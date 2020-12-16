@@ -26,11 +26,14 @@
 \newcommand{\diag}{\text{diag}}
 \DeclareMathOperator{\sign}{sign}
 \mathtoolsset{showonlyrefs}
+\newcommand{\argmin}{\mathop{\text{argmin}}}
+\newcommand{\argmax}{\mathop{\text{argmax}}}
 
+\newtheorem{theorem}{Theorem}
 \graphicspath{{./Graphics/}}
 
 \allowdisplaybreaks
-\onehalfspacing
+\doublespacing
 
 % =======================================================================
 \begin{document}
@@ -48,12 +51,11 @@
     }
 \begin{titlingpage}
 \maketitle
-
 \begin{abstract}
-For later. 
+This paper introduces \textit{lookout}, a new approach to detect outliers using leave-one-out kernel density estimates and extreme value theory. Outlier detection methods that use  kernel density estimates generally employ a user defined parameter to determine the bandwidth. Lookout uses persistent homology to construct a bandwidth suitable for outlier detection without any user input.  We demonstrate the effectiveness of lookout on an extensive data repository by comparing its performance  with other EVT based outlier detection methods. Furthermore, we introduce \textit{outlier persistence}, a useful concept that explores the birth and the cessation of outliers with changing bandwidth. The R package \texttt{lookout} implements this algorithm. 
 \end{abstract}
 
-\begin{keywords}outlier detection, leave-one-out kernel density estimate, topological data analysis
+\begin{keywords}outlier detection, anomaly detection, leave-one-out kernel density estimates, topological data analysis, persistent homology, extreme value theory, peak over thresholds, generalized Pareto distribution
 \end{keywords}
 
 \end{titlingpage}
@@ -62,18 +64,54 @@ For later.
 % =======================================================================
 \section{Introduction}\label{sec:introduction}
 % =======================================================================
+% Outlier detection - applications and importance
+% Different techniques  - need for robust methods
+% Extreme value theory methods for outlier detection
+% These methods based on distances
+% Kernel density estimate methods - bandwidth
+% Our contributions -  bridging topological data analysis to KDE
+% And outlier persistence 
+% R package - lookout
+% What the different sections represent
+
+Outliers, anomalies and novelties are often interchangeably used to describe the same concept: data points that are unusual compared the rest. The existence of multiple words to describe similar concepts arise from the growth of outlier detection and applications in multiple research areas.  Indeed, outlier detection is used in diverse applications ranging from detecting security breaches in Internet of Things networks to identifying extreme weather events. As such, it is important to develop robust techniques to detect outliers minimizing costly false positives and dangerous false negatives. 
+
+To this end, statistical methodologies such as Extreme Value Theory (EVT) is gaining popularity in outlier detection because of its rich, theoretical foundations. \cite{Burridge2006} use EVT to detect outliers in time series data. \cite{Clifton2014} use Generalized Pareto Distributions to model the tails in high-dimensional data and detect outliers. Other recent advances in outlier detection that use EVT include   stray \citep{pridiltal}, oddstream \citep{talagala2019anomaly} and HDoutliers \citep{wilkinson2017visualizing}. Of these three methods, stray is an enhancement of HDoutliers and both  use distances to detect outliers, while oddstream uses kernel density estimates to detect outliers in time series data.
+
+The main challenge of using kernel density estimates for outlier detection is the selection of bandwidth. \cite{Schubert2014} employ kernel density estimates to detect outliers using $k$-nearest neighbor distances where $k$ is a user-specified parameter, which determines bandwidth. \cite{Qin2019} employ kernel density estimates to detect outliers in streaming data. They too have a radius parameter, which is equivalent to the bandwidth that needs to be specified by the user. \cite{Tang2017} use reverse and shared $k$ nearest neighbors to compute kernel density estimates and identify outliers. They also have a user defined parameter $k$ that denotes the reverse $k$ nearest neighbors.  Oddstream \citep{talagala2019anomaly} does not have a user defined parameter that directly impacts the bandwidth of the kernel density estimates. However, it computes kernel density estimates on a  2-dimensional projection defined by the first two principal components, not in the original, high dimensional space. As such, the outliers in the original space may not be outliers in the projected space; for example consider a sphere with non-outlying points distributed on the surface and outliers placed at the center. 
+
+
+In this paper we propose a leave-one-out kernel density estimation approach for outlier detection called \textit{lookout}. 
+We address the challenge of bandwidth selection for outlier detection by using persistent homology -- a method in topological data analysis -- and use EVT to identify outliers.  A brief introduction to persistent homology and EVT is given in Section~\ref{sec:methodology}.
+%A brief introduction to persistent homology and the bandwidth selection process is given in Section~\ref{sec:methodology}.  Using leave one out kernel density estimates and the block maxima approach in EVT we identify outliers. We give a short overview of EVT and the block maxima approach in  Section~\ref{sec:methodology}. 
+%A brief introduction to persistent homology and EVT is given in Section~\ref{sec:methodology}. 
+In Section~\ref{sec:lookout} we introduce the algorithm \textit{lookout} and the concept of outlier persistence, which explores the birth and cessation of outliers with changing bandwidth. 
+%the effect of bandwidth and the level of significance on outlier detection. 
+We show examples illustrating the usefulness of outlier persistence and conduct experiments using synthetic data to evaluate the performance of lookout in  Section~\ref{sec:simulations}. Using en extensive data repository of real datasets, we compare the performance of lookout to HDoutliers and stray in Section~\ref{sec:applications}. 
+
+We have produced an R package \texttt{lookout} CITE, which includes this algorithm. In addition, all examples in this paper are available in the supplementary material at \url{https://github.com/sevvandi/supplementary_material/tree/master/lookout}. 
+
+%Bandwidth selection for outlier detection is different from selecting  in kde bandwidth for outlier detection is different 
+
+%Both stray and HDoutliers use the Spacings Theorem, which is detailed in \cite{Burridge2006}.  
+%While the term outlier detection has been around for several decades and was predominantly used by statisticians in the past, the terms anomaly and novelty detection are not as old and is used by computer scientists and statisticians alike. 
+
+% In fact, both HDoutliers \citep{wilkinson2017visualizing} and stray \citep{pridiltal} use EVT in their outlier detection framework. Both HDoutliers and stray use distances to detect outliers. We investigate a EVT based framework using 
+
 % =======================================================================
-\section{Methodology}\label{sec:methodology}
+\section{Mathematical Background}\label{sec:methodology}
 % =======================================================================
+In this Section we briefly go through three different topics: \begin{inparaenum} \item topological data analysis and persistent homology, \item extreme value theory and the peaks over threshold approach and \item kernel density estimation. \end{inparaenum}  
+
 % =======================================================================
 \subsection{Topological data analysis and persistent homology}\label{subsec:tda}
 %This section gives an introduction to topological data analysis. 
-Topological data analysis is the study of data using topological constructs. It is about inferring high dimensional structure from low dimensional representations such as points, and assembling discrete points to global structure \citep{ghrist2008barcodes}. Persistent homology is a method in algebraic topology that computes topological features of a space that persist across multiple scales or spatial resolutions. These features include connected components, topological circles and trapped volumes.  Features that persist for a wider range of spatial resolutions represent robust, intrinsic features of the data while features that sporadically change are perturbations resulting from noise. Persistent homology has been used in a wide variety of applications including biology  \citep{topaz2015topological}, computer graphics \citep{carlsson2008local} and engineering \citep{perea2015sliding}.
+Topological data analysis is the study of data using topological constructs. It is about inferring high dimensional structure from low dimensional representations such as points and assembling discrete points to construct global structures \citep{ghrist2008barcodes}. Persistent homology is a method in algebraic topology that computes topological features of a space that persist across multiple scales or spatial resolutions. These features include connected components, topological circles and trapped volumes.  Features that persist for a wider range of spatial resolutions represent robust, intrinsic features of the data while features that sporadically change are perturbations resulting from noise. Persistent homology has been used in a wide variety of applications including biology  \citep{topaz2015topological}, computer graphics \citep{carlsson2008local} and engineering \citep{perea2015sliding}. In this Section we will give a brief overview of persistent homology without delving into the mathematical details. Readers are referred to \cite{ghrist2008barcodes} and \cite{Carlsson2009} for an overview and \cite{wasserman2018topological} for a statistical viewpoint on the subject. 
 
 \subsubsection{Simplicial Complex}\label{subsubsec:simplicialcomplex}
-A data cloud, represented as a collection of points, is used to construct a graph where the points are considered vertices and the edges are determined by the distance between the points. Given a proximity parameter $\epsilon$ two vertices are connected by an edge if the distance between these two points are less than or equal to $\epsilon$. Starting from this graph a simplicial complex -- a space built from simple pieces -- is constructed. A simplicial complex is a finite set of $k$-simplices, where $k$ denotes the dimension. To give some examples, a point is a $0$-simplex, an edge a $1$-simplex, a triangle a $2$-simplex and a tetrahedron a $3$-simplex. Suppose $S$ denotes a simplicial complex, which includes a $k$-simplex $\gamma$. Then all non-empty subsets of $\beta \subset \gamma$ are also included in $S$. For example if $S$ contains a triangle $pqr$, then the edges $pq$, $qr$ and $rs$, and the vertices $p$, $q$ and $r$ are also in $S$. 
+It starts with a data cloud  representing a collection of points. This set of points is used to construct a graph where the points are considered vertices and the edges are determined by the distance between the points. Given a proximity parameter $\epsilon$ two vertices are connected by an edge if the distance between these two points are less than or equal to $\epsilon$. Starting from this graph a simplicial complex -- a space built from simple pieces -- is constructed. A simplicial complex is a finite set of $k$-simplices, where $k$ denotes the dimension. To give some examples, a point is a $0$-simplex, an edge a $1$-simplex, a triangle a $2$-simplex and a tetrahedron a $3$-simplex. Suppose $S$ denotes a simplicial complex, which includes a $k$-simplex $\gamma$. Then all non-empty subsets of $\beta \subset \gamma$ are also included in $S$. For example if $S$ contains a triangle $pqr$, then the edges $pq$, $qr$ and $rs$, and the vertices $p$, $q$ and $r$ are also in $S$. 
 
-Two types of $k$-simplices are the \textit{Vietoris-Rips} complex and the \textit{Cech} complex. We will construct a Vietoris-Rips complex from the data cloud. Given a set of points and a proximity parameter $\epsilon > 0$, $k+1$ points within a distance of $\epsilon$ to each other forms a $k$-simplex.  For example consider 5 points $p$, $q$, $r$, $s$ and $t$ and suppose the distance between any two points except $t$ is less than $\epsilon$. Then we can construct the edges $pq$, $pr$, $ps$, $qr$, $qs$ and $rs$. From the edges $pq$, $qr$ and $rp$ we can construct the triangle $pqr$, from $pq$, $qs$ and $sp$ the triangle $pqs$ and so on. By constructing the $4$ triangles $pqr$, $qrs$, $rsp$ and $spq$ we can construct the tetrahedron $pqrs$. The vertex $t$ is not connected to this $3$-simplex because the distance between $t$ and the other vertices is greater than $\epsilon$. As such, the simplicial complex resulting from these 5 points consist of the tetrahedron $pqrs$ and all the subset $k$-simplices and the vertex $t$. Figure~\ref{fig:tetrahedron} shows this simplicial complex. 
+The \textit{Vietoris-Rips} complex and the \textit{Cech} complex are two types of $k$-simplicial complexes. We will construct a Vietoris-Rips complex from the data cloud as it is more computationally efficient than the Cech complex \citep{ghrist2008barcodes}. Given a set of points and a proximity parameter $\epsilon > 0$, $k+1$ points within a distance of $\epsilon$ to each other forms a $k$-simplex.  For example consider 5 points $p$, $q$, $r$, $s$ and $t$ and suppose the distance between any two points except $t$ is less than $\epsilon$. Then we can construct the edges $pq$, $pr$, $ps$, $qr$, $qs$ and $rs$. From the edges $pq$, $qr$ and $rp$ we can construct the triangle $pqr$, from $pq$, $qs$ and $sp$ the triangle $pqs$ and so on, because the distance between any two points $p$, $q$, $r$ and $s$ is bounded by $\epsilon$. By constructing the $4$ triangles $pqr$, $qrs$, $rsp$ and $spq$ we can construct the tetrahedron $pqrs$. The vertex $t$ is not connected to this $3$-simplex because the distance between $t$ and the other vertices is greater than $\epsilon$. As such, the simplicial complex resulting from these 5 points consists of the tetrahedron $pqrs$ and all the subset $k$-simplices and the vertex $t$. Figure~\ref{fig:tetrahedron} shows this simplicial complex on the left and another example on the right. 
 
 \begin{figure}
     \centering
@@ -82,52 +120,440 @@ Two types of $k$-simplices are the \textit{Vietoris-Rips} complex and the \texti
     \label{fig:tetrahedron}
 \end{figure}
 
-\subsubsection{Which $\epsilon$?}\label{subsubsec:whicheps}
-Given a point cloud of data, the resulting Rips complex depends on the value of $\epsilon$. As such, the question arises which $\epsilon$ is most representative of the structure of the data cloud. For example the point cloud illustrated in Figure~\ref{fig:annulus} lies in an annulus. The figure on the top left shows the Rips complex using $\epsilon = 0.1$. This Rips complex consists of mostly disconnected individual points and a small number of edges. The figure at the top right shows the Rips complex using $\epsilon = 0.3$. This consists of $3$ connected components having edges, triangles, tetrahedrons and possibly other $k$-simplices. The figure at the bottom right shows the Rips complex for $\epsilon = 0.8$, which shows 1 connected component consisting of different $k$-simplices and 1 hole. This Rips complex is desirable from a data analysis point of view as it identifies the annulus well. The figure at the bottom right shows the Rips complex for $\epsilon = 1.5$, which connects everything together and closes up the hole. 
+% \subsubsection{Which $\epsilon$?}\label{subsubsec:whicheps}
+% Given a point cloud of data, the resulting Rips complex depends on the value of $\epsilon$. As such, the question arises which $\epsilon$ is most representative of the structure of the data cloud. For example the point cloud illustrated in Figure~\ref{fig:annulus} lies in an annulus. The figure on the top left shows the Rips complex using $\epsilon = 0.1$. This Rips complex consists of mostly disconnected individual points and a small number of edges. The figure at the top right shows the Rips complex using $\epsilon = 0.3$. This consists of $3$ connected components having edges, triangles, tetrahedrons and possibly other $k$-simplices. The figure at the bottom left shows the Rips complex for $\epsilon = 0.8$, which shows 1 connected component consisting of different $k$-simplices and 1 hole. This Rips complex is desirable from a data analysis point of view as it identifies the annulus well. The figure at the bottom right shows the Rips complex for $\epsilon = 1.5$, which connects everything together and closes up the hole. 
 
-\begin{figure}
+\begin{figure}[!ht]
     \centering
     \includegraphics[scale=0.8]{four_plots_diff_radi.png}
     \caption{Rips complexes resulting from different $\epsilon$ values. The figures in the top left, top right, bottom left and bottom right show the Rip complexes resulting from $\epsilon = 0.1, 0.3, 0.8$ and $1.5$ respectively}
     \label{fig:annulus}
 \end{figure}
 
-\subsubsection{Persistent homology}\label{persistenthomology}
-Keeping the question of best $\epsilon$ aside for a moment, we turn our attention to topological features that has been the focus of persistent homology.  Features that continue for a larger range of $\epsilon$, such as the hole in Figure~\ref{fig:annulus} represent  structural properties of the data that are of interest to us. Informally, the topological construct/feature that counts these holes are called Betti numbers. The Betti number $\beta_k$ counts $k$-dimensional holes of a  simplicial complex. Zero-dimensional holes are connected components and  the number of connected components is given by $\beta_0$.  One-dimensional holes are topological circles and is given by $\beta_1$. Two-dimensional holes are trapped volumes or voids. To study Betti numbers we first define some notation. 
+\subsubsection{Persistent homology}\label{subsec:persistenthomology}
+Given a point cloud of data, the resulting Rips complex depends on the value of $\epsilon$. As such, the question arises which $\epsilon$ is most representative of the structure of the data cloud. Keeping the question of best $\epsilon$ aside for a moment, we turn our attention to topological features, such as connected components and holes that has been the focus of persistent homology. As we increase the proximity parameter $\epsilon$, these topological features appear and disappear.  For example in Figure~\ref{fig:annulus}, we start with a large number of connected components (top-left) and as $\epsilon$ increases to $0.8$ the number of connected components merge and decrease to 1 (bottom-left). Around this $\epsilon$ value a hole appears and as $\epsilon$ increases to $1.5$, it too disappears (bottom-right). The appearances and disappearances of these topological features are referred to as births and deaths  and are illustrated using a \textit{barcode} or a \textit{persistence diagram}. 
 
-\begin{enumerate}
-    \item Introduce simplicial complex - done
-    \item Which $\epsilon$ -  sequence of Rips complex
-    \item Persistence homology
-    \item Barcode - persistence diagram
-\end{enumerate}
+Figure~\ref{fig:barcodeandpersistence} shows the barcode and the persistence diagram of the point cloud shown in Figure~\ref{fig:annulus}. The barcode consists of a set of horizontal line segments, each line segment denoting a feature that starts at its birth diameter and ends at its death diameter. These line segments are grouped by their dimension. The orange lines in Figure~\ref{fig:barcodeandpersistence1} denote the zero dimensional holes, which are connected components and blue lines denote one dimensional holes. The longer blue line which is born at  0.53 and dies at 1.35 corresponds to the hole at the centre of the point cloud in Figure~\ref{fig:annulus}. Such features that continue for a large range of $\epsilon$, represent  structural properties of the data that are of interest to us. The same information is presented differently in the persistence diagram, where the birth and the death of each feature is denoted by a point. Points away from the diagonal inform about the structure of the data while points closer to the diagonal are perturbations related to noise.  
+
+Betti numbers denoted by $\beta_k$ give the number of $k$-dimensional holes of a  simplicial complex. The number of connected components is given by $\beta_0$ and the number of one-dimensional holes is given by $\beta_1$. The number of two-dimensional holes, which are trapped volumes or voids is given by $\beta_2$. The Betti numbers can also be computed from the barcode by drawing a vertical line at the desired diameter and counting the points of intersection for each dimension. For example, in Figure~\ref{fig:barcodeandpersistence1} the Betti numbers corresponding to the simplicial complex at diameter $0.5$ are $\beta_0 = 1$ and $\beta_1 = 0$.  
+
+\begin{figure}[!ht]
+    \centering
+	\subfloat[][]{
+		\includegraphics[width=0.48\textwidth]{Graphics/barcode.png}
+        \label{fig:barcodeandpersistence1}
+	}
+	\subfloat[][]{
+		\includegraphics[width=0.48\textwidth]{Graphics/persistence.png}
+        \label{fig:barcodeandpersistence2}
+	}	
+	\caption{ Figure~\ref{fig:barcodeandpersistence1} shows the barcode of the point cloud in Figure~\ref{fig:annulus} and Figure~\ref{fig:barcodeandpersistence2} shows the persistence diagram. }
+  \label{fig:barcodeandpersistence} 
+\end{figure}
+
+
 % =======================================================================
 % =======================================================================
 \subsection{Extreme value theory}\label{subsec:evt}
-This section will introduce extreme value theory and the POT method for exceedences. 
+Extreme Value Analysis (EVA) is used to model rare, extremal events, which often have a big societal impact such as a 100-year flood. EVA is used in many industries including hydrology, finance and insurance \citep{Reiss2001}. For example, setting premiums so that massive insurance losses are mitigated is just as important, if not more than achieving profits on average. Due to its applicability, Extreme Value Theory (EVT) has also been used in outlier detection \citep{wilkinson2017visualizing, talagala2019anomaly}. In this section we will give a brief introduction to EVA using the notation in  \cite{coles2001introduction}. 
+
+Consider $n$ independent and identically distributed random variables $X_1, \, \ldots, \,  X_n$ with a distribution function $F(x) = P\{X \leq x\}$. Then the maximum of these $n$ random variables is  
+\begin{equation}\label{eq:evt1}
+    M_n = \max \{X_1, \, \ldots, \, X_n\} \, . 
+\end{equation}
+If $F$ is known, the distribution of $M_n$ can be derived for any value of $n$ as
+\begin{align}\label{eq:evt2}
+    P\{M_n \leq z \} & = P\{X_1 \leq z, \, \ldots, \, X_n \leq z \} \, ,  \\
+    & = P\{X_1 \leq z\} \times \ldots \times P\{X_n \leq z\}\, , \\
+    & =  \left(F(z)\right)^n \, .
+\end{align}
+However, $F$ is not known in practice. This gap is filled by Extreme Value Theory, which studies approximate families of models for $F^n$ so that extremes can be modeled and uncertainty quantified. Similar to the Central Limit Theorem for means, the Fisher-Tippet-Gnedenko Theorem, also known as the the extreme value theorem or the extremal types theorem states that under certain conditions, a scaled maximum $\frac{M_n - a_n}{b_n}$, if $a_n$ and $b_n$ exist, have certain limit distributions. 
+
+\begin{theorem}[Fisher-Tippett-Gnedenko] \label{thm:FisherTippett}
+If there exist sequences such that 
+$$ P\left\{ \frac{(M_n - a_n)}{b_n} \leq z \right\} \rightarrow G(z) \quad \text{as} \quad n \to \infty,
+$$
+where $G$ is a non-degenerate distribution function, then $G$ belongs to one of the following families:
+\begin{align}\label{eq:EVT3}
+    \text{I}&: G(z) = \exp\left( -\exp \left[ - \left( \frac{z-b}{a}\right) \right] \right), \, \quad -\infty < z < \infty\, ,  \\
+    \text{II}&: G(z) =  \begin{cases}
+                                   0\, ,    &  z \leq b \, ,  \\
+                                   \exp \left( - \left( \frac{z-b}{a}\right)^{-\alpha} \right)\, ,   & z > b \, , 
+                    \end{cases} \\
+     \text{III}&: G(z) =  \begin{cases}
+                            \exp \left( - \left(- \left[\frac{z-b}{a}\right]\right)^{\alpha} \right)\, ,   & z < b \, , \\
+                             1\, ,    &  z \geq b  \, , 
+                    \end{cases}                     
+\end{align}
+ for parameters $a, b$ and $\alpha$ where $a, \alpha >0$.
+\end{theorem}
+The distribution types I, II and III are known as Gumbel, Fr\'echet and Weibull families respectively. These three families of distributions can be further combined into a single family by using the following distribution function known as the Generalized Extreme Value (GEV) distribution,
+\begin{equation}\label{eq:EVT4}
+    G(z) = \exp\left\{ -\left[ 1 + \xi\left(\frac{z - \mu}{\sigma} \right)\right]^{-1/\xi} \right\}\, , 
+\end{equation}
+where the domain of the function is $\{z: 1 + \xi (z - \mu)/\sigma >0 \}$ and the parameters $\mu, \xi \in \mathbb{R}$ and $\sigma > 0$. The parameter $\mu$ is called the location parameter and $\sigma$ is called the scale parameter. The parameter $\xi$ is called the shape parameter and it  determines the behavior of the tails and differentiates between the Gumbel, Fr\'echet and Weibull distributions. When $\xi = 0$ we obtain a Gumbel distribution with exponentially decaying tails. When $\xi <0 $ we get a Weibull distribution with a finite upper end and when $\xi > 0$ we get a Fr\'echet family of distributions with   polynomially decaying tails. 
+
+\subsubsection{Block maxima approach}
+The GEV distributions are used to study extremes using the block maxima method. That is, observations are divided into blocks of equal length and the set of block maxima are modeled by fitting a GEV distribution. For example, one might consider yearly blocks to model the maximum daily temperature. However, this is considered a wasteful approach with respect to the data, because many data points including extremes maybe discarded by only considering the block maximum. For example, a given year may  have multiple days of extreme temperatures that are higher than the maximum temperature of another year. But the block maxima approach would discard these other extremal temperatures and only consider the maximum temperature of each year.
+
+This problem is remedied by regarding the observations that exceed a high threshold as extremes. This approach is known as the Peaks Over Threshold (POT) approach and uses the Generalized Pareto Distribution (GPD).  
+
+\subsubsection{The Generalized Pareto Distribution and the POT approach} \label{sec:potapproach}
+As previously, consider $n$ independent and identically distributed random variables $X_1, \, \ldots, \, X_n$ with a distribution function $F$.  For a high threshold value $u$, if all $X_i > u$ are regarded as extremes, we can write the conditional probability of extreme events as 
+\begin{equation}\label{eq:POT1}
+    P\left \{X > u + y | X > u \right \} = \frac{1 - F(u+y)}{1 - F(u)}\, , \quad y >0 \, , 
+\end{equation}
+giving us
+\begin{equation}\label{eq:POT2}
+    P\left \{X \leq u + y | X > u \right \} = \frac{ F(u+y) - F(u)}{1 - F(u)}\, , \quad y >0 \, . 
+\end{equation}
+The distribution function
+\begin{equation}\label{eq:POT3}
+    F_u(y) = P\left \{X \leq u + y | X > u \right \}\, , 
+\end{equation}
+describes the \textit{exceedances} above threshold $u$. If $F$ is known we could compute this probability. However, as $F$ is not known in practice we use approximations based on the Generalized Pareto Distribution \citep{Pickands1975}. 
+\begin{theorem}[Pickands] Let $X_1, \, X_2, \ldots, \, X_n$  be a sequence of independent random variables with a common distribution function $F$, and let
+$$ M_n = \max \{X_1, \ldots, X_n \} \, .
+$$
+Suppose $F$ satisfies Theorem~\ref{thm:FisherTippett} so that for large $n$
+$$ P\{ M_n \leq z \} \approx G(z)\, , 
+$$
+where 
+$$  G(z) = \exp\left\{ -\left[ 1 + \xi\left(\frac{z - \mu}{\sigma} \right)\right]^{-1/\xi} \right\}\, , 
+$$
+for some $\mu, \xi \in \mathbb{R}$ and $\sigma >0$. Then for large enough $u$, the distribution function of $(X-u)$ conditional on $X > u$, is approximately
+\begin{equation}\label{eq:POT4}
+    H(y) = 1 - \left( 1 + \frac{\xi y}{\sigma_u} \right)^{-1/\xi}\, , 
+\end{equation}
+where the domain of $H$ is $\{y: y >0\, \,    \text{and} \, \,  (1 + \xi y)/\sigma_u >0  \}$\, , where $\sigma_u = \sigma + \xi(u- \mu)$. 
+\end{theorem}
+The family of distributions defined by equation~\eqref{eq:POT4} is called the \textbf{Generalized Pareto Distribution} (GPD). We note that the GPD parameters are determined from the associated GEV parameters. In particular, the shape parameter $\xi$ is the same in both distributions. 
+
+For a chosen threshold $u$, the parameters of the GPD can be estimated by standard maximum likelihood techniques. As an analytical solution that maximizes the likelihood does not exist, numerical techniques are used to arrive at an approximate solution. 
+
 % =======================================================================
 % =======================================================================
-\subsection{Algorithm lookout}\label{subsec:lookout}
-This section will give details of the algorithm. 
-\begin{enumerate}
-    \item From the persistence diagram selecting a bandwidth
-    \item Leave-one-out kernel density estimates using this bandwidth
-    \item Take logarithms of KDE values and fit a GPD using POT 
-    \item Using these POT parameters, find the probability of seeing the points using log of lookde values
-    \item Use a fixed cut off probability of identify outliers
-\end{enumerate}
+\subsection{Kernel density estimation}\label{subsec:kde}
+In this Section we review some basics of kernel density estimation. Consider a univariate kernel density estimator 
+\begin{equation}\label{eq:kde1}
+\hat{f}(x;h) = \frac{1}{nh}\sum_{i=1}^n K\left(\frac{x-x_i}{h}\right) = \frac{1}{n} \sum_{i=1}^n K_h(x-x_i)\, , 
+\end{equation}
+where $K_h(t) = K(t/h)/h$. The Gaussian kernel is given by
+\begin{equation}\label{eq:kde2}
+    K(x) = \frac{1}{\sqrt{2\pi }}{\exp\left(-\frac{x^2}{2}\right)} \, , 
+\end{equation}
+and the Epanechnikov kernel is given by
+\begin{equation}\label{eq:kde3}
+    K(x) = \frac{3}{4}\left(1 - x^2 \right)_+ \, .
+\end{equation}
+In order to match the variances of different kernels, we consider the centralized second order moment of $K$  given by
+\begin{equation}\label{eq:kde4}
+ \mu_2(K) = \int z^2 K(z) \, dz \, , 
+\end{equation}
+and scale $K$ such that $\mu_2(\tilde{K}) = 1$. By doing a change of variables for the Epanechnikov kernel we obtain
+\begin{equation}\label{eq:kde5}
+    \tilde{K}(x) = \frac{3}{4 \sqrt{5}}\left(1 - \frac{x^2}{5} \right)_+ \, ,
+\end{equation}
+giving $\mu_2(\tilde{K}) = 1$. 
+
+The leave-one-out kernel density estimator is given by
+\begin{equation}\label{eq:kde9}
+    \hat{f}_{-j}(x;h) = \frac{1}{(n-1)h}\sum_{i \neq j} K\left(\frac{x-x_i}{h}\right)\, ,  
+\end{equation}
+where $x_j$ is left out. We further simplify it and obtain %This gives the leave-one-out estimate at $x_j$ by leaving $x_j$ out as
+\begin{align}\label{eq:kde10}
+    \hat{f}_{-j}(x_j;h) & = \frac{1}{(n-1)h}\sum_{i \neq j} K\left(\frac{x_j-x_i}{h}\right)\, , \notag \\
+    & = \frac{1}{(n-1)h} \left(\sum_{i = 1}^n K\left(\frac{x_j-x_i}{h}\right) - K\left(\frac{x_j-x_j}{h}\right)  \right) \, , \notag  \\
+    & = \frac{1}{(n-1)h} \left(\sum_{i = 1}^n K\left(\frac{x_j-x_i}{h}\right) - K\left(0\right)  \right) \, , \notag  \\
+    & = \frac{n}{n-1} \hat{f}(x_j;h) - \frac{1}{(n-1)h} K\left(0\right) \, .
+\end{align}
+As such, it is easy to compute the leave-one-out estimate at $x_j$ by leaving $x_j$ out using $\hat{f}(x_j;h)$. 
+
+Next, we consider the multivariate kernel estimator
+\begin{equation}\label{eq:kde6}
+    \hat{f}\left(\bm{x}; \bm{H}\right) = \frac{1}{n|\bm{H}|^{1/2}} \sum_{i=1}^n K\left(\bm{H}^{-1/2}(\bm{x} -\bm{x}_i) \right) = \frac{1}{n} \sum_{i=1}^n K_{\bm{H}}\left(\bm{x} -\bm{x}_i \right)\, ,
+\end{equation}
+where $\mathbf{x} \in \mathbb{R}^p$, $\bm{H}$ denotes a $ p \times p$ positive definite bandwidth matrix and $K_{\bm{H}}(\bm{z}) = \bm{H}^{-1/2} K(\bm{H}^{-1/2} \bm{z})$. The multivariate Gaussian kernel is given by
+\begin{equation}\label{eq:kde7}
+    K(\bm{x}) = \frac{1}{(2\pi)^{p/2}} \exp\left( -\frac{1}{2} \| \bm{x} \| ^2\right)\, , 
+\end{equation}
+and the multivariate scaled Epanechnikov kernel by
+\begin{equation}\label{eq:kde8}
+    K(\bm{x}) = \frac{p+2}{c_p}\left(1 - \frac{\| \bm{x} \| ^2}{5} \right)_+ \, , 
+\end{equation}
+where $c_p$ is the volume of the unit sphere in $\mathbb{R}^p$.
+
+%For the Gaussian kernel we use $h = d_*$ and for Epanechnikov kernel we use $h = \sqrt{5} d_*$ so that 
+
+\section{Methodology}\label{sec:lookout}
+
+\subsection{Bandwidth selection using TDA}\label{subsec:selectingBandwidth}
+The main challenge in using kernel density estimates for outlier detection is selecting appropriate bandwidth. There is a large body of literature on kernel density estimation and bandwidth selection \citep{Scott1994,Wang2019} that  focuses on computing density estimates that represent the data as accurately as possible, where measures of accuracy have certain asymptotic properties. The most common measure of performance that evaluates kernel density estimates is the mean integrated squared error (MISE). However, our goal is somewhat different as we are interested in finding outliers in the data and thus do not interest ourselves in finding a good representation for the rest of the data. The optimal bandwidth which minimizes the MISE is generally not suitable for outlier detection.  Often this bandwidth is too small and causes the kernel density estimates of the boundary and near-boundary points to be too low and similar to those of the outliers. In high dimensions this problem is exacerbated due to the sparsity of the data. Thus, we need a bandwidth that assists outlier detection. A too small bandwidth causes everything to be outliers, while too big a bandwidth hides outliers with other points.  
+% TALK ABOUT EXISTING LITERATURE FOR OUTLIER DETECTION USING KDE BEFORE
+
+To select a bandwidth for outlier detection, we use the barcode  discussed in Section~\ref{subsec:persistenthomology}. First we construct the barcode of the data cloud for dimension zero using the Vietoris-Rips diameter. From the barcode we obtain the sequence of death diameters for the connected components, i.e. the sequence of diameters at which connected components merge into one another and disappear. By construction this is an increasing sequence as seen in Figure~\ref{fig:barcodeandpersistence1}. Let us denote this sequence by $\{d_i\}_{i = 1}^N$, that is we consider the barcode to have $N$ horizontal line segments for dimension $0$. To understand this sequence better we consider an example and compare $\{d_i\}_{i = 1}^N$ with $k$ nearest neighbor distances for different $k$. Figure~\ref{fig:TDAKNN} shows an annulus with some points in the center, its barcode, and the violin plot of different distances. The set $\{d_i\}_{i = 1}^N$ is denoted as TDA in Figure~\ref{fig:TDAKNN} with KNN distances for $k \in \{1, 5, 10\}$ denoted by NN\_1, NN\_5 and NN\_10 respectively. We see that the TDA Rips diameters have a non-zero intersection with KNN distances for each $k$. That is, we can think of the TDA distances as a subset of the union of different KNN distances. Consequently, we can use TDA distances without having to select the parameter $k$ for KNN distances.  
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[scale=0.8]{Graphics/TDA_and_KNN.png}
+    \caption{An annulus with some points in the center on the top left. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom.}
+    \label{fig:TDAKNN}
+\end{figure}
+
+The plot on the bottom right in Figure~\ref{fig:TDAKNN} shows an enlarged version of the top part of the barcode, which has the largest Rips diameters. A vertical dashed line is drawn at diameter 0.436, the second largest Rips diameter. As the diameter increases from 0.436 till 1.017, which is the maximum diameter, the number of components stay the same. For this point cloud, $(0.436, 1.017)$ is the largest diameter range for which the number of components stay the same. As such, it signifies a global structural property of the point cloud. We want to take this structure into account when selecting the bandwidth. As such, we choose a diameter that gives rise to persisting features, which are connected components for dimension $0$. We consider the Rips diameter intervals $(d_i, d_{i+1})$ for all $i$, and find the largest interval by computing successive differences 
+\begin{equation}\label{eq:deathrad1}
+    \Delta d_i = d_{i+1} - d_i\, ,  \quad \text{for} \quad i \in \{1, \cdots,  N-1 \} \, . 
+\end{equation}
+We choose the Rips diameter $d_i$ that maximizes $\Delta d_i$
+\begin{align}\label{eq:deathrad2}
+    i_* & = \argmax \{ \Delta d_i \}_{i=1}^{N-1}  \notag\\
+    d_* & = d_{i_*} \, ,
+\end{align}
+as our chosen Rips diameter. We use this diameter $d_*$ to compute the bandwidth of the Gaussian or a scaled Epanechnikov kernel.  
+
+Consider two points in the point cloud that are $\epsilon = 1$ distance away as shown in Figure~\ref{fig:epsilonandkernels}. Suppose we want these two points to contribute to each others kernel density estimates. This is illustrated in the bottom row of Figure~\ref{fig:epsilonandkernels}. This can be achieved by using a range of bandwidth values. Let us consider a 1-dimensional dataset. For an Epanechnikov kernel, any bandwidth $h > \epsilon $ would suffice. But, a larger bandwidth will make the contribution the neighboring point higher than a smaller bandwidth. For a Gaussian kernel, there is no such restriction as any $h$ would include the other point. However, a small $h < < \epsilon$ would make the contribution of the other point quite small. As such, we choose $h=\epsilon$ for a Gaussian kernel where $\epsilon$ denotes a particular choice of the Rips diameter. For the Epanechnikov kernel, we choose $h = \sqrt{5} \epsilon$, so that it matches the variance of the Gaussian kernel.  
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[scale=0.8]{Graphics/circles_and_kernels.png}
+    \caption{The plot on the top shows two points that are  $\epsilon = 1$ distance away from each other. The plots at the bottom show a Gaussian and an Epanechnikov kernel, with bandwidth $1$ and $2$ respectively. The choice of bandwidth makes each point contribute to the other's kernel density estimate. }
+    \label{fig:epsilonandkernels}
+\end{figure}
+
+% Next we consider the choice of Rips diameter. We are interested in capturing the structure of the point cloud. As such, we choose a diameter that gives rise to persisting features, which are connected components for dimension $0$. We consider the Rips diameter intervals $(d_i, d_{i+1})$ for all $i$, and find the largest interval by computing successive differences 
+% \begin{equation}\label{eq:deathrad1}
+%     \Delta d_i = d_{i+1} - d_i\, ,  \quad \text{for} \quad i \in \{1, \cdots,  N-1 \} \, . 
+% \end{equation}
+% We choose the Rips diameter $d_i$ that maximizes $\Delta d_i$
+% \begin{align}\label{eq:deathrad2}
+%     i_* & = \argmax \{ \Delta d_i \}_{i=1}^{N-1}  \notag\\
+%     d_* & = d_{i_*} \, ,
+% \end{align}
+% as our chosen Rips diameter. We use this diameter $d_*$ to compute the bandwidth of the Gaussian or a scaled Epanechnikov kernel. 
+
+For higher dimensions, we use a bandwidth matrix of the form $\bm{H} = h\bm{I}$, and assign
+\begin{equation}\label{eq:bandwidth}
+    h = d_*^{2/p} \, , 
+\end{equation}
+giving us 
+\begin{align}\label{eq:kde11}
+    \| \bm{H}^{-1/2}(\bm{x} - \bm{x}_i) \|^2  & = (\bm{x} - \bm{x}_i)^T \left(\bm{H}^{-1/2}\right)^T \bm{H}^{-1/2} (\bm{x} - \bm{x}_i) \, , \\
+     & = (\bm{x} - \bm{x}_i)^T \bm{H}^{-1} (\bm{x} - \bm{x}_i) \, ,  \\
+     & = \frac{1}{h^p}(\bm{x} - \bm{x}_i)^T  (\bm{x} - \bm{x}_i)\, , \\
+     & = \frac{1}{d_*^2}\|\bm{x} - \bm{x}_i \|^2 \, , 
+\end{align}
+where $d_*$ is the Rips diameter given in equation~\eqref{eq:deathrad2}. By choosing this bandwidth we make sure that points within a distance of $d_*$ contribute to the kernel density estimate of $\bm{x}$. This diameter results in the following leave-one-out kernel density estimate 
+\begin{align}\label{eq:kde12}
+    \hat{f}_{-j}(\bm{x}_j;\bm{H})  & = \frac{n}{n-1} \hat{f}(\bm{x}_j;\bm{H}) - \frac{1}{(n-1)|\bm{H}|^{1/2}} K\left(\bm{0}\right) \, ,  \notag \\
+    & = = \frac{n}{n-1} \hat{f}(\bm{x}_j;\bm{H}) - \frac{1}{(n-1)d_*} K\left(\bm{0}\right) \,  .
+\end{align}
+
+% As we want a somewhat bigger bandwidth we consider the top portion of this sequence, that is a subsequence containing the top $k\%$ of the death diameters, where $k$ is set to a default value of $50$.  We compute the 
+
+   
+
+% We use the death diameter of the connected components to select a bandwidth for our kernel density estimation. 
+
+\subsection{Algorithm \textit{lookout}}
+
+Now we have all the building blocks ready to describe the algorithm \textit{lookout}. Consider an $N \times p$  data matrix $\bm{X}$ with $N$ observations in $\mathbb{R}^p$.  It is customary in outlier detection to scale the data so that all attributes contribute equally to outlier detection. Min-Max normalization, which scales each attribute to $[0, 1]$ has been shown effective compared to other normalization  techniques \citep{kandanaarachchi2018normalization}. As such, we  normalize the data using Min-Max. To accommodate  datasets that do not need to be normalized, we make normalization a user option.
+
+%The algorithm \textit{lookout} is based on leave-one-out kernel density estimates. 
+To determine the bandwidth for kernel density estimation, we use the Rips diameter $d_*$ as specified in equation~\eqref{eq:deathrad2} and use the bandwidth matrix $\bm{H} = h \bm{I}$ with $h = (d_*)^{2/p}$ as in equation~\eqref{eq:bandwidth}. We use the scaled Epanechnikov kernel to compute kernel density estimates and leave-one-out kernel density estimates as in equation~\eqref{eq:kde12}. 
+
+Let us denote the kernel density estimate of $\bm{x}_i$ by $y_i$ and the leave-one-out kde of $\bm{x}_i$ (by leaving out $\bm{x}_i$) by $y_{-i}$. As we want to model outliers as extremes, we use $-\log(y_i)$ and $-\log(y_{-i})$ so that smaller kde values are mapped to higher values and vice versa.  Then we fit a Generalized Pareto Distribution to  $-\log(y_i)$ using the POT approach discussed in Section~\ref{sec:potapproach}. We use the $90^{\text{th}}$ percentile as the threshold for the POT approach as recommended by \cite{bommier2014peaks}. Using the fitted GPD parameters, $\mu$, $\sigma$ and $\xi$ we find the probability of the  leave-one-out kde values $-\log(y_{-i})$, that is,  we compute $P\left(-\log(y_{-i})|\mu, \sigma,\xi \right)$. Then, using a pre-defined cut-off probability $\alpha$, we declare points with $P\left(-\log(y_{-i})|\mu, \sigma,\xi \right) < \alpha$ as outliers. We summarize these steps in Algorithm~\ref{algo:lookout}.
+\DontPrintSemicolon
+\begin{algorithm}\fontsize{11}{12}\selectfont
+	\SetKwInOut{Input}{input~~~}
+	\SetKwInOut{Output}{output}
+	\Input{~ The data matrix $\bm{X}$, parameters $\alpha$ and \textit{unitize}.}
+	\Output{~ The outliers and the probabilities of  all points}
+	 If \textit{unitize = TRUE}, then normalize the data so that each column is scaled to $[0,1]$.\\
+	 Construct the persistence homology barcode of the data. \\
+	 Find $d_*$ as in equation~\eqref{eq:deathrad2}. \\
+	 Using $h = (d_*)^{2/p}$ and $\bm{H} = h\bm{I}$ compute kernel density estimates  and leave-one-out kernel density estimates using the scaled Epanechnikov kernel. \\
+	 Denote the kde of $\bm{x}_i$ by $y_i$ and leave-one-out kde by $y_{-i}$.\\
+	 Using the POT approach fit a GPD to $\{-\log(y_i)\}_{i=1}^N$ and find $\mu, \sigma$ and $\xi$. \\
+	 Using the GPD parameters $\mu, \sigma$ and $\xi$ find the probability of the leave-one-out kde values $\{-\log(y_{-i})\}_{i=1}^N$, i.e., $P\left(-\log(y_{-i})|\mu, \sigma, \xi \right)$ for all $i$. \\
+	 If $P\left(-\log(y_{-i})|\mu, \sigma, \xi \right) < \alpha$, then declare $\bm{x}_i$ as an outlier. 
+	\caption{\itshape lookout.}
+	\label{algo:lookout}
+\end{algorithm}
+
+As we take $-\log(y_i)$ and $-\log(y_{-i})$ to fit a GPD, the scaling factor of the kernel $K(\bm{x})$ does not affect the GPD parameters as it is just an offset. For the scaled Epanechnikov kernal
+\begin{equation}\label{eq:lookout1}
+    \log(K(\bm{x}))  = \log\left( \frac{p+2}{c_p}\right) + \log\left( \left(1 -\frac{\| x \|^2}{5} \right)_+\right)\, . 
+\end{equation}
+That is, the logarithm values of all points are shifted by an equal amount because of the scaling factor in $K(\bm{x})$. It is similar for the Gaussian kernel as well.  Thus, the scaling factor of the kernel can be disregarded for the algorithm lookout. 
+
+The algorithm lookout has only 2 parameters, $\alpha$ and $\textit{unitize}$. The parameter $\alpha$ determines the threshold for outlier detection and the parameter $\textit{unitize}$ gives the user an option to normalize the data. We set $\alpha= 0.05$ and $\textit{unitize} =$ TRUE by default.
+
+\todo[inline]{Read upto here!}
+
+\subsection{Outlier persistence}\label{subsec:persistence}
+If a point is identified an an outlier by the algorithm lookout for a range of bandwidth values, then it increases the validity of that point as an outlier. Consider an annulus with some points in the middle as shown in the left plot of Figure~\ref{fig:outlierpersistence}. The plot on the right, which is similar to a barcode,  shows the outliers identified for different bandwidth values. Each horizontal line segment shows the range of bandwidth values which has identified that point as an outlier. 
+%Each horizontal line segment corresponds to a point and starts at the smallest bandwidth for which that point is identified as an outlier, and ends at the largest bandwidth after which it is no longer identified as an outlier. 
+In this plot, the y-axis corresponds to the point index. We call this plot \textit{the outlier persistence diagram} signifying the link to topological data analysis. 
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[scale=0.8]{Outlier_Persistence.png}
+    \caption{Outliers at the center of the annulus in the left plot showing the outlier labels 1001-1005. The outlier persistence diagram on the right with the y-axis denoting the labels. The dashed line shows the lookout bandwidth $d_*$.}
+    \label{fig:outlierpersistence}
+\end{figure}
+
+In the example in Figure~\ref{fig:outlierpersistence}, we see that the points from 1001-1005  are identified as outliers in the outlier persistence diagram for a large range of bandwidth values. The bandwidth selected by lookout $d_*$ is shown using a dashed line.  %In addition, the point with index 495 is also identified as an outlier up until a bandwidth of 1.12. 
+Many points are identified as outliers for small bandwidth values, but do not continue to be outliers for long. These outliers are born at small bandwidth values and after being an outlier for a relatively short period, die at small bandwidth values. Some points are never identified as outliers, even at small bandwidths.  
+
+We extend this notion of persistence to include the significance levels $\alpha \in \{0.01, \, 0.02, \, \ldots, \, 0.1 \}$. Figure~\ref{fig:outlierpersistence2} shows the persistence of outliers over different bandwidth values and significance levels. We define the \textit{strength} of the outlier inversely proportional to the significance level, i.e. 
+\begin{equation}
+    \text{strength} = \frac{0.11 - \alpha}{0.01}  \, .
+\end{equation}
+Thus, if a point is identified as an outlier with a significance level  $ \alpha = 0.01$, then it has  strength  10, and  an outlier with $\alpha = 0.1$ has strength 1. 
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[scale=0.8]{Graphics/persistence_alpha.png}
+    \caption{Outlier persistence over different bandwidth values and their strengths. The dashed line corresponds to the bandwidth to the lookout bandwidth $d_*$.}
+    \label{fig:outlierpersistence2}
+\end{figure}
+
+From Figure~\ref{fig:outlierpersistence2} we see that points 1001-1005 are identified as outliers having high strength values even for large bandwidths. This gives a more comprehensive representation of outliers as it encapsulates the bandwidth as well as the significance, which corresponds to strength.
+
+% \subsubsection{Outlier persistence as a tool for tuning parameters}
+% Often, in real applications outliers are context dependent, i.e. a fixed definition of an outliers will not be effective as each application has their own definition of an outlier \citep{leigh2019framework,normalizationoutliers}. We can use outlier persistence to cater for such a context. For example, consider the ******
+
+
+%Even though the bandwidth is depicted as a continuous parameter in these graphs, when computing outlier persistence we use a discrete set of bandwidth values. 
+% identify outliers using the algorithm lookout at discrete bandwidth values starting from a small bandwidth and ending in a large bandwidth. 
 % =======================================================================
 % =======================================================================
-\section{Simulations}\label{sec:simulations}
+\section{Experiments with synthetic data}\label{sec:simulations}
 % =======================================================================
+In this section we first explore outlier persistence using simple examples. % and compare it with outliers identified from lookout using $\alpha = 0.1$. %We use $\alpha = 0.1$ so that we can match lookout outliers with the outlier persistence diagram. 
+Then we conduct experiments with synthetic data comparing lookout to HDoutliers \citep{wilkinson2017visualizing} and stray \citep{pridiltal}, both of which use extreme value theory to detect outliers. 
+
+\subsection{Outlier persistence examples}\label{sec:PersistenceExamples}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[scale=0.7]{Graphics/Persistence_Ex1.png}
+    \caption{Examples of outlier persistence and strength. The top row shows the data with the outliers identified by lookout with $\alpha = 0.1$ colored by its strength. The bottom row shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth. }
+    \label{fig:persistenceExamples}
+\end{figure}
+
+Figure~\ref{fig:persistenceExamples} shows 5 examples in $\mathbb{R}^2$, each showing the data, outliers identified by lookout, their strengths and the outlier persistence diagram. The dashed lines in the outlier persistence diagram indicate the bandwidth chosen by lookout. The graph at (row 1, column 1) show normally distributed data with 5 outliers in the top right corner, which are identified by lookout with high strength. Upon close inspection we see another point approximately at $(4,0)$, which is slightly detached from the normal set of points, also being identified by  lookout with low strength. The lookout probability of this point is $0.078$, and as such it would only be identified as an outlier when $\alpha > 0.78$.  We have used $\alpha = 0.1$ so that we can match the strengths of the outliers with the persistence diagram. The corresponding persistence diagram shows high strength outlier persistence for the points at the top right hand corner. Similarly, from other graphs in row 1, we see that outliers far away from high density regions are identified by lookout with high strength and points outside high density regions, but not so far away are identified with low strength. Some graphs, such as the graph in (row1, column2) is squashed horizontally making the $x$ values more condensed than the $y$ values. For the graph in (row 1, column 3) lookout has identified a cluster of outliers approximately at $(6,6)$ with high strength as well as individual points slightly away from high density regions with low strength. The difference in graph at (row 1, column 4) is that it has single outliers instead of clusters, which are again identified by lookout. For the last graph on row 1, lookout has identified a cluster of outliers at $(-0.6, 0.35)$ with low strength and the remaining points with high strength.  For all examples, the outliers had high indices, i.e. they were placed at the end of the synthetic dataset. The persistence diagrams show that the high strength outliers persist for a bigger range of bandwidth values and also that lookout finds a suitable bandwidth for detecting these outliers.  
+
+
+\subsection{Comparison Study}\label{sec:SyntheticComparison}
+In this section we conduct 3 experiments with synthetic data. Each experiment considers 2 data distributions; the main distribution and a handful of outliers, which are distributed differently. There are several iterations to each experiment. The iterations serve as a measure of the degree of outlyingness of the small sample. The outliers start off with the main distribution and slowly move out of the main distribution with each iteration. Consequently in the initial iterations the points in the outlying distribution are not actual outliers as they are similar to the points of the main distribution, while in the later iterations they are quite different from the main distribution.  We repeat each iteration 10 times to account for the randomness of the data generation process and use $\alpha = 0.05$ for all three algorithms. 
+
+We compare the results of lookout with 2 other algorithms; HDoutliers \citep{wilkinson2017visualizing} and stray \citep{pridiltal}, as both these algorithms use extreme value theory for outlier detection. We use two evaluation metrics suited for imbalanced datasets: the F-measure and the geometric mean of sensitivity and specificity denoted by Gmean. The F-measure is defined as
+\begin{equation}\label{eq:fmeasure}
+    \text{F-measure} =  2\frac{\text{precision} \times \text{recall}}{\left( \text{precision} + \text{recall} \right) } \, , 
+\end{equation}
+where 
+\begin{equation}\label{eq:pr}
+    \text{precision} =  \frac{ \textit{tp} }{\textit{tp} + \textit{fp}} \, ,  \qquad \text{and} \qquad \text{recall} = \frac{\textit{tp}}{\textit{tp} + \textit{fn}} \, ,
+\end{equation}
+where \textit{tp}, \textit{fp} and \textit{fn} denote true positives (predicted = true, actual = true), false positives (predicted = true, actual = false) and false negatives (predicted = false, actual =true) respectively. Sensitivity and specificity are similar evaluation metrics more frequently used in a medical diagnosis context: 
+\begin{equation}\label{eq:ss}
+    \text{sensitivity} =  \frac{ \textit{tp} }{\textit{tp} + \textit{fn}} \, ,  \qquad \text{and} \qquad \text{specificity} = \frac{\textit{tn}}{\textit{tn} + \textit{fp}} \, ,
+\end{equation}
+and 
+\begin{equation}\label{eq:gmean}
+    \text{Gmean} =  \sqrt{ \text{sensitivity} \times \text{specificity}} \, , 
+\end{equation}
+where \textit{tn} denotes the true negatives (predicted = false, actual = false). In fact, sensitivity and recall are two different terms that denote the same quantity of interest. 
+
+\subsubsection{Experiment 1}\label{sec:exp1}
+For this experiment we consider two normally distributed samples; one large and one small, in  $\mathbb{R}^6$ starting at the same location, with the small sample slowly moving out in each iteration. The set of points belonging to the small sample are considered outliers. We consider 400 points in the bigger sample and 5 in outlying sample, placed at indices 401 - 405. The points in the larger sample are distributed in each dimension as $\mathscr{N}(0, 1)$. The outliers differ from the normal points in one dimension, i.e. they are distributed as $\mathscr{N}\left(2 + (i-1)/2, 0.2 \right)$, where $i$ denotes the iteration. As such, for the first iteration, the outliers are distributed as $\mathscr{N}\left(2 \, , 0.2 \right)$ and for the tenth iteration they are distributed as $\mathscr{N}\left(6.5 \, , 0.2 \right)$ in the first dimension, showing that it has clearly moved out from the main distribution.
+
+The top left graph of Figure~\ref{fig:ComparisonEx1} shows the first two dimensions of this experimental dataset in its last iteration and repetition with outliers identified by lookout shown in different colors. The top right graph shows the corresponding outlier persistence plot for this data with the dashed line denoting the lookout bandwidth. The graphs at the bottom show the performance of lookout, HDoutliers and stray with $\alpha = 0.05$. The mean F-measure of the 10 repetitions for each iteration is shown in the graph at the bottom left and the mean Gmean is shown at the bottom right. We see that for each iteration lookout surpasses HDoutliers and stray significantly. 
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[scale=0.8]{Graphics/Comparison_Ex1.png}
+    \caption{Experiment 1 with outliers moving out from the normal distribution in $\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the corresponding outlier persistence plot. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. }
+    \label{fig:ComparisonEx1}
+\end{figure}
+
+\subsubsection{Experiment 2}\label{sec:exp2}
+For this experiment we consider an annulus in $\mathbb{R}^2$ with outlying points moving into the center with each iteration.  We consider $800$ points in the annulus with $5$ outlying points. The outliers are normally distributed and have a smaller standard deviation compared to the other points. The mean of the outliers in the $i^{\text{th}}$ iteration is $\left( 5 - (i-1) /2, \, 0 \right)$, so that the outliers start at the right of the annulus with mean $(5,0)$ and move in with each iteration, ending with mean $(0,0)$.  We repeat each iteration 10 times. 
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[scale=0.8]{Graphics/Comparison_Ex2.png}
+    \caption{Experiment 2 with outliers moving into the center of the annulus in $\mathbb{R}^2$. Graph on the top left shows the points from the last iteration and last repetition. The graph on the top right shows the corresponding outlier persistence plot. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. }
+    \label{fig:ComparisonEx2}
+\end{figure}
+
+The graph at the top left of  Figure~\ref{fig:ComparisonEx2} shows the points in the final iteration and repetition. The graph on the top right shows the outlier persistence for the final iteration and repetition. The outliers are placed at indices 801 - 805 and we see that they are not identified as outliers for small bandwidth values because the outliers are clustered together. This shows the importance of bandwidth selection for outlier detection when using kernel density estimates. The bandwidth selected by lookout is shown as a dashed line.  The bottom two graphs show the mean F-measure and Gmean of the 3 algorithms for each iterations over 10 repetitions. We see that lookout identifies the outliers earlier than stray and HDoutliers, which does not identify outliers at all. 
+\subsubsection{Experiment 3}\label{sec:exp3}
+For this experiment we consider a unit cube in $\mathbb{R}^{20}$ with 500 points. Of these points 499 are uniformly distributed in each direction and the remaining point is considered an outlier. The outlier moves towards the point $\left( 0.9, 0.9, \ldots, 0.9 \right)$ with each iteration. For the $i^{\text{th}}$ iteration the first $i$ coordinates of the outlier are each equal to $0.9$ and the remaining coordinates are uniformly distributed in $(0,1)$. The index of the outlier is 500. Each iteration is repeated 10 times with different randomizations. 
+
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[scale=0.8]{Graphics/Comparison_Ex3.png}
+    \caption{Experiment 3 with an outlier moving to $(0.9, 0.9, \ldots)$. Graph on the top right shows the outlier persistence plot for the last iteration and repetition. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. }
+    \label{fig:ComparisonEx3}
+\end{figure}
+
+The top graph in Figure~\ref{fig:ComparisonEx3} shows the outlier persistence for the last iteration and repetition. The dashed line shows the bandwidth chosen by lookout. The two graphs at the bottom show the comparison with HDoutliers and stray for each iteration averaged over the repetitions. We see that HDoutliers and stray do not identify the outlier for any iteration. Lookout clearly gives better performance and achieves an average Gmean of 0.999  from the $16^{\text{th}}$ iteration onwards. 
 % =======================================================================
-\section{Applications}\label{sec:applications}
+\section{Results on  a data repository}\label{sec:applications}
+For this section we use the data repository used in \cite{datasets}. This repository has more than $12000$ outlier detection datasets that were prepared from classification datasets. Dataset preparation involves downsampling the minority class in the classification datasets, converting the categorical variables to  numerical and accounting for missing values, all of which is detailed in \cite{normalizationoutliers} . 
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[scale=0.7]{lvplots.png}
+    \caption{Letter value plots of performance differences between 1. lookout and HDoutliers, 2. lookout and stray using Gmean and Fmeasure.}
+    \label{fig:lvplots}
+\end{figure}
+
+Figure~\ref{fig:lvplots}  shows the letter-value plots \citep{lvplots}  of performance differences between \begin{inparaenum} \item lookout and HDoutliers and \item lookout and stray \end{inparaenum}  using Gmean and Fmeasure after removing the entries that have zero values for all three algorithms. Letter-value plots enhance traditional box-plots by including more detailed information making them suitable for large datasets. The  letter-value plots in Figure~\ref{fig:lvplots} are area adjusted, that is, the area of each box represents the number of points/datasets in it. The median is represented by a white line and each black box represents a fourth of the population denoted by F in the legend. The next box represents a eighth denoted by an E and each successive box represents half of the previous one. 
+
+From the graphs in Figure~\ref{fig:lvplots}  we see that the total area of the letter-value plots above zero is larger than the area below zero. This signifies that more datasets have positive Gmean and F-measure values for lookout - HDoutliers and lookout - stray performance values compared to the negative values.  This is confirmed by the results in Table~\ref{tab:dataRepository}. We see that for both Gmean and  F-measure the median, mean and the 95\% confidence interval from Student's t-tests are away from zero. In fact, the Gmean has median values  0.131 and 0.138 for lookout - HDoutliers and lookout - stray respectively. Similarly, the corresponding F-measure values are 0.071 and 0.0768. Given that both Gmean and F-measure are bounded by 1, this shows that lookout gives better performance than HDoutliers or stray. 
+
+% In fact, the medians of lookout - HDoutliers and lookout - stray performance values are  0.131 and 0.138 respectively. A Student's t-test on the differences between lookout and HDoutliers gives a mean of 0.048 with a 95\% confidence interval $(0.038, \, 0.059)$.  For differences between lookout and stray we get  a mean of 0.084 with a 95\% confidence interval $(0.074\, , 0.093)$ from the t-test. The bottom graph shows the letter-value plots of the F-measure results and again we see that the area above zero is bigger than the area below and the median, denoted by a white line is above zero. The median is 0.0405 and 0.0406 for lookout - HDoutliers and lookout - stray respectively. The Student's t-test for lookout - HDoutliers gives a mean of 0.0711 with a 95\% confidence interval of $(0.066,\,  0.076)$ and
+
+\begin{table}[!t]
+	\centering
+	\caption{Data repository results}
+	\footnotesize
+	\begin{tabular}{cccc}
+		\toprule
+	Metric & Statistic & lookout - HDoutliers & lookout - stray \\ \midrule
+		   Gmean    & Median                    & 0.1307    & 0.1384 \\
+		            & Mean                      & 0.0487    & 0.0837 \\
+		            & 95\% Confidence Interval & (0.0385, \, 0.0589) &  (0.0743, \, 0.0932) \\
+		           \midrule 
+        F-measure   & Median                   & 0.0405     & 0.0406  \\  
+                    & Mean                     & 0.0711     & 0.0768  \\     
+                    & 95\% Confidence Interval & (0.0662, \,  0.0760) &  (0.0721, \,  0.0815)\\
+		   \bottomrule
+	\end{tabular}
+	\label{tab:dataRepository}
+\end{table}
+
+% We see that the letter value plots have a larger area when Gmean and Fmeasure  are positive, compared to the negative portion. This signifies that more datasets have a positive Gmean and Fmeasure for lookout - HDoutliers and lookout - stray performance values compared to the negative values. 
 % =======================================================================
 % =======================================================================
 \section{Conclusions}\label{sec:conclusions}
+Outlier detection methods that use kernel density estimates generally employ a user defined parameter to construct the bandwidth. Selecting a bandwidth for outlier detection is different from selecting a bandwidth for general data representation, because the purpose is to make outliers have lower density estimates compared to the non-outliers. In addition, it is a challenge to select an appropriate bandwidth in high dimensions. To make outliers have lower density estimates compared to the rest, a reasonably big bandwidth needs to be chosen. We introduced an algorithm called \textit{lookout} that uses a persistent homology based approach to select the bandwidth. Lookout uses leave-one-out kernel density estimates and EVT to detect outliers. We compared the performance of lookout with HDoutliers and stray, two algorithms that use EVT to detect outliers on a large data repository and showed that lookout achieves better performance. 
+
+
+We also introduced \textit{outlier persistence}, a concept that explores the birth and death of outliers with changing bandwidth and significance values.  Outlier persistence gives a bigger picture of outliers, taking a step back from fixed parameter values. It explores the bandwidth and significance parameters and shows the outliers that persist over a range of bandwidth values and their significance levels. It is a useful measure and increases our understanding of outliers.  %It is a useful measure and can be thought of as an additional dimensionality in understanding outliers. 
+
+
+
 % =======================================================================
 % =======================================================================
 \section{Supplementary Materials}\label{sec:suppmat}
+The R package \texttt{lookout} is available at  \url{https://github.com/sevvandi/lookout}. 
+The outlier detection data repository used in Section~\ref{sec:applications} is available at \cite{datasets}. %\url{https://bridges.monash.edu/articles/dataset/Datasets_12338_zip/7705127/4}.  
+The programming scripts used in Sections~\ref{sec:simulations} and~\ref{sec:applications}  are available at \\ \url{https://github.com/sevvandi/supplementary_material/tree/master/lookout}. 
+
+\textbf{Other R packages:} We have used the R package \texttt{tdastats} \citep{tdastatsR} for all TDA and persistent homology related computations. We have used the R package \texttt{evd} \citep{evdR} to fit the Generalized Pareto Distribution. 
 % =======================================================================
 
 \bibliographystyle{agsm}   % agsm  apalike
