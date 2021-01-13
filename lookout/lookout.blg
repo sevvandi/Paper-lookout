@@ -1,0 +1,20 @@
+[0] Config.pm:311> INFO - This is Biber 2.16
+[0] Config.pm:314> INFO - Logfile is 'lookout.blg'
+[259] biber-MSWIN32:340> INFO - === 
+[370] Biber.pm:415> INFO - Reading 'lookout.bcf'
+[782] Biber.pm:952> INFO - Found 30 citekeys in bib section 0
+[845] Biber.pm:4340> INFO - Processing section 0
+[884] Biber.pm:4531> INFO - Looking for bibtex format file 'references.bib' for section 0
+[1075] bibtex.pm:1689> INFO - LaTeX decoding ...
+[1484] bibtex.pm:1494> INFO - Found BibTeX data source 'references.bib'
+[1499] Utils.pm:395> WARN - Possible typo (case mismatch) between datasource keys: 'gridExtra' and 'gridextra' in file 'references.bib'
+[1952] Utils.pm:395> WARN - legacy month field 'Feb' in entry 'datasets' is not an integer - this will probably not sort properly.
+[2053] Utils.pm:395> WARN - Range field 'pages' in entry 'evdR' is malformed, falling back to literal
+[2054] Utils.pm:395> WARN - legacy month field 'June' in entry 'evdR' is not an integer - this will probably not sort properly.
+[2233] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[2233] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[2233] Biber.pm:4168> INFO - Sorting list 'nyt/global//global/global' of type 'entry' with template 'nyt' and locale 'en-US'
+[2234] Biber.pm:4174> INFO - No sort tailoring available for locale 'en-US'
+[2317] bbl.pm:654> INFO - Writing 'lookout.bbl' with encoding 'UTF-8'
+[2348] bbl.pm:757> INFO - Output to lookout.bbl
+[2355] Biber.pm:128> INFO - WARNINGS: 4
