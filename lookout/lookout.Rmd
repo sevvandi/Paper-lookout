@@ -40,6 +40,50 @@ knitr::opts_chunk$set(echo = FALSE, cache=TRUE, messages=FALSE, warning=FALSE)
 #devtools::install_github("rstudio/rmarkdown")
 #devtools::install_github("rstudio/bookdown")
 library(ggplot2)
+library(gridExtra)
+library(HDoutliers)
+library(stray)
+library(lookout)
+library(tidyr)
+
+diff_metrics <- function(act, pred){
+  # positives to be denoted by 1 and negatives with 0
+  n <- length(act)
+  tp <- sum((act==1)&(pred==1))
+  tn <- sum((act==0)&(pred==0))
+  fp <- sum((act==0)&(pred==1))
+  fn <- sum((act==1)&(pred==0))
+  prec <- (tp+tn)/n
+
+  sn <- tp/(tp + fn)
+  sp <- tn/(tn + fp)
+
+  if((tp+fp)==0){
+    precision <- 0
+  }else{
+    precision <- tp/(tp+fp)
+  }
+
+  recall <- tp/(tp + fn)
+  if((precision==0) & (recall==0)){
+    fmeasure <- 0
+  }else{
+    fmeasure <- 2*precision*recall/(precision + recall)
+  }
+
+
+
+  gmean <- sqrt(sn*sp)
+
+  out <- data.frame(N=n, true_pos = tp, true_neg= tn, false_pos = fp, false_neg= fn, accuracy = prec, sensitivity = sn, specificity = sp, gmean=gmean, precision=precision, recall=recall, fmeasure=fmeasure)
+
+  return(out)
+}
+
+col_pal1 <- c("white", "#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
+
+col_pal2 <- col_pal1 <- c("grey", "#ffffcc", "#ffeda0", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")
+
 ```
 
 
@@ -76,14 +120,14 @@ The *Vietoris-Rips* complex and the *Cech* complex are two types of $k$-simplici
 
 \begin{figure}
     \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/simplicial_complex.png}
+    \includegraphics[scale=0.8]{../Graphics/simplicial_complex.png}
     \caption{The figure on the left shows the points $p$, $q$, $r$, $s$ and $t$ with a proximity parameter $\epsilon = 0.5$ and the resulting Rips complex consisting of the tetrahedron $pqrs$, triangles $pqr$, $qrs$, $rsp$,  $pqs$, edges $pq$, $qr$, $rs$, $sp$, $qs$, $pr$ and vertices $p$, $q$, $r$, $s$ and $t$. The figure on the right shows $8$ points and the resulting Rips complex with $\epsilon=4/3$.}
     \label{fig:tetrahedron}
 \end{figure}
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/four_plots_diff_radi.png}
+    \includegraphics[scale=0.8]{../Graphics/four_plots_diff_radi.png}
     \caption{Rips complexes resulting from different $\epsilon$ values. The figures in the top left, top right, bottom left and bottom right show the Rip complexes resulting from $\epsilon = 0.1, 0.3, 0.8$ and $1.5$ respectively}
     \label{fig:annulus}
 \end{figure}
@@ -98,9 +142,9 @@ Betti numbers denoted by $\beta_k$ give the number of $k$-dimensional holes of a
 
 \begin{figure}[!ht]
     \centering
-			\includegraphics[width=0.48\textwidth]{lookout_files/figure-html/barcode.png}
+			\includegraphics[width=0.48\textwidth]{../Graphics/barcode.png}
         \label{fig:barcodeandpersistence1}
-			\includegraphics[width=0.48\textwidth]{lookout_files/figure-html/persistence.png}
+			\includegraphics[width=0.48\textwidth]{../Graphics/persistence.png}
         \label{fig:barcodeandpersistence2}
 		
 	\caption{ The graph on the left shows the barcode of the point cloud in Figure \ref{fig:annulus} and the graph on the right shows the persistence diagram. }
@@ -246,7 +290,7 @@ To select a bandwidth for outlier detection, we use the barcode  discussed in Se
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/TDA_and_KNN.png}
+    \includegraphics[scale=0.8]{../Graphics/TDA_and_KNN.png}
     \caption{An annulus with some points in the center on the top left. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom.}
     \label{fig:TDAKNN}
 \end{figure}
@@ -266,7 +310,7 @@ Consider two points in the point cloud that are $\epsilon = 1$ distance away as 
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/circles_and_kernels.png}
+    \includegraphics[scale=0.8]{../Graphics/circles_and_kernels.png}
     \caption{The plot on the top shows two points that are  $\epsilon = 1$ distance away from each other. The plots at the bottom show a Gaussian and an Epanechnikov kernel, with bandwidth $1$ and $2$ respectively. The choice of bandwidth makes each point contribute to the other's kernel density estimate. }
     \label{fig:epsilonandkernels}
 \end{figure}
@@ -330,7 +374,7 @@ If a point is identified as an outlier by the algorithm lookout for a range of b
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/Outlier_Persistence.png}
+    \includegraphics[scale=0.8]{../Graphics/Outlier_Persistence.png}
     \caption{Outliers at the center of the annulus in the left plot showing the outlier labels 1001-1005. The outlier persistence diagram on the right with the y-axis denoting the labels. The dashed line shows the lookout bandwidth $d_*$.}
     \label{fig:outlierpersistence}
 \end{figure}
@@ -370,7 +414,7 @@ Then we can use equation \eqref{eq:strengthpersistence} to compute its strength.
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/persistence_alpha.png}
+    \includegraphics[scale=0.8]{../Graphics/persistence_alpha.png}
     \caption{Outlier persistence over different bandwidth values and their strengths. The dashed line corresponds to the lookout bandwidth $d_*$.}
     \label{fig:outlierpersistence2}
 \end{figure}
@@ -384,7 +428,7 @@ In this Section we first explore outlier persistence using simple examples. Then
 ## Outlier persistence examples \label{sec:PersistenceExamples}
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.7]{lookout_files/figure-html/Persistence_Ex1.png}
+    \includegraphics[scale=0.7]{../Graphics/Persistence_Ex1.png}
     \caption{Examples of outlier persistence and strength. The top row shows the data with the outliers identified by lookout with $\alpha = 0.1$ colored by its strength. The bottom row shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth. }
     \label{fig:persistenceExamples}
 \end{figure}
@@ -422,34 +466,322 @@ For this experiment we consider two normally distributed samples in  $\mathbb{R}
 
 The top left graph of Figure \ref{fig:ComparisonEx1} shows the first two dimensions of this experimental dataset in its last iteration and repetition with outliers identified by lookout shown in different colors. The top right graph shows the corresponding outlier persistence plot for this data with the dashed line denoting the lookout bandwidth. The graphs at the bottom show the performance of lookout, HDoutliers and stray with $\alpha = 0.05$. The mean F-measure of the 10 repetitions for each iteration is shown in the graph at the bottom left and the mean Gmean is shown at the bottom right. We see that for each iteration lookout surpasses HDoutliers and stray significantly. 
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/Comparison_Ex1.png}
-    \caption{Experiment 1 with outliers moving out from the normal distribution in $\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the corresponding outlier persistence plot. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. }
-    \label{fig:ComparisonEx1}
-\end{figure}
+<!-- \begin{figure}[!ht] -->
+<!--     \centering -->
+<!--     \includegraphics[scale=0.8]{../Graphics/Comparison_Ex1.png} -->
+<!--     \caption{Experiment 1 with outliers moving out from the normal distribution in $\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the corresponding outlier persistence plot. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. } -->
+<!--     \label{fig:ComparisonEx1} -->
+<!-- \end{figure} -->
+```{r ComparisonEx1, fig.cap="Experiment 1 with outliers moving out from the normal distribution in $R^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the corresponding outlier persistence plot. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions."}
+
+values <- rep(0, 10)
+pp <- 10
+
+hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <- stray_gmean <- stray_fmeasure <- matrix(0, nrow=pp, ncol=10)
+
+set.seed(123)
+for(kk in 1:pp){
+  x2 <- rnorm(405)
+  x3 <- rnorm(405)
+  x4 <- rnorm(405)
+  x5 <- rnorm(405)
+  x6 <- rnorm(405)
+  x1_1 <- rnorm(400)
+
+  for(i in 1:10){
+    mu2 <- 2+(i-1)*0.5
+    x1_2 <- rnorm(5, mean=mu2, sd=0.2)
+    x1 <- c(x1_1, x1_2)
+    X <- cbind(x1,x2,x3,x4,x5,x6)
+    labs <- c(rep(0,400), rep(1,5))
+
+    # STRAY
+    strayout <- stray::find_HDoutliers(X, knnsearchtype = "kd_tree", alpha=0.05)
+    straylabs <- rep(0, 405)
+    straylabs[strayout$outliers] <- 1
+    strayoutput <- diff_metrics(labs, straylabs)
+    stray_gmean[kk, i] <- strayoutput$gmean
+    stray_fmeasure[kk, i] <- strayoutput$fmeasure
+
+
+    # LOOKOUT
+    lookoutobj <- lookout(X, alpha=0.05, unitize = TRUE)
+    lookoutlabs <- rep(0, 405)
+    lookoutlabs[lookoutobj$outliers[ ,1]] <- 1
+    lookoutput <- diff_metrics(labs, lookoutlabs)
+    lookout_gmean[kk, i] <- lookoutput$gmean
+    lookout_fmeasure[kk, i] <- lookoutput$fmeasure
+
+
+    # HDOUTLIERS
+    hdoutobj <- HDoutliers(X, alpha=0.05)
+    hdoutlabs <- rep(0, dim(X)[1])
+    hdoutlabs[hdoutobj] <- 1
+    hdoutput <- diff_metrics(labs, hdoutlabs)
+    hdoutliers_gmean[kk, i] <- hdoutput$gmean
+    hdoutliers_fmeasure[kk, i] <- hdoutput$fmeasure
+
+  }
+}
+#lookoutobj$bandwidth
+
+outnew <- persisting_outliers(X)
+g2 <- autoplot(outnew) + geom_vline(xintercept = outnew$lookoutbw, linetype="dashed")
+
+
+
+lookobj <- lookout(X, alpha=0.1)
+strength <- (0.1 - lookobj$outlier_probability)/0.01
+strength[strength < 0] <- 0
+
+X2 <- cbind.data.frame(X, strength)
+g1 <- ggplot(X2, aes(x1,x2)) + geom_point(aes(color = strength)) + scale_colour_gradientn(colours=col_pal2) + theme_bw() + theme(legend.position = "none")
+
+
+
+# PLOT F-MEASURE
+str_mean <- apply(stray_fmeasure, 2, mean)
+#str_mean
+lookout_mean <-  apply(lookout_fmeasure, 2, mean)
+#lookout_mean
+hdoutliers_mean <-  apply(hdoutliers_fmeasure, 2, mean)
+#hdoutliers_mean
+
+df <- cbind.data.frame(1:10, str_mean, lookout_mean, hdoutliers_mean)
+colnames(df) <- c("Iteration", "stray", "lookout", "HDoutliers")
+dfl <- pivot_longer(df, cols=2:4)
+colnames(dfl)[2] <- "Method"
+g3 <- ggplot(dfl, aes(Iteration, value)) + geom_line(aes(color=Method), size=1) + ylab("Fmeasure") + theme_bw() + scale_x_continuous(breaks=1:10) + theme(legend.position = "none")
+
+
+# PLOT GEOMETRIC MEAN OF SENSITIVITY AND SPECIFICITY
+str_mean <- apply(stray_gmean, 2, mean)
+#str_mean
+lookout_mean <-  apply(lookout_gmean, 2, mean)
+#lookout_mean
+hdoutliers_mean <-  apply(hdoutliers_gmean, 2, mean)
+#hdoutliers_mean
+
+df <- cbind.data.frame(1:10, str_mean, lookout_mean, hdoutliers_mean)
+colnames(df) <- c("Iteration", "stray", "lookout", "HDoutliers")
+dfl <- pivot_longer(df, cols=2:4)
+colnames(dfl)[2] <- "Method"
+g4 <- ggplot(dfl, aes(Iteration, value)) + geom_line(aes(color=Method), size=1) + ylab("Gmean") + scale_x_continuous(breaks=1:10) + theme_bw()
+
+
+gridExtra::grid.arrange(
+    g1, g2, g3, g4,
+    ncol = 2, nrow = 2,
+    layout_matrix = rbind(c(1,2), c(3,4)), widths=c(1, 1.5))
+```
 
 ### Experiment 2 \label{sec:exp2}
 For this experiment we consider an annulus in $\mathbb{R}^2$ with outlying points moving into the center with each iteration.  We consider $800$ points in the annulus with $5$ outlying points. The outliers are normally distributed and have a smaller standard deviation compared to the other points. The mean of the outliers in the $i^{\text{th}}$ iteration is $\left( 5 - (i-1) /2, \, 0 \right)$, so that the outliers start at the right of the annulus with mean $(5,0)$ and move in with each iteration, ending with mean $(0,0)$.  We repeat each iteration 10 times. 
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/Comparison_Ex2.png}
-    \caption{Experiment 2 with outliers moving into the center of the annulus in $\mathbb{R}^2$. Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the corresponding outlier persistence plot. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. }
-    \label{fig:ComparisonEx2}
-\end{figure}
+<!-- \begin{figure}[!ht] -->
+<!--     \centering -->
+<!--     \includegraphics[scale=0.8]{../Graphics/Comparison_Ex2.png} -->
+<!--     \caption{Experiment 2 with outliers moving into the center of the annulus in $\mathbb{R}^2$. Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the corresponding outlier persistence plot. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. } -->
+<!--     \label{fig:ComparisonEx2} -->
+<!-- \end{figure} -->
+```{r ComparisonEx2, fig.cap="Experiment 2 with outliers moving into the center of the annulus in $R^2$. Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the corresponding outlier persistence plot. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions."}
+values <- rep(0, 10)
+pp <- 10
+
+hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <- stray_gmean <- stray_fmeasure <- matrix(0, nrow=pp, ncol=10)
+
+set.seed(1234)
+for(kk in 1:pp){
+  r1 <-runif(805)
+  r2 <-rnorm(805, mean=5)
+  theta = 2*pi*r1;
+  R1 <- 2
+  R2 <- 2
+  dist = r2+R2;
+  x =  dist * cos(theta)
+  y =  dist * sin(theta)
+
+  X <- data.frame(
+    x1 = x,
+    x2 = y
+  )
+  labs <- c(rep(0,800), rep(1,5))
+  nn <- dim(X)[1]
+
+  for(i in 1:10){
+    mu2 <-  5 - (i-1)*0.5
+    z <- cbind(rnorm(5,mu2, sd=0.1), rnorm(5,0, sd=0.1))
+
+    X[801:805, 1:2] <- z
+
+    # STRAY
+    strayout <- stray::find_HDoutliers(X, knnsearchtype = "kd_tree", alpha=0.05)
+    straylabs <- rep(0, nn)
+    straylabs[strayout$outliers] <- 1
+    strayoutput <- diff_metrics(labs, straylabs)
+    stray_gmean[kk, i] <- strayoutput$gmean
+    stray_fmeasure[kk, i] <- strayoutput$fmeasure
+
+
+    # LOOKOUT
+    lookoutobj <- lookout(X, alpha=0.05, unitize = TRUE)
+    lookoutlabs <- rep(0, nn)
+    lookoutlabs[lookoutobj$outliers[ ,1]] <- 1
+    lookoutput <- diff_metrics(labs, lookoutlabs)
+    lookout_gmean[kk, i] <- lookoutput$gmean
+    lookout_fmeasure[kk, i] <- lookoutput$fmeasure
+
+
+    # HDOUTLIERS
+    hdoutobj <- HDoutliers(X, alpha=0.05)
+    hdoutlabs <- rep(0, nn)
+    hdoutlabs[hdoutobj] <- 1
+    hdoutput <- diff_metrics(labs, hdoutlabs)
+    hdoutliers_gmean[kk, i] <- hdoutput$gmean
+    hdoutliers_fmeasure[kk, i] <- hdoutput$fmeasure
+
+  }
+}
+
+outnew <- persisting_outliers(X)
+g2 <- autoplot(outnew) + geom_vline(xintercept = outnew$lookoutbw, linetype="dashed")
+
+
+lookobj <- lookout(X, alpha=0.1)
+strength <- (0.1 - lookobj$outlier_probability)/0.01
+strength[strength < 0] <- 0
+
+X2 <- cbind.data.frame(X, strength)
+g1 <- ggplot(X2, aes(x1,x2)) + geom_point(aes(color = strength)) + scale_colour_gradientn(colours=col_pal2) + theme_bw() + theme(legend.position = "none")
+
+
+# PLOT F-MEASURE
+str_mean <- apply(stray_fmeasure, 2, mean)
+lookout_mean <-  apply(lookout_fmeasure, 2, mean)
+hdoutliers_mean <-  apply(hdoutliers_fmeasure, 2, mean)
+
+
+df <- cbind.data.frame(1:10, str_mean, lookout_mean, hdoutliers_mean)
+colnames(df) <- c("Iteration", "stray", "lookout", "HDoutliers")
+dfl <- pivot_longer(df, cols=2:4)
+colnames(dfl)[2] <- "Method"
+g3 <- ggplot(dfl, aes(Iteration, value)) + geom_line(aes(color=Method), size=1) + ylab("Fmeasure")  + scale_x_continuous(breaks=1:10) + theme_bw() + theme(legend.position = "none")
+
+
+# PLOT GEOMETRIC MEAN OF SENSITIVITY AND SPECIFICITY
+str_mean <- apply(stray_gmean, 2, mean)
+lookout_mean <-  apply(lookout_gmean, 2, mean)
+hdoutliers_mean <-  apply(hdoutliers_gmean, 2, mean)
+
+df <- cbind.data.frame(1:10, str_mean, lookout_mean, hdoutliers_mean)
+colnames(df) <- c("Iteration", "stray", "lookout", "HDoutliers")
+dfl <- pivot_longer(df, cols=2:4)
+colnames(dfl)[2] <- "Method"
+g4 <- ggplot(dfl, aes(Iteration, value)) + geom_line(aes(color=Method), size=1) + ylab("Gmean") + scale_x_continuous(breaks=1:10) + theme_bw()
+
+
+gridExtra::grid.arrange(
+  g1, g2, g3, g4,
+  ncol = 2, nrow = 2,
+  layout_matrix = rbind(c(1,2), c(3,4)), widths=c(1, 1.5))
+
+```
 
 The graph at the top left of  Figure \ref{fig:ComparisonEx2} shows the points in the final iteration and repetition. The graph on the top right shows the outlier persistence for the final iteration and repetition. The outliers are placed at indices 801 - 805 and we see that they are not identified as outliers for small bandwidth values because the outliers are clustered together. This shows the importance of bandwidth selection for outlier detection when using kernel density estimates. The bandwidth selected by lookout is shown as a dashed line.  The bottom two graphs show the mean F-measure and Gmean of the 3 algorithms for each iterations over 10 repetitions. We see that lookout identifies the outliers earlier compared stray and HDoutliers, which does not identify any outliers. 
 
 ### Experiment 3 \label{sec:exp3}
 For this experiment we consider a unit cube in $\mathbb{R}^{20}$ with 500 points. Of these points 499 are uniformly distributed in each direction and the remaining point is considered an outlier. The outlier moves towards the point $\left( 0.9, 0.9, \ldots, 0.9 \right)$ with each iteration. For the $i^{\text{th}}$ iteration the first $i$ coordinates of the outlier are each equal to $0.9$ and the remaining coordinates are uniformly distributed in $(0,1)$. The index of the outlier is 500. Each iteration is repeated 10 times with different randomizations. 
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/Comparison_Ex3.png}
-    \caption{Experiment 3 with an outlier moving to $(0.9, 0.9, \ldots)$. Graph on the top shows the outlier persistence plot for the last iteration and repetition. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. }
-    \label{fig:ComparisonEx3}
-\end{figure}
+<!-- \begin{figure}[!ht] -->
+<!--     \centering -->
+<!--     \includegraphics[scale=0.8]{../Graphics/Comparison_Ex3.png} -->
+<!--     \caption{Experiment 3 with an outlier moving to $(0.9, 0.9, \ldots)$. Graph on the top shows the outlier persistence plot for the last iteration and repetition. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. } -->
+<!--     \label{fig:ComparisonEx3} -->
+<!-- \end{figure} -->
+
+```{r ComparisonEx3, fig.cap="Experiment 3 with an outlier moving to $(0.9, 0.9, . . .)$. Graph on the top shows the outlier persistence plot for the last iteration and repetition. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions."}
+values <- rep(0, 10)
+pp <- 10
+dd <- 19
+hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <- stray_gmean <- stray_fmeasure <- matrix(0, nrow=pp, ncol=20)
+
+labs <- c(rep(0, 499), 1)
+set.seed(123)
+for(kk in 1:pp){
+  X <- runif(500)
+  for(j in 1:dd){
+    X <- cbind(X, runif(500))
+  }
+  colnames(X) <- paste("x", 1:20, sep="")
+  nn <- dim(X)[1]
+
+  for(i in 1:20){
+    X[500, 1:i] <- rep(0.9, i)
+    # STRAY
+    strayout <- stray::find_HDoutliers(X, knnsearchtype = "kd_tree", alpha=0.05)
+    straylabs <- rep(0, nn)
+    straylabs[strayout$outliers] <- 1
+    strayoutput <- diff_metrics(labs, straylabs)
+    stray_gmean[kk, i] <- strayoutput$gmean
+    stray_fmeasure[kk, i] <- strayoutput$fmeasure
+
+
+    # LOOKOUT
+    lookoutobj <- lookout(X, alpha=0.05, unitize = TRUE)
+    lookoutlabs <- rep(0, nn)
+    lookoutlabs[lookoutobj$outliers[ ,1]] <- 1
+    lookoutput <- diff_metrics(labs, lookoutlabs)
+    lookout_gmean[kk, i] <- lookoutput$gmean
+    lookout_fmeasure[kk, i] <- lookoutput$fmeasure
+
+
+    # HDOUTLIERS
+    hdoutobj <- HDoutliers(X, alpha=0.05)
+    hdoutlabs <- rep(0, nn)
+    hdoutlabs[hdoutobj] <- 1
+    hdoutput <- diff_metrics(labs, hdoutlabs)
+    hdoutliers_gmean[kk, i] <- hdoutput$gmean
+    hdoutliers_fmeasure[kk, i] <- hdoutput$fmeasure
+
+  }
+}
+
+outnew <- persisting_outliers(X)
+g2 <- autoplot(outnew) + geom_vline(xintercept = outnew$lookoutbw, linetype="dashed")
+
+lookobj <- lookout(X, alpha=0.1)
+strength <- (0.1 - lookobj$outlier_probability)/0.01
+strength[strength < 0] <- 0
+
+# PLOT F-MEASURE
+str_mean <- apply(stray_fmeasure, 2, mean)
+lookout_mean <-  apply(lookout_fmeasure, 2, mean)
+hdoutliers_mean <-  apply(hdoutliers_fmeasure, 2, mean)
+
+
+df <- cbind.data.frame(1:20, str_mean, lookout_mean, hdoutliers_mean)
+colnames(df) <- c("Iteration", "stray", "lookout", "HDoutliers")
+dfl <- pivot_longer(df, cols=2:4)
+colnames(dfl)[2] <- "Method"
+g3 <- ggplot(dfl, aes(Iteration, value)) + geom_line(aes(color=Method), size=1) + ylab("Fmeasure")  + scale_x_continuous(breaks=2*(1:10)) + theme_bw() + theme(legend.position = "none") 
+
+# PLOT GEOMETRIC MEAN OF SENSITIVITY AND SPECIFICITY
+str_mean <- apply(stray_gmean, 2, mean)
+lookout_mean <-  apply(lookout_gmean, 2, mean)
+hdoutliers_mean <-  apply(hdoutliers_gmean, 2, mean)
+
+
+df <- cbind.data.frame(1:20, str_mean, lookout_mean, hdoutliers_mean)
+colnames(df) <- c("Iteration", "stray", "lookout", "HDoutliers")
+dfl <- pivot_longer(df, cols=2:4)
+colnames(dfl)[2] <- "Method"
+g4 <- ggplot(dfl, aes(Iteration, value)) + geom_line(aes(color=Method), size=1) + ylab("Gmean") + scale_x_continuous(breaks=2*(1:10)) + theme_bw() 
+gridExtra::grid.arrange(
+  g2, g3, g4,
+  ncol = 2, nrow = 2,
+  layout_matrix = rbind(c(1,1), c(2,3)), widths=c(1, 1.5))
+
+```
 
 The top graph in Figure \ref{fig:ComparisonEx3} shows the outlier persistence for the last iteration and repetition. The dashed line shows the bandwidth chosen by lookout. The two graphs at the bottom show the comparison with HDoutliers and stray for each iteration averaged over the repetitions. We see that HDoutliers and stray do not identify the outlier for any iteration. Lookout clearly gives better performance and achieves an average Gmean of 0.999  from the $16^{\text{th}}$ iteration onward. 
 
@@ -459,7 +791,7 @@ For this Section we use the data repository used in @datasets. This repository h
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.7]{lookout_files/figure-html/lvplots.png}
+    \includegraphics[scale=0.7]{../Graphics/lvplots.png}
     \caption{Letter value plots of performance differences between 1. lookout and HDoutliers, 2. lookout and stray using Gmean and Fmeasure.}
     \label{fig:lvplots}
 \end{figure}
@@ -501,9 +833,3 @@ The outlier detection data repository used in Section \ref{sec:applications} is 
 The programming scripts used in Sections \ref{sec:simulations} and \ref{sec:applications}  are available at  \url{https://github.com/sevvandi/supplementary_material/tree/master/lookout}. 
 
 \textbf{Other R packages:} We have used the R packages \texttt{TDAstats} [@tdastatsR] and \texttt{ggtda} [@ggdta] for all TDA and persistent homology computations and related graphs. We have used the R package \texttt{evd} [@evdR] to fit the Generalized Pareto Distribution. 
-
-<!-- ```{r histogram, fig.cap="Nice histogram", message=FALSE, warning=FALSE} -->
-<!-- qplot(exp(rnorm(200))) -->
-<!-- ``` -->
-
-

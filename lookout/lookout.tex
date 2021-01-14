@@ -33,6 +33,15 @@
 \usepackage{longtable,booktabs}
 % Fix footnotes in tables (requires footnote package)
 \IfFileExists{footnote.sty}{\usepackage{footnote}\makesavenoteenv{long table}}{}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
 \IfFileExists{parskip.sty}{%
 \usepackage{parskip}
 }{% else
@@ -344,14 +353,14 @@ The \emph{Vietoris-Rips} complex and the \emph{Cech} complex are two types of \(
 
 \begin{figure}
     \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/simplicial_complex.png}
+    \includegraphics[scale=0.8]{../Graphics/simplicial_complex.png}
     \caption{The figure on the left shows the points $p$, $q$, $r$, $s$ and $t$ with a proximity parameter $\epsilon = 0.5$ and the resulting Rips complex consisting of the tetrahedron $pqrs$, triangles $pqr$, $qrs$, $rsp$,  $pqs$, edges $pq$, $qr$, $rs$, $sp$, $qs$, $pr$ and vertices $p$, $q$, $r$, $s$ and $t$. The figure on the right shows $8$ points and the resulting Rips complex with $\epsilon=4/3$.}
     \label{fig:tetrahedron}
 \end{figure}
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/four_plots_diff_radi.png}
+    \includegraphics[scale=0.8]{../Graphics/four_plots_diff_radi.png}
     \caption{Rips complexes resulting from different $\epsilon$ values. The figures in the top left, top right, bottom left and bottom right show the Rip complexes resulting from $\epsilon = 0.1, 0.3, 0.8$ and $1.5$ respectively}
     \label{fig:annulus}
 \end{figure}
@@ -367,9 +376,9 @@ Betti numbers denoted by \(\beta_k\) give the number of \(k\)-dimensional holes 
 
 \begin{figure}[!ht]
     \centering
-            \includegraphics[width=0.48\textwidth]{lookout_files/figure-html/barcode.png}
+            \includegraphics[width=0.48\textwidth]{../Graphics/barcode.png}
         \label{fig:barcodeandpersistence1}
-            \includegraphics[width=0.48\textwidth]{lookout_files/figure-html/persistence.png}
+            \includegraphics[width=0.48\textwidth]{../Graphics/persistence.png}
         \label{fig:barcodeandpersistence2}
         
     \caption{ The graph on the left shows the barcode of the point cloud in Figure \ref{fig:annulus} and the graph on the right shows the persistence diagram. }
@@ -521,7 +530,7 @@ To select a bandwidth for outlier detection, we use the barcode discussed in Sec
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/TDA_and_KNN.png}
+    \includegraphics[scale=0.8]{../Graphics/TDA_and_KNN.png}
     \caption{An annulus with some points in the center on the top left. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom.}
     \label{fig:TDAKNN}
 \end{figure}
@@ -541,7 +550,7 @@ Consider two points in the point cloud that are \(\epsilon = 1\) distance away a
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/circles_and_kernels.png}
+    \includegraphics[scale=0.8]{../Graphics/circles_and_kernels.png}
     \caption{The plot on the top shows two points that are  $\epsilon = 1$ distance away from each other. The plots at the bottom show a Gaussian and an Epanechnikov kernel, with bandwidth $1$ and $2$ respectively. The choice of bandwidth makes each point contribute to the other's kernel density estimate. }
     \label{fig:epsilonandkernels}
 \end{figure}
@@ -607,7 +616,7 @@ If a point is identified as an outlier by the algorithm lookout for a range of b
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/Outlier_Persistence.png}
+    \includegraphics[scale=0.8]{../Graphics/Outlier_Persistence.png}
     \caption{Outliers at the center of the annulus in the left plot showing the outlier labels 1001-1005. The outlier persistence diagram on the right with the y-axis denoting the labels. The dashed line shows the lookout bandwidth $d_*$.}
     \label{fig:outlierpersistence}
 \end{figure}
@@ -647,7 +656,7 @@ Then we can use equation \eqref{eq:strengthpersistence} to compute its strength.
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/persistence_alpha.png}
+    \includegraphics[scale=0.8]{../Graphics/persistence_alpha.png}
     \caption{Outlier persistence over different bandwidth values and their strengths. The dashed line corresponds to the lookout bandwidth $d_*$.}
     \label{fig:outlierpersistence2}
 \end{figure}
@@ -664,7 +673,7 @@ In this Section we first explore outlier persistence using simple examples. Then
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.7]{lookout_files/figure-html/Persistence_Ex1.png}
+    \includegraphics[scale=0.7]{../Graphics/Persistence_Ex1.png}
     \caption{Examples of outlier persistence and strength. The top row shows the data with the outliers identified by lookout with $\alpha = 0.1$ colored by its strength. The bottom row shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth. }
     \label{fig:persistenceExamples}
 \end{figure}
@@ -705,11 +714,10 @@ For this experiment we consider two normally distributed samples in \(\mathbb{R}
 
 The top left graph of Figure \ref{fig:ComparisonEx1} shows the first two dimensions of this experimental dataset in its last iteration and repetition with outliers identified by lookout shown in different colors. The top right graph shows the corresponding outlier persistence plot for this data with the dashed line denoting the lookout bandwidth. The graphs at the bottom show the performance of lookout, HDoutliers and stray with \(\alpha = 0.05\). The mean F-measure of the 10 repetitions for each iteration is shown in the graph at the bottom left and the mean Gmean is shown at the bottom right. We see that for each iteration lookout surpasses HDoutliers and stray significantly.
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/Comparison_Ex1.png}
-    \caption{Experiment 1 with outliers moving out from the normal distribution in $\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the corresponding outlier persistence plot. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. }
-    \label{fig:ComparisonEx1}
+\begin{figure}
+\centering
+\includegraphics{lookout_files/figure-latex/ComparisonEx1-1.pdf}
+\caption{\label{fig:ComparisonEx1}Experiment 1 with outliers moving out from the normal distribution in \(R^6\). Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the corresponding outlier persistence plot. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions.}
 \end{figure}
 
 \hypertarget{experiment-2}{%
@@ -717,11 +725,10 @@ The top left graph of Figure \ref{fig:ComparisonEx1} shows the first two dimensi
 
 For this experiment we consider an annulus in \(\mathbb{R}^2\) with outlying points moving into the center with each iteration. We consider \(800\) points in the annulus with \(5\) outlying points. The outliers are normally distributed and have a smaller standard deviation compared to the other points. The mean of the outliers in the \(i^{\text{th}}\) iteration is \(\left( 5 - (i-1) /2, \, 0 \right)\), so that the outliers start at the right of the annulus with mean \((5,0)\) and move in with each iteration, ending with mean \((0,0)\). We repeat each iteration 10 times.
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/Comparison_Ex2.png}
-    \caption{Experiment 2 with outliers moving into the center of the annulus in $\mathbb{R}^2$. Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the corresponding outlier persistence plot. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. }
-    \label{fig:ComparisonEx2}
+\begin{figure}
+\centering
+\includegraphics{lookout_files/figure-latex/ComparisonEx2-1.pdf}
+\caption{\label{fig:ComparisonEx2}Experiment 2 with outliers moving into the center of the annulus in \(R^2\). Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the corresponding outlier persistence plot. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions.}
 \end{figure}
 
 The graph at the top left of Figure \ref{fig:ComparisonEx2} shows the points in the final iteration and repetition. The graph on the top right shows the outlier persistence for the final iteration and repetition. The outliers are placed at indices 801 - 805 and we see that they are not identified as outliers for small bandwidth values because the outliers are clustered together. This shows the importance of bandwidth selection for outlier detection when using kernel density estimates. The bandwidth selected by lookout is shown as a dashed line. The bottom two graphs show the mean F-measure and Gmean of the 3 algorithms for each iterations over 10 repetitions. We see that lookout identifies the outliers earlier compared stray and HDoutliers, which does not identify any outliers.
@@ -731,11 +738,10 @@ The graph at the top left of Figure \ref{fig:ComparisonEx2} shows the points in 
 
 For this experiment we consider a unit cube in \(\mathbb{R}^{20}\) with 500 points. Of these points 499 are uniformly distributed in each direction and the remaining point is considered an outlier. The outlier moves towards the point \(\left( 0.9, 0.9, \ldots, 0.9 \right)\) with each iteration. For the \(i^{\text{th}}\) iteration the first \(i\) coordinates of the outlier are each equal to \(0.9\) and the remaining coordinates are uniformly distributed in \((0,1)\). The index of the outlier is 500. Each iteration is repeated 10 times with different randomizations.
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{lookout_files/figure-html/Comparison_Ex3.png}
-    \caption{Experiment 3 with an outlier moving to $(0.9, 0.9, \ldots)$. Graph on the top shows the outlier persistence plot for the last iteration and repetition. The  two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. }
-    \label{fig:ComparisonEx3}
+\begin{figure}
+\centering
+\includegraphics{lookout_files/figure-latex/ComparisonEx3-1.pdf}
+\caption{\label{fig:ComparisonEx3}Experiment 3 with an outlier moving to \((0.9, 0.9, . . .)\). Graph on the top shows the outlier persistence plot for the last iteration and repetition. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions.}
 \end{figure}
 
 The top graph in Figure \ref{fig:ComparisonEx3} shows the outlier persistence for the last iteration and repetition. The dashed line shows the bandwidth chosen by lookout. The two graphs at the bottom show the comparison with HDoutliers and stray for each iteration averaged over the repetitions. We see that HDoutliers and stray do not identify the outlier for any iteration. Lookout clearly gives better performance and achieves an average Gmean of 0.999 from the \(16^{\text{th}}\) iteration onward.
@@ -747,7 +753,7 @@ For this Section we use the data repository used in \textcite{datasets}. This re
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[scale=0.7]{lookout_files/figure-html/lvplots.png}
+    \includegraphics[scale=0.7]{../Graphics/lvplots.png}
     \caption{Letter value plots of performance differences between 1. lookout and HDoutliers, 2. lookout and stray using Gmean and Fmeasure.}
     \label{fig:lvplots}
 \end{figure}

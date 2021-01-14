@@ -1,8 +1,10 @@
 base
-methods
-datasets
-utils
-grDevices
-graphics
-stats
 ggplot2
+gridExtra
+FNN
+FactoMineR
+mclust
+HDoutliers
+stray
+lookout
+tidyr
