@@ -45,6 +45,7 @@ library(HDoutliers)
 library(stray)
 library(lookout)
 library(tidyr)
+library(lvplot)
 
 diff_metrics <- function(act, pred){
   # positives to be denoted by 1 and negatives with 0
@@ -789,12 +790,105 @@ The top graph in Figure \ref{fig:ComparisonEx3} shows the outlier persistence fo
 # Results on  a data repository \label{sec:applications}
 For this Section we use the data repository used in @datasets. This repository has more than $12000$ outlier detection datasets that were prepared from classification datasets. Dataset preparation involves downsampling the minority class in classification datasets, converting the categorical variables to  numerical and accounting for missing values, all of which is detailed in @normalizationoutliers. 
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.7]{../Graphics/lvplots.png}
-    \caption{Letter value plots of performance differences between 1. lookout and HDoutliers, 2. lookout and stray using Gmean and Fmeasure.}
-    \label{fig:lvplots}
-\end{figure}
+<!-- \begin{figure}[!ht] -->
+<!--     \centering -->
+<!--     \includegraphics[scale=0.7]{../Graphics/lvplots.png} -->
+<!--     \caption{Letter value plots of performance differences between 1. lookout and HDoutliers, 2. lookout and stray using Gmean and Fmeasure.} -->
+<!--     \label{fig:lvplots} -->
+<!-- \end{figure} -->
+
+```{r lvplots, fig.cap="Letter value plots of performance differences between 1. lookout and HDoutliers, 2. lookout and stray using Gmean and Fmeasure."}
+dat <- read.csv("data_repo_output/Collated_EX2_Take1_1_alpha_point05.csv", sep="," )
+
+# Differences - gmean
+# G-Mean
+colnums <- grep( "sensitivity" ,colnames(dat))
+dat1 <- dat[ ,c(colnums)]
+colnums <- grep( "specificity" ,colnames(dat))
+dat2 <- dat[ ,c(colnums)]
+gmean <- sqrt(dat1*dat2)
+
+
+regobj <- regexpr("_", colnames(gmean)[1:3])
+colnames(gmean) <- substring(colnames(gmean), 1, (regobj[1:3]-1) )
+
+# Remove entries which are zero for all 3 algorithms
+inds <- which(apply(gmean, 1, sum) ==0)
+gmean <- gmean[-inds, ]
+dat <- dat[-inds, ]
+
+
+gmean2 <- cbind.data.frame(dat[ ,1], (gmean[ ,1] - gmean[ ,2]), (gmean[ ,1] - gmean[ ,3]) )
+colnames(gmean2) <- c("filename", "look-hd", "look-stray")
+dfl <- pivot_longer(gmean2, cols=2:3)
+colnames(dfl)[2:3] <- c("Algorithm", "Gmean")
+
+g1 <- ggplot(dfl, aes(x=Algorithm, y=Gmean)) + lvplot::geom_lv(aes(fill = ..LV..), width.method = "area", width=0.3)+ lvplot::scale_fill_lv()  + xlab("Algorithm") + ylab("Gmean")
+
+# Read dat again
+dat <- read.csv("data_repo_output/Collated_EX2_Take1_1_alpha_point05.csv", sep="," )
+
+# Precision
+colnums <- grep( "true_pos" ,colnames(dat))
+dat1 <- dat[ ,c(colnums)]
+
+colnums <- grep( "false_pos" ,colnames(dat))
+dat2 <- dat[ ,c(colnums)]
+
+datsum <- dat1 + dat2
+precision <- matrix(0, nrow=nrow(dat1), ncol=3)
+
+for(i in 1:3){
+  precision[ ,i] <- ifelse(datsum[ ,i] ==0, 0, dat1[ ,i]/datsum[ ,i])
+}
+
+
+# Recall
+colnums <- grep( "true_pos" ,colnames(dat))
+dat1 <- dat[ ,c(colnums)]
+
+colnums <- grep( "false_neg" ,colnames(dat))
+dat2 <- dat[ ,c(colnums)]
+
+recall <- dat1/(dat1 + dat2 )
+
+
+# F-measure
+fmeasure <- function(precision, recall){
+  if((precision==0) & (recall==0)){
+    fmeas <- 0
+  }else{
+    fmeas <- 2*precision*recall/(precision + recall)
+  }
+  return(fmeas)
+}
+
+fmeas <- matrix(0, nrow=nrow(precision), ncol=3)
+for(ll in 1:3){
+  fmeas[ ,ll] <- mapply(fmeasure, precision[ ,ll], recall[ ,ll]) #
+}
+
+# Remove entries which have zeros for all 3 algorithms
+inds <- which(apply(fmeas, 1, sum) ==0)
+fmeas <- fmeas[-inds, ]
+dat <- dat[-inds, ]
+
+dd <- fmeas
+
+regobj <- regexpr("_", colnames(dd)[1:3])
+colnames(dd)[1:3] <- substring(colnames(dd)[1:3], 1, (regobj[1:3]-1) )
+dat3 <- cbind.data.frame(dat[ ,1], (dd[ ,1] - dd[ ,2]), (dd[ ,1] - dd[ ,3]))
+colnames(dat3) <- c("filename", "look-hd", "look-stray")
+
+
+dfl <- pivot_longer(dat3, cols=2:3)
+colnames(dfl)[2:3] <- c("Algorithm", "fmeas")
+
+
+g2 <- ggplot(dfl, aes(x=Algorithm, y=fmeas)) + lvplot::geom_lv(aes(fill = ..LV..), width.method = "area", width = 0.2) + lvplot::scale_fill_lv()  + xlab("Algorithm") + ylab("F measure")
+
+gridExtra::grid.arrange(g1, g2)
+```
 
 Figure \ref{fig:lvplots}  shows the letter-value plots [@lvplots]  of performance differences between 
 1. lookout and HDoutliers and 
