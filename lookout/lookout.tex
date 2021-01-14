@@ -352,17 +352,15 @@ It starts with a data cloud representing a collection of points. This set of poi
 The \emph{Vietoris-Rips} complex and the \emph{Cech} complex are two types of \(k\)-simplicial complexes. We will construct a Vietoris-Rips complex from the data cloud as it is more computationally efficient than the Cech complex \autocite{ghrist2008barcodes}. Given a set of points and a proximity parameter \(\epsilon > 0\), \(k+1\) points within a distance of \(\epsilon\) to each other form a \(k\)-simplex. For example, consider 5 points \(p\), \(q\), \(r\), \(s\) and \(t\) and suppose the distance between any two points except \(t\) is less than \(\epsilon\). Then we can construct the edges \(pq\), \(pr\), \(ps\), \(qr\), \(qs\) and \(rs\). From the edges \(pq\), \(qr\) and \(rp\) we can construct the triangle \(pqr\), from \(pq\), \(qs\) and \(sp\) the triangle \(pqs\) and so on, because the distance between any two points \(p\), \(q\), \(r\) and \(s\) is bounded by \(\epsilon\). By constructing the \(4\) triangles \(pqr\), \(qrs\), \(rsp\) and \(spq\) we can construct the tetrahedron \(pqrs\). The vertex \(t\) is not connected to this \(3\)-simplex because the distance between \(t\) and the other vertices is greater than \(\epsilon\). As such, the simplicial complex resulting from these 5 points consists of the tetrahedron \(pqrs\) and all the subset \(k\)-simplices and the vertex \(t\). Figure \ref{fig:tetrahedron} shows this simplicial complex on the left and another example on the right.
 
 \begin{figure}
-    \centering
-    \includegraphics[scale=0.8]{../Graphics/simplicial_complex.png}
-    \caption{The figure on the left shows the points $p$, $q$, $r$, $s$ and $t$ with a proximity parameter $\epsilon = 0.5$ and the resulting Rips complex consisting of the tetrahedron $pqrs$, triangles $pqr$, $qrs$, $rsp$,  $pqs$, edges $pq$, $qr$, $rs$, $sp$, $qs$, $pr$ and vertices $p$, $q$, $r$, $s$ and $t$. The figure on the right shows $8$ points and the resulting Rips complex with $\epsilon=4/3$.}
-    \label{fig:tetrahedron}
+\centering
+\includegraphics{lookout_files/figure-latex/tetrahedron-1.pdf}
+\caption{\label{fig:tetrahedron}The figure on the left shows the points \(p\), \(q\), \(r\), \(s\) and \(t\) with a proximity parameter \(0.5\) and the resulting Rips complex consisting of the tetrahedron \(pqrs\), triangles \(pqr\), \(qrs\), \(rsp\), \(pqs\), edges \(pq\), \(qr\), \(rs\), \(sp\), \(qs\), \(pr\) and vertices \(p\), \(q\), \(r\), \(s\) and \(t\). The figure on the right shows \(8\) points and the resulting Rips complex with a proximity parameter \(4/3\).}
 \end{figure}
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{../Graphics/four_plots_diff_radi.png}
-    \caption{Rips complexes resulting from different $\epsilon$ values. The figures in the top left, top right, bottom left and bottom right show the Rip complexes resulting from $\epsilon = 0.1, 0.3, 0.8$ and $1.5$ respectively}
-    \label{fig:annulus}
+\begin{figure}
+\centering
+\includegraphics{lookout_files/figure-latex/annulus-1.pdf}
+\caption{\label{fig:annulus}Rips complexes resulting from different proximity values. The figures in the top left, top right, bottom left and bottom right show the Rip complexes resulting from proximity parameters 0.1, 0.3, 0.8 and 1.5 respectively}
 \end{figure}
 
 \hypertarget{persistent-homology}{%
@@ -374,15 +372,10 @@ Figure \ref{fig:barcodeandpersistence} shows the barcode and the persistence dia
 
 Betti numbers denoted by \(\beta_k\) give the number of \(k\)-dimensional holes of a simplicial complex. The number of connected components is given by \(\beta_0\) and the number of one-dimensional holes is given by \(\beta_1\). The number of two-dimensional holes, which are trapped volumes or voids is given by \(\beta_2\). The Betti numbers can also be computed from the barcode by drawing a vertical line at the desired diameter and counting the points of intersection for each dimension. For example, in Figure \ref{fig:barcodeandpersistence} the Betti numbers corresponding to the simplicial complex at diameter \(0.5\) are \(\beta_0 = 1\) and \(\beta_1 = 0\).
 
-\begin{figure}[!ht]
-    \centering
-            \includegraphics[width=0.48\textwidth]{../Graphics/barcode.png}
-        \label{fig:barcodeandpersistence1}
-            \includegraphics[width=0.48\textwidth]{../Graphics/persistence.png}
-        \label{fig:barcodeandpersistence2}
-        
-    \caption{ The graph on the left shows the barcode of the point cloud in Figure \ref{fig:annulus} and the graph on the right shows the persistence diagram. }
-  \label{fig:barcodeandpersistence} 
+\begin{figure}
+\centering
+\includegraphics{lookout_files/figure-latex/barcodeandpersistence-1.pdf}
+\caption{\label{fig:barcodeandpersistence}The graph on the left shows the barcode of the point cloud in Figure ef\{fig:annulus\} and the graph on the right shows the persistence diagram.}
 \end{figure}
 
 \hypertarget{extreme-value-theory}{%
@@ -433,7 +426,8 @@ The GEV distributions are used to study extremes using the block maxima method. 
 
 This problem is remedied by regarding the observations that exceed a high threshold as extremes. This approach is known as the Peaks Over Threshold (POT) approach and uses the Generalized Pareto Distribution (GPD).
 
-\subsubsection{The Generalized Pareto Distribution and the POT approach} \label{sec:potapproach}
+\hypertarget{the-generalized-pareto-distribution-and-the-pot-approach}{%
+\subsubsection{\texorpdfstring{The Generalized Pareto Distribution and the POT approach \label{sec:potapproach}}{The Generalized Pareto Distribution and the POT approach }}\label{the-generalized-pareto-distribution-and-the-pot-approach}}
 
 As previously, consider \(n\) independent and identically distributed random variables \(X_1, \, \ldots, \, X_n\) with a distribution function \(F\). For a high threshold value \(u\), if all \(X_i > u\) are regarded as extremes, we can write the conditional probability of extreme events as
 \begin{equation}\label{eq:POT1}
@@ -528,11 +522,10 @@ The main challenge in using kernel density estimates for outlier detection is se
 
 To select a bandwidth for outlier detection, we use the barcode discussed in Section \ref{subsec:persistenthomology}. First we construct the barcode of the data cloud for dimension zero using the Vietoris-Rips diameter. From the barcode we obtain the sequence of death diameters for the connected components, i.e.~the sequence of diameters at which connected components merge into one another and disappear. By construction this is an increasing sequence as seen in Figure \ref{fig:barcodeandpersistence}. Let us denote this sequence by \(\{d_i\}_{i = 1}^N\), that is we consider the barcode to have \(N\) horizontal line segments for dimension \(0\). To understand this sequence better we consider an example and compare \(\{d_i\}_{i = 1}^N\) with \(k\) nearest neighbor distances for different \(k\). Figure \ref{fig:TDAKNN} shows an annulus with some points in the center, its barcode, and the violin plot of different distances. The set \(\{d_i\}_{i = 1}^N\) is denoted as TDA in Figure \ref{fig:TDAKNN} with KNN distances for \(k \in \{1, 5, 10\}\) denoted by NN\_1, NN\_5 and NN\_10 respectively. We see that the TDA Rips diameters have a non-zero intersection with KNN distances for each \(k\). That is, we can think of the TDA distances as a subset of the union of different KNN distances. Consequently, we can use TDA distances without having to select the parameter \(k\) for KNN distances.
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{../Graphics/TDA_and_KNN.png}
-    \caption{An annulus with some points in the center on the top left. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom.}
-    \label{fig:TDAKNN}
+\begin{figure}
+\centering
+\includegraphics{lookout_files/figure-latex/TDAKNN-1.pdf}
+\caption{\label{fig:TDAKNN}An annulus with some points in the center on the top left. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom.}
 \end{figure}
 
 The plot on the bottom right in Figure \ref{fig:TDAKNN} shows an enlarged version of the top part of the barcode, which contains the largest Rips diameters. A vertical dashed line is drawn at diameter 0.436, the second largest Rips diameter. As the diameter increases from 0.436 till 1.017, which is the maximum diameter, the number of connected components stay the same. For this point cloud, \((0.436, 1.017)\) is the largest diameter range for which the number of components stay the same. As such, it signifies a global structural property of the point cloud. We want to take this structure into account when selecting the bandwidth. Therefore, we choose a diameter that gives rise to persisting features, which in our case are connected components. We consider the Rips diameter intervals \((d_i, d_{i+1})\) for all \(i\), and find the largest interval by computing successive differences
@@ -548,11 +541,10 @@ as our chosen Rips diameter. We use this diameter \(d_*\) to compute the bandwid
 
 Consider two points in the point cloud that are \(\epsilon = 1\) distance away as shown in Figure \ref{fig:epsilonandkernels}. Suppose we want these two points to contribute to each others kernel density estimates. This is illustrated in the bottom row of Figure \ref{fig:epsilonandkernels}. This can be achieved by using a range of bandwidth values. Let us consider a 1-dimensional dataset. For an Epanechnikov kernel, any bandwidth \(h>\epsilon\) would suffice. But, a larger bandwidth will make the contribution of the neighboring point higher than a smaller bandwidth. For a Gaussian kernel, there is no such restriction as any \(h\) would include the other point. However, a small \(h < < \epsilon\) would make the contribution of the other point quite small. As such, we choose \(h=\epsilon\) for a Gaussian kernel where \(\epsilon\) denotes a particular choice of the Rips diameter. For the Epanechnikov kernel, we choose \(h = \sqrt{5} \epsilon\), so that it matches the variance of the Gaussian kernel.
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{../Graphics/circles_and_kernels.png}
-    \caption{The plot on the top shows two points that are  $\epsilon = 1$ distance away from each other. The plots at the bottom show a Gaussian and an Epanechnikov kernel, with bandwidth $1$ and $2$ respectively. The choice of bandwidth makes each point contribute to the other's kernel density estimate. }
-    \label{fig:epsilonandkernels}
+\begin{figure}
+\centering
+\includegraphics{lookout_files/figure-latex/epsilonandkernels-1.pdf}
+\caption{\label{fig:epsilonandkernels}The plot on the top shows two points that are distance \(1\) away from each other. The plots at the bottom show a Gaussian and an Epanechnikov kernel, with bandwidth \(1\) and \(2\) respectively. The choice of bandwidth makes each point contribute to the other's kernel density estimate.}
 \end{figure}
 
 For higher dimensions, we use a bandwidth matrix of the form \(\bm{H} = h\bm{I}\), and assign
@@ -614,11 +606,10 @@ Lookout identifies outliers by selecting an appropriate bandwidth using TDA. If 
 
 If a point is identified as an outlier by the algorithm lookout for a range of bandwidth values, then it increases the validity of that point as an outlier. Consider an annulus with some points in the middle as shown in the left plot of Figure \ref{fig:outlierpersistence}. The plot on the right, which is similar to a barcode, shows the outliers identified by lookout for different bandwidth values. Each horizontal line segment shows the range of Rips diameter values that has identified each point as an outlier. With some abuse of notation, we label the \(x\) axis ``bandwidth'', even though it actually represents the Rips diameter \(d_* = h^{p/2}\), where the bandwidth matrix \(\bm{H} = h\bm{I}\). This is motivated from equation \eqref{eq:kde11}, as we only consider points \(\bm{x}_i\) within a distance \(d_*\) of every point \(\bm{x}\) when computing kernel density estimates using the Epanechnikov kernel. In this plot, the y-axis corresponds to the point index. We call this plot \emph{the outlier persistence diagram} signifying the link to topological data analysis.
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{../Graphics/Outlier_Persistence.png}
-    \caption{Outliers at the center of the annulus in the left plot showing the outlier labels 1001-1005. The outlier persistence diagram on the right with the y-axis denoting the labels. The dashed line shows the lookout bandwidth $d_*$.}
-    \label{fig:outlierpersistence}
+\begin{figure}
+\centering
+\includegraphics{lookout_files/figure-latex/outlierpersistence-1.pdf}
+\caption{\label{fig:outlierpersistence}Outliers at the center of the annulus in the left plot showing the outlier labels 1001-1005. The outlier persistence diagram on the right with the y-axis denoting the labels. The dashed line shows the lookout bandwidth \(d_*\).}
 \end{figure}
 
 In the example in Figure \ref{fig:outlierpersistence}, we see that the points 1001-1005 are identified as outliers in the outlier persistence diagram for a large range of bandwidth values. The Rips diameter \(d_*\) selected by lookout is shown by a vertical dashed line. Many points are identified as outliers for small bandwidth values but do not continue to be outliers for long. These outliers are born at small bandwidth values and after being an outlier for a relatively short period, die at small bandwidth values. Some points are never identified as outliers, even at small bandwidths.
@@ -654,11 +645,10 @@ We define the \emph{strength} of an outlier to be inversely proportional to its 
 Thus, if a point is identified as an outlier with a significance level \(\alpha = 0.01\), then it has strength 10, and an outlier with \(\alpha = 0.1\) has strength 1. To compute persistence over significance levels, the only modification that needs to be done to Algorithm \ref{algo:persistence} is to fix \(\alpha = 0.1\) and to record the minimum significance level if \(P\left(-\log(y_{-i})|\mu_0, \sigma_0, \xi_0 \right) < 0.1\).
 Then we can use equation \eqref{eq:strengthpersistence} to compute its strength.
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{../Graphics/persistence_alpha.png}
-    \caption{Outlier persistence over different bandwidth values and their strengths. The dashed line corresponds to the lookout bandwidth $d_*$.}
-    \label{fig:outlierpersistence2}
+\begin{figure}
+\centering
+\includegraphics{lookout_files/figure-latex/outlierpersistence2-1.pdf}
+\caption{\label{fig:outlierpersistence2}Outlier persistence over different bandwidth values and their strengths. The dashed line corresponds to the lookout bandwidth \(d_*\).}
 \end{figure}
 
 Figure \ref{fig:outlierpersistence2} shows the persistence of outliers over different bandwidth values and significance levels for the dataset in Figure \ref{fig:outlierpersistence}. We see that points 1001-1005 are identified as outliers with high strength even for large bandwidths. This gives a comprehensive representation of outliers as it encapsulates the bandwidth as well as the strength, which corresponds to significance.
@@ -671,16 +661,15 @@ In this Section we first explore outlier persistence using simple examples. Then
 \hypertarget{outlier-persistence-examples}{%
 \subsection{\texorpdfstring{Outlier persistence examples \label{sec:PersistenceExamples}}{Outlier persistence examples }}\label{outlier-persistence-examples}}
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.7]{../Graphics/Persistence_Ex1.png}
-    \caption{Examples of outlier persistence and strength. The top row shows the data with the outliers identified by lookout with $\alpha = 0.1$ colored by its strength. The bottom row shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth. }
-    \label{fig:persistenceExamples}
+\begin{figure}
+\centering
+\includegraphics{lookout_files/figure-latex/persistenceEx-1.pdf}
+\caption{\label{fig:persistenceEx}Examples of outlier persistence and strength. The top row shows the data with the outliers identified by lookout with a significance level of \(0.1\) colored by its strength. The bottom row shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth.}
 \end{figure}
 
-Figure \ref{fig:persistenceExamples} shows 5 examples in \(\mathbb{R}^2\), each showing the data, outliers identified by lookout, their strengths and the corresponding outlier persistence diagram. In each example, the outliers are placed at the end of the synthetic dataset, i.e.~their observation indices are the highest. The dashed lines in the outlier persistence diagram indicate the bandwidth chosen by lookout. The graph at (row 1, column 1) show normally distributed data with 5 outliers in the top right corner, which are identified by lookout with high strength. Upon close inspection we see another point approximately at \((4,0)\), which is slightly detached from the normal set of points, also being identified by lookout with low strength. The lookout probability of this point is \(0.078\), and as such it would only be identified as an outlier when \(\alpha > 0.78\). We have used \(\alpha = 0.1\) so that we can match the strengths of the outliers with the persistence diagram. The corresponding persistence diagram shows high strength outlier persistence for the points at the top right hand corner. Similarly, from other graphs in row 1, we see that outliers far away from high density regions are identified by lookout with high strength and points outside high density regions, but not so far away are identified with low strength. Some graphs, such as the graph in (row1, column2) is squashed horizontally making the \(x\) values more condensed than the \(y\) values. For the graph in (row 1, column 3) lookout has identified a cluster of outliers approximately at \((6,6)\) with high strength as well as individual points slightly away from high density regions with low strength. The difference in graph at (row 1, column 4) is that it has single outliers instead of clusters, which are again identified by lookout. For the last graph on row 1, lookout has identified a cluster of outliers at \((-0.6, 0.35)\) with low strength and the remaining outliers with high strength. From the persistence diagrams we see that many points are identified as outliers for low bandwidth values, but only a small number of outliers persist until the bandwidth is large. In addition, some outliers persist at low strength values. For example, the persistence diagram at (row 2, column 5) has outliers around index 500 with low strength persisting until large bandwidth values.
+Figure \ref{fig:persistenceEx} shows 5 examples in \(\mathbb{R}^2\), each showing the data, outliers identified by lookout, their strengths and the corresponding outlier persistence diagram. In each example, the outliers are placed at the end of the synthetic dataset, i.e.~their observation indices are the highest. The dashed lines in the outlier persistence diagram indicate the bandwidth chosen by lookout. The graph at (row 1, column 1) show normally distributed data with 5 outliers in the top right corner, which are identified by lookout with high strength. Upon close inspection we see another point approximately at \((4,0)\), which is slightly detached from the normal set of points, also being identified by lookout with low strength. The lookout probability of this point is \(0.078\), and as such it would only be identified as an outlier when \(\alpha > 0.78\). We have used \(\alpha = 0.1\) so that we can match the strengths of the outliers with the persistence diagram. The corresponding persistence diagram shows high strength outlier persistence for the points at the top right hand corner. Similarly, from other graphs in row 1, we see that outliers far away from high density regions are identified by lookout with high strength and points outside high density regions, but not so far away are identified with low strength. Some graphs, such as the graph in (row1, column2) is squashed horizontally making the \(x\) values more condensed than the \(y\) values. For the graph in (row 1, column 3) lookout has identified a cluster of outliers approximately at \((6,6)\) with high strength as well as individual points slightly away from high density regions with low strength. The difference in graph at (row 1, column 4) is that it has single outliers instead of clusters, which are again identified by lookout. For the last graph on row 1, lookout has identified a cluster of outliers at \((-0.6, 0.35)\) with low strength and the remaining outliers with high strength. From the persistence diagrams we see that many points are identified as outliers for low bandwidth values, but only a small number of outliers persist until the bandwidth is large. In addition, some outliers persist at low strength values. For example, the persistence diagram at (row 2, column 5) has outliers around index 500 with low strength persisting until large bandwidth values.
 
-From the examples in Figure \ref{fig:persistenceExamples} we see that lookout selects a bandwidth appropriate for outlier detection that is neither too small nor too large. In addition, lookout identifies outliers correctly. The outlier persistence diagram gives a snapshot of the outliers for varying bandwidths and significance levels increasing our understanding of the dataset and its outliers.
+From the examples in Figure \ref{fig:persistenceEx} we see that lookout selects a bandwidth appropriate for outlier detection that is neither too small nor too large. In addition, lookout identifies outliers correctly. The outlier persistence diagram gives a snapshot of the outliers for varying bandwidths and significance levels increasing our understanding of the dataset and its outliers.
 
 \hypertarget{comparison-study}{%
 \subsection{\texorpdfstring{Comparison Study \label{sec:SyntheticComparison}}{Comparison Study }}\label{comparison-study}}

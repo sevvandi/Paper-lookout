@@ -46,6 +46,10 @@ library(stray)
 library(lookout)
 library(tidyr)
 library(lvplot)
+library(ggtda)
+library(ggforce)
+library(RANN)
+library(TDAstats)
 
 diff_metrics <- function(act, pred){
   # positives to be denoted by 1 and negatives with 0
@@ -119,19 +123,141 @@ It starts with a data cloud  representing a collection of points. This set of po
 
 The *Vietoris-Rips* complex and the *Cech* complex are two types of $k$-simplicial complexes. We will construct a Vietoris-Rips complex from the data cloud as it is more computationally efficient than the Cech complex [@ghrist2008barcodes]. Given a set of points and a proximity parameter $\epsilon > 0$, $k+1$ points within a distance of $\epsilon$ to each other form a $k$-simplex.  For example, consider 5 points $p$, $q$, $r$, $s$ and $t$ and suppose the distance between any two points except $t$ is less than $\epsilon$. Then we can construct the edges $pq$, $pr$, $ps$, $qr$, $qs$ and $rs$. From the edges $pq$, $qr$ and $rp$ we can construct the triangle $pqr$, from $pq$, $qs$ and $sp$ the triangle $pqs$ and so on, because the distance between any two points $p$, $q$, $r$ and $s$ is bounded by $\epsilon$. By constructing the $4$ triangles $pqr$, $qrs$, $rsp$ and $spq$ we can construct the tetrahedron $pqrs$. The vertex $t$ is not connected to this $3$-simplex because the distance between $t$ and the other vertices is greater than $\epsilon$. As such, the simplicial complex resulting from these 5 points consists of the tetrahedron $pqrs$ and all the subset $k$-simplices and the vertex $t$. Figure \ref{fig:tetrahedron} shows this simplicial complex on the left and another example on the right. 
 
-\begin{figure}
-    \centering
-    \includegraphics[scale=0.8]{../Graphics/simplicial_complex.png}
-    \caption{The figure on the left shows the points $p$, $q$, $r$, $s$ and $t$ with a proximity parameter $\epsilon = 0.5$ and the resulting Rips complex consisting of the tetrahedron $pqrs$, triangles $pqr$, $qrs$, $rsp$,  $pqs$, edges $pq$, $qr$, $rs$, $sp$, $qs$, $pr$ and vertices $p$, $q$, $r$, $s$ and $t$. The figure on the right shows $8$ points and the resulting Rips complex with $\epsilon=4/3$.}
-    \label{fig:tetrahedron}
-\end{figure}
+<!-- \begin{figure} -->
+<!--     \centering -->
+<!--     \includegraphics[scale=0.8]{../Graphics/simplicial_complex.png} -->
+<!--     \caption{The figure on the left shows the points $p$, $q$, $r$, $s$ and $t$ with a proximity parameter $\epsilon = 0.5$ and the resulting Rips complex consisting of the tetrahedron $pqrs$, triangles $pqr$, $qrs$, $rsp$,  $pqs$, edges $pq$, $qr$, $rs$, $sp$, $qs$, $pr$ and vertices $p$, $q$, $r$, $s$ and $t$. The figure on the right shows $8$ points and the resulting Rips complex with $\epsilon=4/3$.} -->
+<!--     \label{fig:tetrahedron} -->
+<!-- \end{figure} -->
+```{r tetrahedron, fig.height=3, fig.cap="The figure on the left shows the points $p$, $q$, $r$, $s$ and $t$ with a proximity parameter $0.5$ and the resulting Rips complex consisting of the tetrahedron $pqrs$, triangles $pqr$, $qrs$, $rsp$,  $pqs$, edges $pq$, $qr$, $rs$, $sp$, $qs$, $pr$ and vertices $p$, $q$, $r$, $s$ and $t$. The figure on the right shows $8$ points and the resulting Rips complex with a proximity parameter $4/3$."}
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{../Graphics/four_plots_diff_radi.png}
-    \caption{Rips complexes resulting from different $\epsilon$ values. The figures in the top left, top right, bottom left and bottom right show the Rip complexes resulting from $\epsilon = 0.1, 0.3, 0.8$ and $1.5$ respectively}
-    \label{fig:annulus}
-\end{figure}
+p <- c(0,0,0)
+q <- c(0.2, 0.2)
+r <- c(0, 0.2)
+s <- c(0.1, 0)
+t <- c(0.75, 0.75)
+d <- rbind.data.frame(p,q,r,s,t)
+rownames(d) <- c("p","q", "r", "s", "t")
+colnames(d) <-c("x", "y")
+
+# compute the persistent homology
+ph <- as.data.frame(TDAstats::calculate_homology(as.matrix(d), dim = 1))
+ph <- transform(ph, dim = as.factor(dimension))
+prox <- 0.5
+
+
+p1 <- ggplot(d, aes(x = x, y = y, label=rownames(d))) +
+  theme_bw() +
+  coord_fixed() +
+  stat_disk(radius = prox/2, fill = "aquamarine3") +
+  geom_point() + geom_text(nudge_x=0.08, nudge_y=0.08) +
+  stat_vietoris0() +
+  stat_vietoris1(diameter = prox, alpha = .25) +
+  stat_vietoris2(diameter = prox, fill = "darkgoldenrod")
+
+set.seed(1)
+x1 <- rnorm(8)
+x2 <- rnorm(8)
+X <- cbind.data.frame(x2, x1)
+
+# compute the persistent homology
+ph <- as.data.frame(TDAstats::calculate_homology(as.matrix(X), dim = 1))
+ph <- transform(ph, dim = as.factor(dimension))
+
+colnames(X) <- c("x", "y")
+
+prox <- 4/3
+p2 <- ggplot(X, aes(x = x, y = y)) +
+  theme_bw() +
+  coord_fixed() +
+  stat_disk(radius = prox/2, fill = "aquamarine3") +
+  geom_point() +
+  stat_vietoris0() +
+  stat_vietoris1(diameter = prox, alpha = .25) +
+  stat_vietoris2(diameter = prox, fill = "darkgoldenrod")
+
+
+gridExtra::grid.arrange(
+  p1, p2,
+  layout_matrix = matrix(c(1, 2), nrow = 1)
+)
+
+
+```
+
+<!-- \begin{figure}[!ht] -->
+<!--     \centering -->
+<!--     \includegraphics[scale=0.8]{../Graphics/four_plots_diff_radi.png} -->
+<!--     \caption{Rips complexes resulting from different $\epsilon$ values. The figures in the top left, top right, bottom left and bottom right show the Rip complexes resulting from $\epsilon = 0.1, 0.3, 0.8$ and $1.5$ respectively} -->
+<!--     \label{fig:annulus} -->
+<!-- \end{figure} -->
+
+```{r annulus, fig.cap="Rips complexes resulting from different proximity values. The figures in the top left, top right, bottom left and bottom right show the Rip complexes resulting from proximity parameters 0.1, 0.3, 0.8 and 1.5 respectively"}
+
+set.seed(1)
+outer_radius <- 1
+inner_radius <- 0.7
+n <- 50
+rho <- sqrt(runif(n,inner_radius^2,outer_radius^2))
+theta <- runif(n, 0, 2*pi)
+x <- rho * cos(theta)
+y <- rho * sin(theta)
+X <- cbind.data.frame(x,y)
+ph <- TDAstats::calculate_homology(as.matrix(X), dim = 1)
+ph <- as.data.frame(ph)
+
+ph <- transform(ph, dim = as.factor(dimension))
+
+colnames(X) <- c("x", "y")
+
+prox <- 0.1
+p3 <- ggplot(X, aes(x = x, y = y)) +
+  theme_bw() +
+  coord_fixed() +
+  stat_disk(radius = prox/2, fill = "aquamarine3") +
+  geom_point() +
+  stat_vietoris0() +
+  stat_vietoris1(diameter = prox, alpha = .25) +
+  stat_vietoris2(diameter = prox, fill = "darkgoldenrod")
+
+prox <- 0.3
+p4 <- ggplot(X, aes(x = x, y = y)) +
+  theme_bw() +
+  coord_fixed() +
+  stat_disk(radius = prox/2, fill = "aquamarine3") +
+  geom_point() +
+  stat_vietoris0() +
+  stat_vietoris1(diameter = prox, alpha = .25) +
+  stat_vietoris2(diameter = prox, fill = "darkgoldenrod")
+
+prox <- 0.8
+p5 <- ggplot(X, aes(x = x, y = y)) +
+  theme_bw() +
+  coord_fixed() +
+  stat_disk(radius = prox/2, fill = "aquamarine3") +
+  geom_point() +
+  stat_vietoris0() +
+  stat_vietoris1(diameter = prox, alpha = .25) +
+  stat_vietoris2(diameter = prox, fill = "darkgoldenrod")
+
+
+prox <- 1.5
+p6 <- ggplot(X, aes(x = x, y = y)) +
+  theme_bw() +
+  coord_fixed() +
+  stat_disk(radius = prox/2, fill = "aquamarine3") +
+  geom_point() +
+  stat_vietoris0() +
+  stat_vietoris1(diameter = prox, alpha = .25) +
+  stat_vietoris2(diameter = prox, fill = "darkgoldenrod")
+
+
+gridExtra::grid.arrange(
+  p3, p4, p5, p6,
+  ncol = 2, nrow = 2,
+  layout_matrix = rbind(c(1,2), c(3,4)))
+
+```
 
 ### Persistent homology \label{subsec:persistenthomology}
 Given a point cloud of data, the resulting Rips complex depends on the value of $\epsilon$. As such, the question arises which $\epsilon$ is most representative of the structure of the data cloud. Keeping the question of best $\epsilon$ aside for a moment, we turn our attention to topological features, such as connected components and holes that has been the focus of persistent homology. As we increase the proximity parameter $\epsilon$, these topological features appear and disappear.  For example in Figure \ref{fig:annulus}, we start with a large number of connected components (top-left) and as $\epsilon$ increases to $0.8$ the number of connected components merge and decrease to 1 (bottom-left). Around this $\epsilon$ value a hole appears and as $\epsilon$ increases to $1.5$, it too disappears (bottom-right). The appearances and disappearances of these topological features are referred to as births and deaths  and are illustrated using a \textit{barcode} or a \textit{persistence diagram}. 
@@ -141,16 +267,42 @@ Figure \ref{fig:barcodeandpersistence} shows the barcode and the persistence dia
 Betti numbers denoted by $\beta_k$ give the number of $k$-dimensional holes of a  simplicial complex. The number of connected components is given by $\beta_0$ and the number of one-dimensional holes is given by $\beta_1$. The number of two-dimensional holes, which are trapped volumes or voids is given by $\beta_2$. The Betti numbers can also be computed from the barcode by drawing a vertical line at the desired diameter and counting the points of intersection for each dimension. For example, in Figure \ref{fig:barcodeandpersistence} the Betti numbers corresponding to the simplicial complex at diameter $0.5$ are $\beta_0 = 1$ and $\beta_1 = 0$.  
 
 
-\begin{figure}[!ht]
-    \centering
-			\includegraphics[width=0.48\textwidth]{../Graphics/barcode.png}
-        \label{fig:barcodeandpersistence1}
-			\includegraphics[width=0.48\textwidth]{../Graphics/persistence.png}
-        \label{fig:barcodeandpersistence2}
-		
-	\caption{ The graph on the left shows the barcode of the point cloud in Figure \ref{fig:annulus} and the graph on the right shows the persistence diagram. }
-  \label{fig:barcodeandpersistence} 
-\end{figure}
+<!-- \begin{figure}[!ht] -->
+<!--     \centering -->
+<!-- 			\includegraphics[width=0.48\textwidth]{../Graphics/barcode.png} -->
+<!--         \label{fig:barcodeandpersistence1} -->
+<!-- 			\includegraphics[width=0.48\textwidth]{../Graphics/persistence.png} -->
+<!--         \label{fig:barcodeandpersistence2} -->
+
+<!-- 	\caption{ The graph on the left shows the barcode of the point cloud in Figure \ref{fig:annulus} and the graph on the right shows the persistence diagram. } -->
+<!--   \label{fig:barcodeandpersistence}  -->
+<!-- \end{figure} -->
+
+```{r barcodeandpersistence, fig.cap="The graph on the left shows the barcode of the point cloud in Figure \ref{fig:annulus} and the graph on the right shows the persistence diagram."}
+set.seed(1)
+outer_radius <- 1
+inner_radius <- 0.7
+n <- 50
+rho <- sqrt(runif(n,inner_radius^2,outer_radius^2))
+theta <- runif(n, 0, 2*pi)
+x <- rho * cos(theta)
+y <- rho * sin(theta)
+X <- cbind.data.frame(x,y)
+
+
+# compute the persistent homology
+ph1 <- TDAstats::calculate_homology(as.matrix(X), dim = 1)
+# plot topological barcode
+bcd <- plot_barcode(ph1)
+# plot persistence diagram
+pst <- plot_persist(ph1) + xlab("Birth") + ylab("Death")
+
+
+gridExtra::grid.arrange(
+  bcd, pst,
+  ncol = 2, nrow = 1)
+
+```
 
 
 ## Extreme value theory \label{subsec:evt}
@@ -200,7 +352,7 @@ This problem is remedied by regarding the observations that exceed a high thresh
 
 
 
-\subsubsection{The Generalized Pareto Distribution and the POT approach} \label{sec:potapproach}
+### The Generalized Pareto Distribution and the POT approach \label{sec:potapproach}
 As previously, consider $n$ independent and identically distributed random variables $X_1, \, \ldots, \, X_n$ with a distribution function $F$.  For a high threshold value $u$, if all $X_i > u$ are regarded as extremes, we can write the conditional probability of extreme events as 
 \begin{equation}\label{eq:POT1}
     P\left \{X > u + y | X > u \right \} = \frac{1 - F(u+y)}{1 - F(u)}\, , \quad y >0 \, , 
@@ -289,12 +441,79 @@ The main challenge in using kernel density estimates for outlier detection is se
 
 To select a bandwidth for outlier detection, we use the barcode  discussed in Section \ref{subsec:persistenthomology}. First we construct the barcode of the data cloud for dimension zero using the Vietoris-Rips diameter. From the barcode we obtain the sequence of death diameters for the connected components, i.e. the sequence of diameters at which connected components merge into one another and disappear. By construction this is an increasing sequence as seen in Figure \ref{fig:barcodeandpersistence}. Let us denote this sequence by $\{d_i\}_{i = 1}^N$, that is we consider the barcode to have $N$ horizontal line segments for dimension $0$. To understand this sequence better we consider an example and compare $\{d_i\}_{i = 1}^N$ with $k$ nearest neighbor distances for different $k$. Figure \ref{fig:TDAKNN} shows an annulus with some points in the center, its barcode, and the violin plot of different distances. The set $\{d_i\}_{i = 1}^N$ is denoted as TDA in Figure \ref{fig:TDAKNN} with KNN distances for $k \in \{1, 5, 10\}$ denoted by NN\_1, NN\_5 and NN\_10 respectively. We see that the TDA Rips diameters have a non-zero intersection with KNN distances for each $k$. That is, we can think of the TDA distances as a subset of the union of different KNN distances. Consequently, we can use TDA distances without having to select the parameter $k$ for KNN distances.  
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{../Graphics/TDA_and_KNN.png}
-    \caption{An annulus with some points in the center on the top left. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom.}
-    \label{fig:TDAKNN}
-\end{figure}
+<!-- \begin{figure}[!ht] -->
+<!--     \centering -->
+<!--     \includegraphics[scale=0.8]{../Graphics/TDA_and_KNN.png} -->
+<!--     \caption{An annulus with some points in the center on the top left. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom.} -->
+<!--     \label{fig:TDAKNN} -->
+<!-- \end{figure} -->
+```{r TDAKNN, fig.cap="An annulus with some points in the center on the top left. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom."}
+set.seed(1)
+oo <- 10
+outer_radius <- 1
+inner_radius <- 0.7
+n <- 1000
+rho <- sqrt(abs(rnorm(n,mean=5,sd=1)))
+theta <- runif(n, 0, 2*pi)
+x <- rho * cos(theta)
+y <- rho * sin(theta)
+X <- cbind(x,y)
+opoints <- cbind(rnorm(oo, mean=0, sd=0.2), rnorm(oo, mean=0, sd=0.2))
+X <- rbind(X, opoints)
+
+X <- as.data.frame(X)
+g1 <- ggplot(X, aes(x,y)) + geom_point() + theme_bw()
+# g1
+
+phom <- calculate_homology(X, dim=0)
+g2 <- plot_barcode(phom)
+# g2
+deathtimes <- phom[ ,3]
+
+df1 <- cbind.data.frame("TDA", deathtimes)
+colnames(df1) <- c("Type", "Distance")
+
+distances <- as.matrix(dist(X))
+dist_vec <- as.vector(distances)
+df2 <- cbind.data.frame("ALL", dist_vec)
+colnames(df2) <- colnames(df1)
+df <- rbind.data.frame(df1, df2)
+
+# KNN distances
+nn_obj <- RANN::nn2(X, k=11)
+len <- dim(nn_obj$nn.dists)[1]
+for(kk in c(2, 6, 11)){
+  dist_df <- cbind.data.frame(rep(paste("NN_", (kk-1), sep=""),len) ,nn_obj$nn.dists[ ,kk])
+  colnames(dist_df) <- c("NN", "Distance")
+  if(kk==2){
+    dist_df_all <- dist_df
+  }else{
+    dist_df_all <- rbind.data.frame(dist_df_all, dist_df)
+  }
+}
+colnames(dist_df_all) <- colnames(df1)
+df <- rbind.data.frame(df1, dist_df_all)
+
+data_summary <- function(x) {
+  m <- mean(x)
+  ymin <- m-sd(x)
+  ymax <- m+sd(x)
+  return(c(y=m,ymin=ymin,ymax=ymax))
+}
+g3 <- ggplot(df, aes(x=Type, y=Distance, fill=Type)) + geom_violin(trim=FALSE) + stat_summary(fun.data=data_summary) +scale_fill_brewer(palette="Dark2")+ xlab("Distance Type") +  theme_bw()
+
+
+ll <- dim(phom)[1]
+phom2 <- phom[(ll-20):ll, ]
+g4 <- plot_barcode(phom2) + geom_vline(xintercept =0.436, lty=2)
+# g4
+
+gridExtra::grid.arrange(
+  g1, g2, g3, g4,
+  ncol = 2, nrow = 2,
+  layout_matrix = rbind(c(1,2), c(3,4)))
+
+```
 
 The plot on the bottom right in Figure \ref{fig:TDAKNN} shows an enlarged version of the top part of the barcode, which contains the largest Rips diameters. A vertical dashed line is drawn at diameter 0.436, the second largest Rips diameter. As the diameter increases from 0.436 till 1.017, which is the maximum diameter, the number of connected components stay the same. For this point cloud, $(0.436, 1.017)$ is the largest diameter range for which the number of components stay the same. As such, it signifies a global structural property of the point cloud. We want to take this structure into account when selecting the bandwidth. Therefore, we choose a diameter that gives rise to persisting features, which in our case are connected components. We consider the Rips diameter intervals $(d_i, d_{i+1})$ for all $i$, and find the largest interval by computing successive differences 
 \begin{equation}\label{eq:deathrad1}
@@ -309,13 +528,45 @@ as our chosen Rips diameter. We use this diameter $d_*$ to compute the bandwidth
 
 Consider two points in the point cloud that are $\epsilon = 1$ distance away as shown in Figure \ref{fig:epsilonandkernels}. Suppose we want these two points to contribute to each others kernel density estimates. This is illustrated in the bottom row of Figure \ref{fig:epsilonandkernels}. This can be achieved by using a range of bandwidth values. Let us consider a 1-dimensional dataset. For an Epanechnikov kernel, any bandwidth $h>\epsilon$ would suffice. But, a larger bandwidth will make the contribution of the neighboring point higher than a smaller bandwidth. For a Gaussian kernel, there is no such restriction as any $h$ would include the other point. However, a small $h < < \epsilon$ would make the contribution of the other point quite small. As such, we choose $h=\epsilon$ for a Gaussian kernel where $\epsilon$ denotes a particular choice of the Rips diameter. For the Epanechnikov kernel, we choose $h = \sqrt{5} \epsilon$, so that it matches the variance of the Gaussian kernel.
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{../Graphics/circles_and_kernels.png}
-    \caption{The plot on the top shows two points that are  $\epsilon = 1$ distance away from each other. The plots at the bottom show a Gaussian and an Epanechnikov kernel, with bandwidth $1$ and $2$ respectively. The choice of bandwidth makes each point contribute to the other's kernel density estimate. }
-    \label{fig:epsilonandkernels}
-\end{figure}
+<!-- \begin{figure}[!ht] -->
+<!--     \centering -->
+<!--     \includegraphics[scale=0.8]{../Graphics/circles_and_kernels.pdf} -->
+<!--     \caption{The plot on the top shows two points that are  $\epsilon = 1$ distance away from each other. The plots at the bottom show a Gaussian and an Epanechnikov kernel, with bandwidth $1$ and $2$ respectively. The choice of bandwidth makes each point contribute to the other's kernel density estimate. } -->
+<!--     \label{fig:epsilonandkernels} -->
+<!-- \end{figure} -->
 
+```{r epsilonandkernels, fig.height=3, fig.cap="The plot on the top shows two points that are distance $1$ away from each other. The plots at the bottom show a Gaussian and an Epanechnikov kernel, with bandwidth $1$ and $2$ respectively. The choice of bandwidth makes each point contribute to the other's kernel density estimate."}
+
+X <- matrix(c(0, 0, 1, 0), ncol=2, byrow = TRUE)
+colnames(X) <- c("x", "y")
+X <- as.data.frame(X)
+prox <- 1
+g5 <- ggplot(X, aes(x = x, y = y)) +
+  theme_bw() +
+  coord_fixed() +
+  stat_disk(radius = prox/2, fill = "aquamarine3") +
+  geom_point() + geom_segment(x=0, y=0, xend=1, yend=0, arrow= arrow(length = unit(0.03, "npc"))) + geom_text(x=0.5, y=0.05, label="1")
+# g5
+
+x <- seq(-2, 2, length=1000)
+y <- dnorm(x, mean=0, sd=1)
+Y <- cbind.data.frame(x,y)
+colnames(X) <- c("x0", "y0")
+g6 <- ggplot(Y, aes(x,y))+ geom_line() + geom_point(x=0, y=0) + geom_point(x=1, y=0) + geom_segment(x=0, y=0, xend=1, yend=0) + coord_fixed(ratio=4) + geom_vline(xintercept = 0, lty=2) +  geom_segment(x=1, y=-0.15, xend=1, yend=0.23, lty=2) + geom_ellipse(aes(x0=0,y0=0,a=0.5, b=0.125, angle=0), inherit.aes = FALSE)+  geom_ellipse(aes(x0=1,y0=0,a=0.5, b=0.125, angle=0), inherit.aes = FALSE) +theme_bw()
+# g6
+
+
+x <- seq(-2, 2, length=1000)
+y <- sqrt(4-x^2)
+Y <- cbind.data.frame(x,y)
+g7 <- ggplot(Y, aes(x,y))+ geom_line() + geom_point(x=0, y=0) + geom_point(x=1, y=0) + geom_segment(x=0, y=0, xend=1, yend=0) + coord_fixed(ratio=1) + geom_vline(xintercept = 0, lty=2) +  geom_segment(x=1, y=-0.5, xend=1, yend=1.7, lty=2) + geom_circle(aes(x0 = 0, y0 = 0, r = 0.5), inherit.aes = FALSE) + geom_circle(aes(x0 = 1, y0 = 0, r = 0.5), inherit.aes = FALSE) + theme_bw()
+
+
+gridExtra::grid.arrange(
+  g5, g6, g7,
+  ncol = 2, nrow = 2,
+  layout_matrix = rbind(c(1,1), c(2,3)))
+```
 
 For higher dimensions, we use a bandwidth matrix of the form $\bm{H} = h\bm{I}$, and assign
 \begin{equation}\label{eq:bandwidth}
@@ -373,12 +624,50 @@ Lookout identifies outliers by selecting an appropriate bandwidth using TDA. If 
 
 If a point is identified as an outlier by the algorithm lookout for a range of bandwidth values, then it increases the validity of that point as an outlier. Consider an annulus with some points in the middle as shown in the left plot of Figure \ref{fig:outlierpersistence}. The plot on the right, which is similar to a barcode,  shows the outliers identified by lookout for different bandwidth values. Each horizontal line segment shows the range of Rips diameter values that has identified each point as an outlier. With some abuse of notation, we label the $x$ axis "bandwidth", even though  it actually represents the Rips diameter $d_* = h^{p/2}$, where the bandwidth matrix $\bm{H} = h\bm{I}$. This is motivated from equation \eqref{eq:kde11}, as we only consider points $\bm{x}_i$ within a distance $d_*$ of every point $\bm{x}$  when computing kernel density estimates using the Epanechnikov kernel. In this plot, the y-axis corresponds to the point index. We call this plot *the outlier persistence diagram* signifying the link to topological data analysis. 
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{../Graphics/Outlier_Persistence.png}
-    \caption{Outliers at the center of the annulus in the left plot showing the outlier labels 1001-1005. The outlier persistence diagram on the right with the y-axis denoting the labels. The dashed line shows the lookout bandwidth $d_*$.}
-    \label{fig:outlierpersistence}
-\end{figure}
+<!-- \begin{figure}[!ht] -->
+<!--     \centering -->
+<!--     \includegraphics[scale=0.8]{../Graphics/Outlier_Persistence.png} -->
+<!--     \caption{Outliers at the center of the annulus in the left plot showing the outlier labels 1001-1005. The outlier persistence diagram on the right with the y-axis denoting the labels. The dashed line shows the lookout bandwidth $d_*$.} -->
+<!--     \label{fig:outlierpersistence} -->
+<!-- \end{figure} -->
+
+```{r outlierpersistence, fig.height=3, fig.cap="Outliers at the center of the annulus in the left plot showing the outlier labels 1001-1005. The outlier persistence diagram on the right with the y-axis denoting the labels. The dashed line shows the lookout bandwidth $d_*$."}
+set.seed(1)
+oo <- 5
+outer_radius <- 1
+inner_radius <- 0.7
+n <- 1000
+rho <- sqrt(abs(rnorm(n,mean=5,sd=1)))
+theta <- runif(n, 0, 2*pi)
+x <- rho * cos(theta)
+y <- rho * sin(theta)
+X <- cbind(x,y)
+opoints <- cbind(rnorm(oo, mean=0, sd=0.2), rnorm(oo, mean=0, sd=0.2))
+X <- rbind(X, opoints)
+
+inds <- c(1001,1002,1003,1004,1005) 
+oplabs <- cbind.data.frame(X[inds, ], inds)
+colnames(oplabs) <- c("x", "y", "lab")
+rightones <- c(1,3,5)
+leftones <- c(2,4)
+oplabs[rightones, 1] <- oplabs[rightones, 1] + 0.5
+oplabs[leftones, 1] <- oplabs[leftones, 1] - 0.5
+
+upones <- c(2,3, 6,7,8)
+downones <- c(1,4)
+oplabs[upones, 2] <- oplabs[upones, 2] + 0.2
+oplabs[downones, 2] <- oplabs[downones, 2] - 0.2
+
+X <- as.data.frame(X)
+g1 <- ggplot(X, aes(x,y)) + geom_point() + geom_text(data=oplabs, aes(x, y, label=lab))  + theme_bw()
+
+lookobj <- lookout(X)
+outnew <- persisting_outliers(X, num_steps = 20)
+g2 <- autoplot(outnew, alpha=0.05) + geom_vline(xintercept = lookobj$bandwidth, linetype="dashed")
+
+gridExtra::grid.arrange(g1, g2,
+  ncol = 2, nrow = 1)
+```
 
 In the example in Figure \ref{fig:outlierpersistence}, we see that the points  1001-1005  are identified as outliers in the outlier persistence diagram for a large range of bandwidth values. The Rips diameter $d_*$ selected by lookout  is shown by a vertical dashed line. Many points are identified as outliers for small bandwidth values but do not continue to be outliers for long. These outliers are born at small bandwidth values and after being an outlier for a relatively short period, die at small bandwidth values. Some points are never identified as outliers, even at small bandwidths.
 
@@ -413,12 +702,17 @@ We define the *strength* of an outlier to be inversely proportional to its signi
 Thus, if a point is identified as an outlier with a significance level  $\alpha = 0.01$, then it has  strength  10, and  an outlier with $\alpha = 0.1$ has strength 1. To compute persistence over significance levels, the only modification that needs to be done to Algorithm \ref{algo:persistence} is to fix $\alpha = 0.1$ and to record the minimum significance level if $P\left(-\log(y_{-i})|\mu_0, \sigma_0, \xi_0 \right) < 0.1$. 
 Then we can use equation \eqref{eq:strengthpersistence} to compute its strength. 
 
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.8]{../Graphics/persistence_alpha.png}
-    \caption{Outlier persistence over different bandwidth values and their strengths. The dashed line corresponds to the lookout bandwidth $d_*$.}
-    \label{fig:outlierpersistence2}
-\end{figure}
+<!-- \begin{figure}[!ht] -->
+<!--     \centering -->
+<!--     \includegraphics[scale=0.8]{../Graphics/persistence_alpha.png} -->
+<!--     \caption{Outlier persistence over different bandwidth values and their strengths. The dashed line corresponds to the lookout bandwidth $d_*$.} -->
+<!--     \label{fig:outlierpersistence2} -->
+<!-- \end{figure} -->
+```{r outlierpersistence2, fig.width=6, fig.height=3, dependson="outlierpersistence", fig.cap="Outlier persistence over different bandwidth values and their strengths. The dashed line corresponds to the lookout bandwidth $d_*$."}
+
+autoplot(outnew) + geom_vline(xintercept = lookobj$bandwidth, linetype="dashed")
+
+```
 
 Figure \ref{fig:outlierpersistence2} shows the persistence of outliers  over different bandwidth values and significance levels for the dataset in Figure \ref{fig:outlierpersistence}. We see that points 1001-1005 are identified as outliers with high strength even for large bandwidths. This gives a comprehensive representation of outliers as it encapsulates the bandwidth as well as the strength, which corresponds to significance.
 
@@ -427,16 +721,136 @@ Figure \ref{fig:outlierpersistence2} shows the persistence of outliers  over dif
 In this Section we first explore outlier persistence using simple examples. Then we conduct experiments using synthetic data comparing lookout to HDoutliers [@wilkinson2017visualizing] and stray [@pridiltal], both of which use extreme value theory to detect outliers. 
 
 ## Outlier persistence examples \label{sec:PersistenceExamples}
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[scale=0.7]{../Graphics/Persistence_Ex1.png}
-    \caption{Examples of outlier persistence and strength. The top row shows the data with the outliers identified by lookout with $\alpha = 0.1$ colored by its strength. The bottom row shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth. }
-    \label{fig:persistenceExamples}
-\end{figure}
+<!-- \begin{figure}[!ht] -->
+<!--     \centering -->
+<!--     \includegraphics[scale=0.7]{../Graphics/Persistence_Ex1.png} -->
+<!--     \caption{Examples of outlier persistence and strength. The top row shows the data with the outliers identified by lookout with $\alpha = 0.1$ colored by its strength. The bottom row shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth. } -->
+<!--     \label{fig:persistenceExamples} -->
+<!-- \end{figure} -->
 
-Figure \ref{fig:persistenceExamples} shows 5 examples in $\mathbb{R}^2$, each showing the data, outliers identified by lookout, their strengths and the corresponding outlier persistence diagram. In each example, the outliers are placed at the end of the synthetic dataset, i.e. their observation indices are the highest. The dashed lines in the outlier persistence diagram indicate the bandwidth chosen by lookout. The graph at (row 1, column 1) show normally distributed data with 5 outliers in the top right corner, which are identified by lookout with high strength. Upon close inspection we see another point approximately at $(4,0)$, which is slightly detached from the normal set of points, also being identified by  lookout with low strength. The lookout probability of this point is $0.078$, and as such it would only be identified as an outlier when $\alpha > 0.78$.  We have used $\alpha = 0.1$ so that we can match the strengths of the outliers with the persistence diagram. The corresponding persistence diagram shows high strength outlier persistence for the points at the top right hand corner. Similarly, from other graphs in row 1, we see that outliers far away from high density regions are identified by lookout with high strength and points outside high density regions, but not so far away are identified with low strength. Some graphs, such as the graph in (row1, column2) is squashed horizontally making the $x$ values more condensed than the $y$ values. For the graph in (row 1, column 3) lookout has identified a cluster of outliers approximately at $(6,6)$ with high strength as well as individual points slightly away from high density regions with low strength. The difference in graph at (row 1, column 4) is that it has single outliers instead of clusters, which are again identified by lookout. For the last graph on row 1, lookout has identified a cluster of outliers at $(-0.6, 0.35)$ with low strength and the remaining outliers with high strength. From the persistence diagrams we see that many points are identified as outliers for low bandwidth values, but only a small number of outliers persist until the bandwidth is large. In addition, some outliers persist at low strength values. For example, the persistence diagram at (row 2, column 5) has outliers around index 500 with low strength persisting until large bandwidth values.
 
-From the examples in Figure \ref{fig:persistenceExamples} we see that lookout selects a bandwidth appropriate for outlier detection that is neither too small nor too large. In addition, lookout identifies outliers correctly. The outlier persistence diagram  gives a snapshot of the outliers for varying bandwidths and significance levels increasing our understanding of the dataset and its outliers.  
+```{r persistenceEx, fig.cap="Examples of outlier persistence and strength. The top row shows the data with the outliers identified by lookout with a significance level of $0.1$ colored by its strength. The bottom row shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth."}
+
+# ---------------------------------------------------------------------
+# TASK 1 - EXAMPLE 1
+# ---------------------------------------------------------------------
+set.seed(1)
+x1 <- cbind.data.frame(rnorm(500), rnorm(500))
+x2 <- cbind.data.frame(rnorm(5, mean=10, sd=0.2), rnorm(5, mean=10, sd=0.2))
+colnames(x1) <- colnames(x2) <- c("x", "y")
+X <- rbind.data.frame(x1, x2)
+
+outnew <- persisting_outliers(X, unitize=FALSE)
+g2 <- autoplot(outnew)  + geom_vline(xintercept = outnew$lookoutbw, linetype="dashed") + theme(legend.position = "none")
+# g2
+
+lookobj <- lookout(X, unitize=FALSE, alpha=0.1)
+strength <- (0.1 - lookobj$outlier_probability)/0.01
+strength[strength < 0] <- 0
+X2 <- cbind.data.frame(X, strength)
+g1 <- ggplot(X2, aes(x,y)) + geom_point(aes(color = strength)) + scale_colour_gradientn(colours=col_pal2) + theme_bw() + theme(legend.position = "none")
+# g1
+
+
+# ---------------------------------------------------------------------
+# TASK 2 - EXAMPLE 2
+# ---------------------------------------------------------------------
+set.seed(1)
+x1 <- cbind.data.frame(rnorm(500, mean=-10), rnorm(500))
+x2 <- cbind.data.frame(rnorm(500, mean= 10), rnorm(500))
+x3 <- cbind.data.frame(rnorm(5, sd=0.2), rnorm(5, sd=0.2))
+colnames(x1) <- colnames(x2) <- colnames(x3) <- c("x", "y")
+X <- rbind.data.frame(x1, x2, x3)
+
+outnew <- persisting_outliers(X, unitize=FALSE)
+g4 <- autoplot(outnew) + geom_vline(xintercept = outnew$lookoutbw, linetype="dashed") + ylab("")  + theme(legend.position = "none")
+# g4
+
+lookobj <- lookout(X, unitize=FALSE, alpha=0.1)
+strength <- (0.1 - lookobj$outlier_probability)/0.01
+strength[strength < 0] <- 0
+X2 <- cbind.data.frame(X, strength)
+g3 <- ggplot(X2, aes(x,y)) + geom_point(aes(color = strength)) + scale_colour_gradientn(colours=col_pal2)  + theme_bw() + ylab("")  + theme(legend.position = "none")
+# g3
+
+
+# ---------------------------------------------------------------------
+# TASK 3 - EXAMPLE 3
+# ---------------------------------------------------------------------
+set.seed(1)
+x1 <- cbind.data.frame(rnorm(500), rnorm(500))
+x2 <- cbind.data.frame(rnorm(100, sd=0.7), rnorm(100, mean=8, sd=0.7))
+x3 <- cbind.data.frame(rnorm(100, mean=8 , sd=0.7), rnorm(100, sd=0.7))
+x4 <- cbind.data.frame(rnorm(3, mean=6, sd=0.2), rnorm(3, mean=6, sd=0.2))
+colnames(x1) <- colnames(x2) <- colnames(x3) <- colnames(x4) <- c("x", "y")
+X <- rbind.data.frame(x1, x2, x3, x4)
+
+outnew <- persisting_outliers(X, unitize=FALSE)
+g6 <- autoplot(outnew) + ylab("")  + geom_vline(xintercept = outnew$lookoutbw, linetype="dashed") + theme(legend.position = "none")
+# g6
+
+lookobj <- lookout(X, unitize=FALSE, alpha=0.1)
+strength <- (0.1 - lookobj$outlier_probability)/0.01
+strength[strength < 0] <- 0
+X2 <- cbind.data.frame(X, strength)
+g5 <- ggplot(X2, aes(x,y)) + geom_point(aes(color = strength)) + ylab("")  + scale_colour_gradientn(colours=col_pal2) + theme_bw() + theme(legend.position = "none")
+# g5
+
+# ---------------------------------------------------------------------
+# TASK 4 - EXAMPLE 4
+# ---------------------------------------------------------------------
+set.seed(456)
+x1 <- cbind.data.frame(rnorm(500), rnorm(500))
+x2 <- cbind.data.frame(rnorm(100, sd=0.7), rnorm(100, mean=8, sd=0.7))
+x3 <- cbind.data.frame(rnorm(100, mean=8 , sd=0.7), rnorm(100, sd=0.7))
+x4 <- rbind.data.frame(c(5,5), c(8,7.5), c(12,4))
+colnames(x1) <- colnames(x2) <- colnames(x3) <- colnames(x4) <- c("x", "y")
+X <- rbind.data.frame(x1, x2, x3, x4)
+
+outnew <- persisting_outliers(X, unitize=FALSE)
+g8 <- autoplot(outnew) + geom_vline(xintercept = outnew$lookoutbw, linetype="dashed") + ylab("")  + theme(legend.position = "none")
+# g8
+
+lookobj <- lookout(X, unitize=FALSE, alpha=0.1)
+strength <- (0.1 - lookobj$outlier_probability)/0.01
+strength[strength < 0] <- 0
+X2 <- cbind.data.frame(X, strength)
+g7 <- ggplot(X2, aes(x,y)) + geom_point(aes(color = strength)) + ylab("")  + scale_colour_gradientn(colours=col_pal2) + theme_bw()  + theme(legend.position = "none")
+# g7
+
+
+# ---------------------------------------------------------------------
+# TASK 5 - EXAMPLE 5
+# ---------------------------------------------------------------------
+set.seed(1)
+x1 <- rnorm(1000, sd=0.2)
+x2 <- x1^2 + rnorm(1000, sd=0.01)
+x <- cbind.data.frame(x1, x2)
+x3 <- rbind.data.frame(c(0,0.3), c(-0.2, 0.4), c(0.4, 0.5) )
+colnames(x) <- colnames(x3) <- c("x", "y")
+X <- rbind.data.frame(x, x3)
+
+outnew <- persisting_outliers(X, unitize=FALSE)
+g10 <- autoplot(outnew) + geom_vline(xintercept = outnew$lookoutbw, linetype="dashed") + ylab("")
+# g10
+
+lookobj <- lookout(X, unitize=FALSE, alpha=0.1)
+strength <- (0.1 - lookobj$outlier_probability)/0.01
+strength[strength < 0] <- 0
+X2 <- cbind.data.frame(X, strength)
+g9 <- ggplot(X2, aes(x,y)) + geom_point(aes(color = strength)) + ylab("")  + scale_colour_gradientn(colours=col_pal2) + theme_bw()
+# g9
+
+
+gridExtra::grid.arrange(
+  g1, g3, g5, g7, g9, g2, g4, g6, g8, g10,
+  ncol = 5, nrow = 2,
+  layout_matrix = rbind(c(1,2, 3, 4, 5), c(6, 7, 8, 9, 10)), widths=c(1,1,1,1,1.8))
+```
+
+Figure \ref{fig:persistenceEx} shows 5 examples in $\mathbb{R}^2$, each showing the data, outliers identified by lookout, their strengths and the corresponding outlier persistence diagram. In each example, the outliers are placed at the end of the synthetic dataset, i.e. their observation indices are the highest. The dashed lines in the outlier persistence diagram indicate the bandwidth chosen by lookout. The graph at (row 1, column 1) show normally distributed data with 5 outliers in the top right corner, which are identified by lookout with high strength. Upon close inspection we see another point approximately at $(4,0)$, which is slightly detached from the normal set of points, also being identified by  lookout with low strength. The lookout probability of this point is $0.078$, and as such it would only be identified as an outlier when $\alpha > 0.78$.  We have used $\alpha = 0.1$ so that we can match the strengths of the outliers with the persistence diagram. The corresponding persistence diagram shows high strength outlier persistence for the points at the top right hand corner. Similarly, from other graphs in row 1, we see that outliers far away from high density regions are identified by lookout with high strength and points outside high density regions, but not so far away are identified with low strength. Some graphs, such as the graph in (row1, column2) is squashed horizontally making the $x$ values more condensed than the $y$ values. For the graph in (row 1, column 3) lookout has identified a cluster of outliers approximately at $(6,6)$ with high strength as well as individual points slightly away from high density regions with low strength. The difference in graph at (row 1, column 4) is that it has single outliers instead of clusters, which are again identified by lookout. For the last graph on row 1, lookout has identified a cluster of outliers at $(-0.6, 0.35)$ with low strength and the remaining outliers with high strength. From the persistence diagrams we see that many points are identified as outliers for low bandwidth values, but only a small number of outliers persist until the bandwidth is large. In addition, some outliers persist at low strength values. For example, the persistence diagram at (row 2, column 5) has outliers around index 500 with low strength persisting until large bandwidth values.
+
+From the examples in Figure \ref{fig:persistenceEx} we see that lookout selects a bandwidth appropriate for outlier detection that is neither too small nor too large. In addition, lookout identifies outliers correctly. The outlier persistence diagram  gives a snapshot of the outliers for varying bandwidths and significance levels increasing our understanding of the dataset and its outliers.  
 
 ## Comparison Study \label{sec:SyntheticComparison}
 In this section we conduct 3 experiments with synthetic data. Each experiment considers 2 data distributions; the main distribution and a handful of outliers, which are distributed differently. There are several iterations to each experiment. The iterations serve as a measure of the degree of outlyingness of the small sample. The outliers start off with the main distribution and slowly move out of the main distribution with each iteration. Consequently, in the initial iterations the points in the outlying distribution are not actual outliers as they are similar to the points in the main distribution, while in the later iterations they are quite different from the main distribution.  We repeat each iteration 10 times to account for the randomness of the data generation process.  
