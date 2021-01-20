@@ -22,7 +22,7 @@
 \usepackage[unicode=true]{hyperref}
 \hypersetup{
             pdftitle={Leave-one-out kernel density estimates for outlier detection},
-            pdfkeywords={outlier detection, anomaly detection, leave-one-out kernel density estimates, topological data analysis, persistent homology, extreme value theory, peak over thresholds, generalized Pareto distribution},
+            pdfkeywords={anomaly detection, topological data analysis, persistent homology, extreme value theory, peak over thresholds, generalized Pareto distribution},
             pdfborder={0 0 0},
             breaklinks=true}
 \urlstyle{same}  % don't use monospace font for urls
@@ -294,20 +294,6 @@ Monash University
 \mathtoolsset{showonlyrefs}
 \newcommand{\argmax}{\mathop{\text{arg\,max}}}
 
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{array}
-\usepackage{multirow}
-\usepackage{wrapfig}
-\usepackage{float}
-\usepackage{colortbl}
-\usepackage{pdflscape}
-\usepackage{tabu}
-\usepackage{threeparttable}
-\usepackage{threeparttablex}
-\usepackage[normalem]{ulem}
-\usepackage{makecell}
-\usepackage{xcolor}
 
 
 \usepackage{amsthm}
@@ -328,22 +314,26 @@ Monash University
 \begin{document}
 \maketitle
 \begin{abstract}
-This paper introduces \emph{lookout}, a new approach to detect outliers using leave-one-out kernel density estimates and extreme value theory (EVT). Outlier detection methods that use kernel density estimates generally employ a user defined parameter to determine the bandwidth. Lookout uses persistent homology to construct a bandwidth suitable for outlier detection without any user input. We demonstrate the effectiveness of lookout on an extensive data repository by comparing its performance with other EVT based outlier detection methods. Furthermore, we introduce \emph{outlier persistence}, a useful concept that explores the birth and the cessation of outliers with changing bandwidth and significance levels. The R package \texttt{lookout} implements this algorithm.
+This paper introduces \emph{lookout}, a new approach to detect outliers using leave-one-out kernel density estimates and extreme value theory. Outlier detection methods that use kernel density estimates generally employ a user defined parameter to determine the bandwidth. Lookout uses persistent homology to construct a bandwidth suitable for outlier detection without any user input. We demonstrate the effectiveness of lookout on an extensive data repository by comparing its performance with other outlier detection methods based on extreme value theory. Furthermore, we introduce \emph{outlier persistence}, a useful concept that explores the birth and the cessation of outliers with changing bandwidth and significance levels. The R package \texttt{lookout} implements this algorithm.
 \end{abstract}
 \begin{keywords}
-outlier detection, anomaly detection, leave-one-out kernel density estimates, topological data analysis, persistent homology, extreme value theory, peak over thresholds, generalized Pareto distribution
+anomaly detection, topological data analysis, persistent homology, extreme value theory, peak over thresholds, generalized Pareto distribution
 \end{keywords}
 
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
 
-Outliers, anomalies and novelties are often interchangeably used to describe the same concept: data points that are unusual compared to the rest. The existence of multiple words to describe similar concepts arise from the growth of outlier detection and applications in multiple research areas. Indeed, outlier detection is used in diverse applications ranging from detecting security breaches in the Internet of Things networks to identifying extreme weather events. As such, it is important to develop robust techniques to detect outliers minimizing costly false positives and dangerous false negatives.
+Outliers, anomalies and novelties are often interchangeably used to describe the same concept: data points that are unusual compared to the rest. The existence of multiple words to describe similar concepts arise from the growth of outlier detection and applications in multiple research areas. Indeed, outlier detection is used in diverse applications ranging from detecting security breaches in the Internet of Things networks to identifying extreme weather events. Consequently, it is important to develop robust techniques to detect outliers, which minimize costly false positives and dangerous false negatives.
 
-To this end, statistical methodologies such as Extreme Value Theory (EVT) is gaining popularity in outlier detection because of its rich, theoretical foundations. \textcite{Burridge2006} use EVT to detect outliers in time series data. \textcite{Clifton2014} use Generalized Pareto Distributions to model the tails in high-dimensional data and detect outliers. Other recent advances in outlier detection that use EVT include stray \autocite{stray}, oddstream \autocite{talagala2019anomaly} and HDoutliers \autocite{wilkinson2017visualizing}. Of these three methods, stray is an enhancement of HDoutliers and both use distances to detect outliers, while oddstream uses kernel density estimates to detect outliers in time series data.
+This diverse literature can be divided into approaches that use probability densities to define outliers, and those that use distances to define outliers. Outlier detection methods that use probability densities treat outliers as observations that are very unlikely given the other observations. Outlier detection methods that use distances treat outliers as observations that lie far from other observations.
 
-The main challenge of using kernel density estimates for outlier detection is the selection of bandwidth. \textcite{Schubert2014} employ kernel density estimates to detect outliers using \(k\)-nearest neighbor distances where \(k\) is a user-specified parameter, which determines bandwidth. \textcite{Qin2019} employ kernel density estimates to detect outliers in streaming data. They too have a radius parameter, which is equivalent to the bandwidth that needs to be specified by the user. \textcite{Tang2017} use reverse and shared \(k\) nearest neighbors to compute kernel density estimates and identify outliers. They also have a user defined parameter \(k\) that denotes the reverse \(k\) nearest neighbors. Oddstream \autocite{talagala2019anomaly} does not have a user defined parameter that directly impacts the bandwidth of the kernel density estimates. However, it computes kernel density estimates on a 2-dimensional projection defined by the first two principal components, not in the original, high dimensional space. As such, the outliers in the original space may not be outliers in the projected space; for example consider a sphere with non-outlying points distributed on the surface and outliers placed at the center.
+In this paper, we take a probability density approach to outlier detection. We propose a new outlier detection algorithm that we call \emph{lookout}, which uses leave-one-out kernel density estimates to identify the most unlikely observations. We address the challenge of bandwidth selection by using persistent homology --- a concept in topological data analysis --- and use extreme value theory (EVT) to identify outliers based on their leave-one-out density estimates.
 
-In this paper we propose a leave-one-out kernel density estimation approach for outlier detection called \emph{lookout}. We address the challenge of bandwidth selection for outlier detection by using persistent homology --- a method in topological data analysis --- and use EVT to identify outliers. A brief introduction to persistent homology and EVT is given in Section \ref{sec:methodology}. In Section \ref{sec:lookout} we introduce the algorithm \emph{lookout} and the concept of outlier persistence, which explores the birth and death of outliers with changing bandwidth. We show examples illustrating the usefulness of outlier persistence and conduct experiments using synthetic data to evaluate the performance of lookout in Section \ref{sec:simulations}. Using an extensive data repository of real datasets, we compare the performance of lookout to HDoutliers and stray in Section \ref{sec:applications}.
+The main challenge in using kernel density estimates for outlier detection is the selection of the bandwidth. \textcite{Schubert2014} employ kernel density estimates to detect outliers using \(k\)-nearest neighbor distances where \(k\) is a user-specified parameter, which determines bandwidth. \textcite{Qin2019} employ kernel density estimates to detect outliers in streaming data. They too have a radius parameter, which is equivalent to the bandwidth that needs to be specified by the user. \textcite{Tang2017} use reverse and shared \(k\) nearest neighbors to compute kernel density estimates and identify outliers. They also have a user defined parameter \(k\) that denotes the reverse \(k\) nearest neighbors. The oddstream algorithm \autocite{talagala2019anomaly} computes kernel density estimates on a 2-dimensional projection defined by the first two principal components, and so bandwidths need to be selected. We avoid subjective user-choice, and the inappropriate use of bandwidths optimized for some other purpose, by proposing the use of persistent homology as a new tool for bandwidth selection.
+
+Extreme Value Theory has been gaining popularity in outlier detection because of its rich, theoretical foundations. \textcite{Burridge2006} used EVT to detect outliers in time series data. \textcite{Clifton2014} used Generalized Pareto Distributions to model the tails in high-dimensional data and detect outliers. Other recent advances in outlier detection that use EVT include the stray \autocite{stray}, oddstream \autocite{talagala2019anomaly} and HDoutliers \autocite{wilkinson2017visualizing} algorithms. Of these three methods, stray is an enhancement of HDoutliers and both use distances to detect outliers, while oddstream uses kernel density estimates to detect outliers in time series data. Our approach is closest to oddstream in that we also apply EVT to functions of kernel density estimates. However, we use a different functional, and we avoid the need for an outlier-free training set.
+
+A brief introduction to persistent homology and EVT is given in Section \ref{sec:methodology}. In Section \ref{sec:lookout} we introduce the algorithm \emph{lookout} and the concept of outlier persistence, which explores the birth and death of outliers with changing bandwidth. We show examples illustrating the usefulness of outlier persistence and conduct experiments using synthetic data to evaluate the performance of lookout in Section \ref{sec:simulations}. Using an extensive data repository of real datasets, we compare the performance of lookout to HDoutliers and stray in Section \ref{sec:applications}.
 
 We have produced an R package \texttt{lookout} \autocite{lookoutR} containing this algorithm. In addition, all examples in this paper are available in the supplementary material at \url{https://github.com/sevvandi/supplementary_material/tree/master/lookout}.
 
