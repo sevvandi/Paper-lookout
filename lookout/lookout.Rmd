@@ -319,13 +319,13 @@ The distribution types I, II and III are known as Gumbel, Fréchet and Weibull f
 \end{equation}
 where the domain of the function is $\{z: 1 + \xi (z - \mu)/\sigma >0 \}$ and the parameters $\mu, \xi \in \mathbb{R}$ and $\sigma > 0$. The parameter $\mu$ is called the location parameter and $\sigma$ is called the scale parameter. The parameter $\xi$ is called the shape parameter and it determines the behavior of the tails and differentiates between the Gumbel, Fréchet and Weibull distributions. When $\xi = 0$ we obtain a Gumbel distribution with exponentially decaying tails. When $\xi < 0$ we get a Weibull distribution with a finite upper end and when $\xi > 0$ we get a Fréchet family of distributions with polynomially decaying tails.
 
-### Block maxima approach
+### Block maxima approach {-}
 
 The GEV distributions are used to study extremes using the block maxima method. That is, observations are divided into blocks of equal length and the set of block maxima are modeled by fitting a GEV distribution. For example, one might consider yearly blocks to model the maximum daily temperature. However, this is considered a wasteful approach with respect to the data, because many data points including extremes maybe discarded by only considering the block maximum. For example, a given year may have multiple days of extreme temperatures that are higher than the maximum temperature of another year. But the block maxima approach would discard these other extremal temperatures and only consider the maximum temperature of each year.
 
 This problem is remedied by regarding the observations that exceed a high threshold as extremes. This approach is known as the Peaks Over Threshold (POT) approach and uses the Generalized Pareto Distribution (GPD).
 
-### The Generalized Pareto Distribution and the POT approach {#sec:potapproach}
+### The Generalized Pareto Distribution and the POT approach {-}
 
 As previously, consider $n$ independent and identically distributed random variables $X_1, \dots, X_n$ with a distribution function $F$. For a high threshold value $u$, if all $X_i > u$ are regarded as extremes, we can write the conditional probability of extreme events as
 \begin{equation}\label{eq:POT1}
@@ -376,7 +376,7 @@ The leave-one-out kernel density estimator is given by
 \end{equation}
 where $x_j$ is left out. We further simplify it and obtain
 \begin{align}\label{eq:kde10}
-	\hat{f}_{-j}(x_j;h) 
+	\hat{f}_{-j}(x_j;h)
 	  & = \frac{1}{(n-1)h}\sum_{i \neq j} K\left(\frac{x_j-x_i}{h}\right) , \notag                                                  \\
 	  & = \frac{1}{(n-1)h} \left(\sum_{i = 1}^n K\left(\frac{x_j-x_i}{h}\right) - K\left(\frac{x_j-x_j}{h}\right) \right)  , \notag \\
 	  & = \frac{1}{(n-1)h} \left(\sum_{i = 1}^n K\left(\frac{x_j-x_i}{h}\right) - K\left(0\right) \right)  , \notag                 \\
@@ -404,7 +404,7 @@ where $c_p$ is the volume of the unit sphere in $\mathbb{R}^p$.
 
 The main challenge in using kernel density estimates for outlier detection is selecting the appropriate bandwidth. There is a large body of literature on kernel density estimation and bandwidth selection [@Scott1994;@Wang2019] that focuses on computing density estimates that represent the data as accurately as possible, where measures of accuracy have certain asymptotic properties. The most common measure of performance that evaluates kernel density estimates is the mean integrated squared error (MISE). However, our goal is somewhat different as we are interested in finding outliers in the data and thus do not interest ourselves in finding a good representation for the rest of the data. The optimal bandwidth which minimizes the MISE is generally not suitable for outlier detection. Often this bandwidth is too small and causes the kernel density estimates of the boundary and near-boundary points to be too low and similar to those of the outliers. In high dimensions this problem is exacerbated due to the sparsity of the data. Thus, we need a bandwidth that assists outlier detection. A too small bandwidth causes everything to be outliers, while too large a bandwidth hides outliers with other points.
 
-To select a bandwidth for outlier detection, we use the barcode discussed in Section \ref{subsec:persistenthomology}. First we construct the barcode of the data cloud for dimension zero using the Vietoris-Rips diameter. From the barcode we obtain the sequence of death diameters for the connected components, i.e. the sequence of diameters at which connected components merge into one another and disappear. By construction this is an increasing sequence as seen in Figure \ref{fig:barcodeandpersistence}. Let us denote this sequence by $\{d_i\}_{i = 1}^N$, that is we consider the barcode to have $N$ horizontal line segments for dimension $0$. To understand this sequence better we consider an example and compare $\{d_i\}_{i = 1}^N$ with $k$ nearest neighbor distances for different $k$. Figure \ref{fig:TDAKNN} shows an annulus with some points in the center, its barcode, and the violin plot of different distances. The set $\{d_i\}_{i = 1}^N$ is denoted as TDA in Figure \ref{fig:TDAKNN} with KNN distances for $k \in \{1, 5, 10\}$ denoted by NN\_1, NN\_5 and NN\_10 respectively. We see that the TDA Rips diameters have a non-zero intersection with KNN distances for each $k$. That is, we can think of the TDA distances as a subset of the union of different KNN distances. Consequently, we can use TDA distances without having to select the parameter $k$ for KNN distances.
+To select a bandwidth for outlier detection, we use the barcode discussed in Section \ref{subsec:tda}. First we construct the barcode of the data cloud for dimension zero using the Vietoris-Rips diameter. From the barcode we obtain the sequence of death diameters for the connected components, i.e. the sequence of diameters at which connected components merge into one another and disappear. By construction this is an increasing sequence as seen in Figure \ref{fig:barcodeandpersistence}. Let us denote this sequence by $\{d_i\}_{i = 1}^N$, that is we consider the barcode to have $N$ horizontal line segments for dimension $0$. To understand this sequence better we consider an example and compare $\{d_i\}_{i = 1}^N$ with $k$ nearest neighbor distances for different $k$. Figure \ref{fig:TDAKNN} shows an annulus with some points in the center, its barcode, and the violin plot of different distances. The set $\{d_i\}_{i = 1}^N$ is denoted as TDA in Figure \ref{fig:TDAKNN} with KNN distances for $k \in \{1, 5, 10\}$ denoted by NN\_1, NN\_5 and NN\_10 respectively. We see that the TDA Rips diameters have a non-zero intersection with KNN distances for each $k$. That is, we can think of the TDA distances as a subset of the union of different KNN distances. Consequently, we can use TDA distances without having to select the parameter $k$ for KNN distances.
 
 ```{r TDAKNN, fig.cap="An annulus with some points in the center on the top left. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom."}
 oo <- 10
@@ -439,7 +439,7 @@ nn_obj <- RANN::nn2(X, k = 11)
 for (kk in c(2, 6, 11)) {
   df <- bind_rows(df,
     tibble(
-      Type = rep(paste0("NN_", kk - 1), NROW(nn_obj$nn.dists)), 
+      Type = rep(paste0("NN_", kk - 1), NROW(nn_obj$nn.dists)),
       Distance = nn_obj$nn.dists[, kk]
     )
   )
@@ -475,7 +475,7 @@ We choose the Rips diameter $d_i$ that maximizes $\Delta d_i$, where
 \end{align}
 as our chosen Rips diameter. We use this diameter $d_*$ to compute the bandwidth of the scaled Epanechnikov kernel.
 
-```{r epsilonandkernels, fig.height=3, fig.cap="The plot on the top shows two points that are $\\epsilon = 1$ distance away from each other. The plots at the bottom show a Gaussian and an Epanechnikov kernel, with bandwidth $1$ and $2$ respectively. The choice of bandwidth makes each point contribute to the other's kernel density estimate.", fig.height=5}
+```{r epsilonandkernels, fig.height=3, fig.cap="The plot on the top shows two points that are $\\varepsilon = 1$ distance away from each other. The plots at the bottom show a Gaussian and an Epanechnikov kernel, with bandwidth $1$ and $2$ respectively. The choice of bandwidth makes each point contribute to the other's kernel density estimate.", fig.height=5}
 X <- tibble(
   x = c(0,1),
   y = c(0,0)
@@ -520,7 +520,7 @@ g7 <- ggplot(Y, aes(x, y)) +
 g5 / (g6 | g7) + plot_layout(heights=c(1,1))
 ```
 
-Consider two points in the point cloud that are $\epsilon = 1$ distance away as shown in Figure \ref{fig:epsilonandkernels}. Suppose we want these two points to contribute to each others kernel density estimates. This is illustrated in the bottom row of Figure \ref{fig:epsilonandkernels}. This can be achieved by using a range of bandwidth values. Let us consider a 1-dimensional dataset. For an Epanechnikov kernel, any bandwidth $h>\epsilon$ would suffice. But, a larger bandwidth will make the contribution of the neighboring point higher than a smaller bandwidth. For a Gaussian kernel, there is no such restriction as any $h$ would include the other point. However, a small $h < < \epsilon$ would make the contribution of the other point quite small. As such, we choose $h=\epsilon$ for a Gaussian kernel where $\epsilon$ denotes a particular choice of the Rips diameter. For the Epanechnikov kernel, we choose $h = \sqrt{5} \epsilon$, so that it matches the variance of the Gaussian kernel.
+Consider two points in the point cloud that are $\varepsilon = 1$ distance away as shown in Figure \ref{fig:epsilonandkernels}. Suppose we want these two points to contribute to each others kernel density estimates. This is illustrated in the bottom row of Figure \ref{fig:epsilonandkernels}. This can be achieved by using a range of bandwidth values. Let us consider a 1-dimensional dataset. For an Epanechnikov kernel, any bandwidth $h>\varepsilon$ would suffice. But, a larger bandwidth will make the contribution of the neighboring point higher than a smaller bandwidth. For a Gaussian kernel, there is no such restriction as any $h$ would include the other point. However, a small $h < < \varepsilon$ would make the contribution of the other point quite small. As such, we choose $h=\varepsilon$ for a Gaussian kernel where $\varepsilon$ denotes a particular choice of the Rips diameter. For the Epanechnikov kernel, we choose $h = \sqrt{5} \varepsilon$, so that it matches the variance of the Gaussian kernel.
 
 For higher dimensions, we use a bandwidth matrix of the form $\bm{H} = h\bm{I}$, and assign
 \begin{equation}\label{eq:bandwidth}
@@ -528,7 +528,7 @@ For higher dimensions, we use a bandwidth matrix of the form $\bm{H} = h\bm{I}$,
 \end{equation}
 giving us
 \begin{align}\label{eq:kde11}
-	\| \bm{H}^{-1/2}(\bm{x} - \bm{x}_i) \|^2 
+	\| \bm{H}^{-1/2}(\bm{x} - \bm{x}_i) \|^2
 	  & = (\bm{x} - \bm{x}_i)^T \left(\bm{H}^{-1/2}\right)^T \bm{H}^{-1/2} (\bm{x} - \bm{x}_i)  , \notag \\
 	  & = (\bm{x} - \bm{x}_i)^T \bm{H}^{-1} (\bm{x} - \bm{x}_i)  , \notag                                \\
 	  & = \frac{1}{h^p}(\bm{x} - \bm{x}_i)^T (\bm{x} - \bm{x}_i) , \notag                                \\
@@ -536,7 +536,7 @@ giving us
 \end{align}
 where $d_*$ is the Rips diameter given in equation \eqref{eq:deathrad2}. By choosing this bandwidth we make sure that points within a distance of $d_*$ contribute to the kernel density estimate of $\bm{x}$. This diameter results in the following leave-one-out kernel density estimate
 \begin{align}\label{eq:kde12}
-	\hat{f}_{-j}(\bm{x}_j;\bm{H}) 
+	\hat{f}_{-j}(\bm{x}_j;\bm{H})
 	  & = \frac{n}{n-1} \hat{f}(\bm{x}_j;\bm{H}) - \frac{1}{(n-1)|\bm{H}|^{1/2}} K\left(\bm{0}\right)  , \notag \\
 	  & = = \frac{n}{n-1} \hat{f}(\bm{x}_j;\bm{H}) - \frac{1}{(n-1)d_*} K\left(\bm{0}\right)  .
 \end{align}
@@ -547,7 +547,7 @@ Now we have all the building blocks necessary to describe the algorithm *lookout
 
 To determine the bandwidth for kernel density estimation, we use the Rips diameter $d_*$ as specified in equation \eqref{eq:deathrad2} and use the bandwidth matrix $\bm{H} = h \bm{I}$ with $h = (d_*)^{2/p}$ as in equation \eqref{eq:bandwidth}. We use the scaled Epanechnikov kernel to compute kernel density estimates and leave-one-out kernel density estimates as in equation \eqref{eq:kde12}.
 
-Let us denote the kernel density estimate of $\bm{x}_i$ by $y_i$ and the leave-one-out kde of $\bm{x}_i$ (by leaving out $\bm{x}_i$) by $y_{-i}$. As we want to model outliers as extremes, we use $-\log(y_i)$ and $-\log(y_{-i})$ so that smaller kde values are mapped to higher values and vice versa. Then we fit a Generalized Pareto Distribution to $-\log(y_i)$ using the POT approach discussed in Section \ref{sec:potapproach}. We use the $90^{\text{th}}$ percentile as the threshold for the POT approach as recommended by @bommier2014peaks. Using the fitted GPD parameters, $\mu$, $\sigma$ and $\xi$ we find the probability of the leave-one-out kde values $-\log(y_{-i})$, that is, we compute $P\left(-\log(y_{-i})|\mu, \sigma,\xi \right)$. Then, using a pre-defined cut-off probability $\alpha$, we declare points with $P\left(-\log(y_{-i})|\mu, \sigma,\xi \right) < \alpha$ as outliers. We summarize these steps in Algorithm \ref{algo:lookout}.
+Let us denote the kernel density estimate of $\bm{x}_i$ by $y_i$ and the leave-one-out kde of $\bm{x}_i$ (by leaving out $\bm{x}_i$) by $y_{-i}$. As we want to model outliers as extremes, we use $-\log(y_i)$ and $-\log(y_{-i})$ so that smaller kde values are mapped to higher values and vice versa. Then we fit a Generalized Pareto Distribution to $-\log(y_i)$ using the POT approach discussed in Section \ref{subsec:evt}. We use the $90^{\text{th}}$ percentile as the threshold for the POT approach as recommended by @bommier2014peaks. Using the fitted GPD parameters, $\mu$, $\sigma$ and $\xi$ we find the probability of the leave-one-out kde values $-\log(y_{-i})$, that is, we compute $P\left(-\log(y_{-i})|\mu, \sigma,\xi \right)$. Then, using a pre-defined cut-off probability $\alpha$, we declare points with $P\left(-\log(y_{-i})|\mu, \sigma,\xi \right) < \alpha$ as outliers. We summarize these steps in Algorithm \ref{algo:lookout}.
 \DontPrintSemicolon
 \begin{algorithm}\fontsize{11}{16}\selectfont
 	\SetKwInOut{Input}{input~~~}
@@ -591,7 +591,7 @@ X <- bind_rows(
     y = rho * sin(theta)
   ),
   tibble(
-    x = rnorm(oo, mean = 0, sd = 0.2), 
+    x = rnorm(oo, mean = 0, sd = 0.2),
     y = rnorm(oo, mean = 0, sd = 0.2)
   )
 )
@@ -606,7 +606,7 @@ g1 <- ggplot(X, aes(x, y)) +
 
 lookobj <- lookout(X)
 outnew <- persisting_outliers(X, num_steps = 20)
-g2 <- autoplot(outnew, alpha = 0.05) + 
+g2 <- autoplot(outnew, alpha = 0.05) +
   geom_vline(xintercept = lookobj$bandwidth, linetype = "dashed")
 
 g1 | g2
@@ -648,7 +648,7 @@ Thus, if a point is identified as an outlier with a significance level $\alpha =
 Then we can use equation \eqref{eq:strengthpersistence} to compute its strength.
 
 ```{r outlierpersistence2, fig.width=6, fig.height=3, dependson="outlierpersistence", fig.cap="Outlier persistence over different bandwidth values and their strengths. The dashed line corresponds to the lookout bandwidth $d_*$.", dependson="outlierpersistence"}
-autoplot(outnew) + 
+autoplot(outnew) +
   geom_vline(xintercept = lookobj$bandwidth, linetype = "dashed")
 ```
 
@@ -670,13 +670,13 @@ X <- bind_rows(
     y = rnorm(500)
   ),
   tibble(
-    x = rnorm(5, mean = 10, sd = 0.2), 
+    x = rnorm(5, mean = 10, sd = 0.2),
     y = rnorm(5, mean = 10, sd = 0.2)
   )
 )
 outnew <- persisting_outliers(X, unitize = FALSE)
-g2 <- autoplot(outnew) + 
-  geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed") + 
+g2 <- autoplot(outnew) +
+  geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed") +
   theme(legend.position = "none")
 
 lookobj <- lookout(X, unitize = FALSE, alpha = 0.1)
@@ -693,23 +693,23 @@ g1 <- ggplot(X2, aes(x, y)) +
 # ---------------------------------------------------------------------
 X <- bind_rows(
   tibble(
-    x = rnorm(500, mean = -10), 
+    x = rnorm(500, mean = -10),
     y = rnorm(500),
   ),
   tibble(
-    x = rnorm(500, mean = 10), 
+    x = rnorm(500, mean = 10),
     y = rnorm(500)
   ),
   tibble(
-    x = rnorm(5, sd = 0.2), 
+    x = rnorm(5, sd = 0.2),
     y = rnorm(5, sd = 0.2)
   )
 )
 
 outnew <- persisting_outliers(X, unitize = FALSE)
-g4 <- autoplot(outnew) + 
-  geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed") + 
-  ylab("") + 
+g4 <- autoplot(outnew) +
+  geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed") +
+  ylab("") +
   theme(legend.position = "none")
 
 lookobj <- lookout(X, unitize = FALSE, alpha = 0.1)
@@ -727,26 +727,26 @@ g3 <- ggplot(X2, aes(x, y)) +
 # ---------------------------------------------------------------------
 X <- bind_rows(
   tibble(
-    x = rnorm(500), 
+    x = rnorm(500),
     y = rnorm(500)
   ),
   tibble(
-    x = rnorm(100, sd = 0.7), 
+    x = rnorm(100, sd = 0.7),
     y = rnorm(100, mean = 8, sd = 0.7)
   ),
   tibble(
-    x = rnorm(100, mean = 8, sd = 0.7), 
+    x = rnorm(100, mean = 8, sd = 0.7),
     y = rnorm(100, sd = 0.7)
   ),
   tibble(
-    x = rnorm(3, mean = 6, sd = 0.2), 
+    x = rnorm(3, mean = 6, sd = 0.2),
     y = rnorm(3, mean = 6, sd = 0.2)
   )
 )
 outnew <- persisting_outliers(X, unitize = FALSE)
-g6 <- autoplot(outnew) + 
-  ylab("") + 
-  geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed") + 
+g6 <- autoplot(outnew) +
+  ylab("") +
+  geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed") +
   theme(legend.position = "none")
 
 lookobj <- lookout(X, unitize = FALSE, alpha = 0.1)
@@ -764,15 +764,15 @@ g5 <- ggplot(X2, aes(x, y)) +
 # ---------------------------------------------------------------------
 X <- bind_rows(
   tibble(
-    x = rnorm(500), 
+    x = rnorm(500),
     y = rnorm(500)
   ),
   tibble(
-    x = rnorm(100, sd = 0.7), 
+    x = rnorm(100, sd = 0.7),
     y = rnorm(100, mean = 8, sd = 0.7)
   ),
   tibble(
-    x = rnorm(100, mean = 8, sd = 0.7), 
+    x = rnorm(100, mean = 8, sd = 0.7),
     y = rnorm(100, sd = 0.7)
   ),
   tibble(
@@ -781,9 +781,9 @@ X <- bind_rows(
   )
 )
 outnew <- persisting_outliers(X, unitize = FALSE)
-g8 <- autoplot(outnew) + 
-  geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed") + 
-  ylab("") + 
+g8 <- autoplot(outnew) +
+  geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed") +
+  ylab("") +
   theme(legend.position = "none")
 
 lookobj <- lookout(X, unitize = FALSE, alpha = 0.1)
@@ -809,8 +809,8 @@ X <- bind_rows(
 )
 
 outnew <- persisting_outliers(X, unitize = FALSE)
-g10 <- autoplot(outnew) + 
-  geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed") + 
+g10 <- autoplot(outnew) +
+  geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed") +
   ylab("")
 
 lookobj <- lookout(X, unitize = FALSE, alpha = 0.1)
@@ -854,14 +854,14 @@ and
 \end{equation}
 where *tn* denotes the true negatives (predicted = false, actual = false). In fact, sensitivity and recall are two different terms denoting the same quantity of interest.
 
-### Experiment 1 {#sec:exp1}
+### Experiment 1 {-}
 
 For this experiment we consider two normally distributed samples in $\mathbb{R}^6$; one large and one small starting at the same location with the small sample slowly moving out in each iteration. The set of points belonging to the small sample are considered outliers. We consider 400 points in the bigger sample and 5 in the outlying sample, placed at indices 401 - 405. The points in the larger sample are distributed in each dimension as $\mathcal{N}(0, 1)$. The outliers differ from the normal points only in one dimension, i.e. they are distributed as $\mathcal{N}\left(2 + (i-1)/2, 0.2 \right)$, where $i$ denotes the iteration. As such, in the first iteration the outliers are distributed as $\mathcal{N}\left(2  , 0.2 \right)$ in the first dimension and in the tenth iteration they are distributed as $\mathcal{N}\left(6.5  , 0.2 \right)$, showing that it has clearly moved out from the main distribution. Each iteration is repeated 10 times to account for randomness.
 
 ```{r ComparisonEx1, fig.cap="Experiment 1 with outliers moving out from the normal distribution in $\\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the corresponding outlier persistence plot. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions."}
 values <- rep(0, 10)
 pp <- 10
-hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <- 
+hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <-
   stray_gmean <- stray_fmeasure <- matrix(0, nrow = pp, ncol = 10)
 
 for (kk in seq(pp)) {
@@ -906,7 +906,7 @@ for (kk in seq(pp)) {
 }
 
 outnew <- persisting_outliers(X)
-g2 <- autoplot(outnew) + 
+g2 <- autoplot(outnew) +
   geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed")
 
 lookobj <- lookout(X, alpha = 0.1)
@@ -924,9 +924,9 @@ lookout_mean <- colMeans(lookout_fmeasure)
 hdoutliers_mean <- colMeans(hdoutliers_fmeasure)
 
 df <- tibble(
-    Iteration = seq(10), 
-    stray = str_mean, 
-    lookout = lookout_mean, 
+    Iteration = seq(10),
+    stray = str_mean,
+    lookout = lookout_mean,
     HDoutliers = hdoutliers_mean
   ) %>%
   pivot_longer(-Iteration, names_to = "Method")
@@ -944,8 +944,8 @@ hdoutliers_mean <- colMeans(hdoutliers_gmean)
 
 df <- tibble(
     Iteration = seq(10),
-    stray = str_mean, 
-    lookout = lookout_mean, 
+    stray = str_mean,
+    lookout = lookout_mean,
     HDoutliers = hdoutliers_mean
   ) %>%
   pivot_longer(-Iteration, names_to = "Method")
@@ -960,14 +960,14 @@ g4 <- ggplot(df, aes(Iteration, value)) +
 
 The top left graph of Figure \ref{fig:ComparisonEx1} shows the first two dimensions of this experimental dataset in its last iteration and repetition with outliers identified by lookout shown in different colors. The top right graph shows the corresponding outlier persistence plot for this data with the dashed line denoting the lookout bandwidth. The graphs at the bottom show the performance of lookout, HDoutliers and stray with $\alpha = 0.05$. The mean F-measure of the 10 repetitions for each iteration is shown in the graph at the bottom left and the mean Gmean is shown at the bottom right. We see that for each iteration lookout surpasses HDoutliers and stray significantly.
 
-### Experiment 2 {#sec:exp2}
+### Experiment 2 {-}
 
 For this experiment we consider an annulus in $\mathbb{R}^2$ with outlying points moving into the center with each iteration. We consider $800$ points in the annulus with $5$ outlying points. The outliers are normally distributed and have a smaller standard deviation compared to the other points. The mean of the outliers in the $i^{\text{th}}$ iteration is $\left( 5 - (i-1) /2,  0 \right)$, so that the outliers start at the right of the annulus with mean $(5,0)$ and move in with each iteration, ending with mean $(0,0)$. We repeat each iteration 10 times.
 
 ```{r ComparisonEx2, fig.cap="Experiment 2 with outliers moving into the center of the annulus in $\\mathbb{R}^2$. Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the corresponding outlier persistence plot. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions."}
 values <- rep(0, 10)
 pp <- 10
-hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <- 
+hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <-
   stray_gmean <- stray_fmeasure <- matrix(0, nrow = pp, ncol = 10)
 
 for (kk in seq(pp)) {
@@ -1034,8 +1034,8 @@ hdoutliers_mean <- apply(hdoutliers_fmeasure, 2, mean)
 
 df <- tibble(
   Iteration = seq(10),
-  stray = str_mean, 
-  lookout = lookout_mean, 
+  stray = str_mean,
+  lookout = lookout_mean,
   HDoutliers = hdoutliers_mean
 )
 dfl <- pivot_longer(df, cols = 2:4)
@@ -1054,8 +1054,8 @@ hdoutliers_mean <- apply(hdoutliers_gmean, 2, mean)
 
 df <- tibble(
   Iteration = seq(10),
-  stray = str_mean, 
-  lookout = lookout_mean, 
+  stray = str_mean,
+  lookout = lookout_mean,
   HDoutliers = hdoutliers_mean
 )
 dfl <- pivot_longer(df, cols = 2:4)
@@ -1071,7 +1071,7 @@ g4 <- ggplot(dfl, aes(Iteration, value)) +
 
 The graph at the top left of Figure \ref{fig:ComparisonEx2} shows the points in the final iteration and repetition. The graph on the top right shows the outlier persistence for the final iteration and repetition. The outliers are placed at indices 801 - 805 and we see that they are not identified as outliers for small bandwidth values because the outliers are clustered together. This shows the importance of bandwidth selection for outlier detection when using kernel density estimates. The bandwidth selected by lookout is shown as a dashed line. The bottom two graphs show the mean F-measure and Gmean of the 3 algorithms for each iterations over 10 repetitions. We see that lookout identifies the outliers earlier compared stray and HDoutliers, which does not identify any outliers.
 
-### Experiment 3 {#sec:exp3}
+### Experiment 3 {-}
 
 For this experiment we consider a unit cube in $\mathbb{R}^{20}$ with 500 points. Of these points 499 are uniformly distributed in each direction and the remaining point is considered an outlier. The outlier moves towards the point $\left( 0.9, 0.9, \dots, 0.9 \right)$ with each iteration. For the $i^{\text{th}}$ iteration the first $i$ coordinates of the outlier are each equal to $0.9$ and the remaining coordinates are uniformly distributed in $(0,1)$. The index of the outlier is 500. Each iteration is repeated 10 times with different randomizations.
 
@@ -1079,7 +1079,7 @@ For this experiment we consider a unit cube in $\mathbb{R}^{20}$ with 500 points
 values <- rep(0, 10)
 pp <- 10
 dd <- 19
-hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <- 
+hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <-
   stray_gmean <- stray_fmeasure <- matrix(0, nrow = pp, ncol = 20)
 nn <- 500
 labs <- c(rep(0, nn-1), 1)
@@ -1118,7 +1118,7 @@ for (kk in seq(pp)) {
 }
 
 outnew <- persisting_outliers(X)
-g2 <- autoplot(outnew) + 
+g2 <- autoplot(outnew) +
   geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed")
 
 # PLOT F-MEASURE
@@ -1127,9 +1127,9 @@ lookout_mean <- colMeans(lookout_fmeasure)
 hdoutliers_mean <- colMeans(hdoutliers_fmeasure)
 
 df <- tibble(
-    Iteration = seq(20), 
-    stray = str_mean, 
-    lookout = lookout_mean, 
+    Iteration = seq(20),
+    stray = str_mean,
+    lookout = lookout_mean,
     HDoutliers = hdoutliers_mean
   ) %>%
   pivot_longer(-Iteration, names_to="Method")
@@ -1147,8 +1147,8 @@ hdoutliers_mean <- colMeans(hdoutliers_gmean)
 
 df <- tibble(
     Iteration = seq(20),
-    stray = str_mean, 
-    lookout = lookout_mean, 
+    stray = str_mean,
+    lookout = lookout_mean,
     HDoutliers = hdoutliers_mean
   ) %>%
   pivot_longer(-Iteration, names_to = "Method")
@@ -1168,7 +1168,7 @@ The top graph in Figure \ref{fig:ComparisonEx3} shows the outlier persistence fo
 For this Section we use the data repository used in @datasets. This repository has more than $12000$ outlier detection datasets that were prepared from classification datasets. Dataset preparation involves downsampling the minority class in classification datasets, converting the categorical variables to numerical and accounting for missing values, all of which is detailed in @normalizationoutliers.
 
 ```{r lvplots, fig.cap="Letter value plots of performance differences between 1. lookout and HDoutliers, 2. lookout and stray using Gmean and Fmeasure.", fig.height=4, message=FALSE}
-dat <- readr::read_csv(here::here("lookout/data_repo_output/Collated_EX2_Take1_1_alpha_point05.csv"))
+dat <- readr::read_csv(here::here("data_repo_output/Collated_EX2_Take1_1_alpha_point05.csv"))
 
 # Differences - gmean
 sensitivity <- select(dat, contains("sensitivity"))
@@ -1184,10 +1184,10 @@ gmean <- sqrt(sensitivity * specificity) %>%
   ) %>%
   pivot_longer(look_hd:look_stray, names_to = "Algorithm", values_to = "Gmean")
 g1 <- ggplot(gmean, aes(x = Algorithm, y = Gmean)) +
-  lvplot::geom_lv(aes(fill = ..LV..), 
+  lvplot::geom_lv(aes(fill = ..LV..),
                   width.method = "area", width = 0.3, show.legend=FALSE) +
   lvplot::scale_fill_lv() +
-  labs(x = "Algorithm", y = "Gmean") 
+  labs(x = "Algorithm", y = "Gmean")
 
 # Precision and recall
 true_pos <- select(dat, contains("true_pos"))
@@ -1197,7 +1197,7 @@ precision <- as_tibble(true_pos / (true_pos + false_pos)) %>%
   rename_all(function(x){stringr::str_extract(x, "[a-z]*")}) %>%
   replace_na(list(lookout = 0, hdoutliers = 0, stray = 0))
 recall <- as_tibble(true_pos / (true_pos + false_neg)) %>%
-  rename_all(function(x){stringr::str_extract(x, "[a-z]*")}) 
+  rename_all(function(x){stringr::str_extract(x, "[a-z]*")})
 fmeas <- as_tibble(2 * precision * recall / (precision + recall)) %>%
   replace_na(list(lookout = 0, hdoutliers = 0, stray = 0)) %>%
   bind_cols(dat) %>%
@@ -1213,7 +1213,7 @@ g2 <- ggplot(fmeas, aes(x = Algorithm, y = Fmeasure)) +
   lvplot::scale_fill_lv() +
   labs(x = "Algorithm", y = "F measure")
 
-g1 | g2 
+g1 | g2
 ```
 
 Figure \ref{fig:lvplots} shows the letter-value plots [@lvplots] of performance differences between
@@ -1224,13 +1224,13 @@ using Gmean and Fmeasure after removing the entries that have zero values for al
 
 ```{r table, dependson='lvplots', message=FALSE}
 stats <- bind_rows(
-    gmean %>% 
-      select(Algorithm, Gmean) %>% 
-      rename(value = Gmean) %>% 
+    gmean %>%
+      select(Algorithm, Gmean) %>%
+      rename(value = Gmean) %>%
       mutate(Metric = "Gmean"),
-    fmeas %>% 
-      select(Algorithm, Fmeasure) %>% 
-      rename(value = Fmeasure) %>% 
+    fmeas %>%
+      select(Algorithm, Fmeasure) %>%
+      rename(value = Fmeasure) %>%
       mutate(Metric = "Fmeasure"),
   ) %>%
   group_by(Algorithm, Metric) %>%
@@ -1249,14 +1249,14 @@ tab <- stats %>%
     CI = paste0("(",sprintf("%.4f",lo),",",sprintf("%.4f",hi),")"),
     Mean = sprintf("%.4f", mean),
     Median = sprintf("%.4f", median)
-  ) %>% 
+  ) %>%
   pivot_longer(c(Median, Mean, CI), names_to = "Statistic") %>%
   select(Algorithm, Metric, Statistic, value) %>%
   pivot_wider(names_from=Algorithm, values_from = value) %>%
   arrange(desc(Metric), desc(Statistic)) %>%
   mutate(
     Statistic = recode(Statistic, CI = "95% Confidence Interval")
-  ) 
+  )
 tab %>%
   select(-Metric) %>%
   knitr::kable(
@@ -1266,12 +1266,12 @@ tab %>%
   ) %>%
   kableExtra::pack_rows(index = table(tab$Metric))
 
-gmean <- stats %>% 
-  filter(Metric == "Gmean") %>% 
-  arrange(Algorithm) %>% 
-  pull(median) 
-fmeas <- stats %>% 
-  filter(Metric == "Fmeasure") %>% 
+gmean <- stats %>%
+  filter(Metric == "Gmean") %>%
+  arrange(Algorithm) %>%
+  pull(median)
+fmeas <- stats %>%
+  filter(Metric == "Fmeasure") %>%
   arrange(Algorithm) %>%
   pull(median)
 ```
