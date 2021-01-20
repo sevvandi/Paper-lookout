@@ -53,6 +53,7 @@ library(RANN)
 library(TDAstats)
 library(patchwork)
 library(ggrepel)
+library(latex2exp)
 
 set.seed(2021)
 
@@ -104,9 +105,9 @@ col_pal2 <- col_pal1 <- c(
 
 Outliers, anomalies and novelties are often interchangeably used to describe the same concept: data points that are unusual compared to the rest. The existence of multiple words to describe similar concepts arise from the growth of outlier detection and applications in multiple research areas. Indeed, outlier detection is used in diverse applications ranging from detecting security breaches in the Internet of Things networks to identifying extreme weather events. Consequently, it is important to develop robust techniques to detect outliers, which minimize costly false positives and dangerous false negatives.
 
-This diverse literature can be divided into approaches that use probability densities to define outliers, and those that use distances to define outliers. Outlier detection methods that use probability densities treat outliers as observations that are very unlikely given the other observations. Outlier detection methods that use distances treat outliers as observations that lie far from other observations. 
+This diverse literature can be divided into approaches that use probability densities to define outliers, and those that use distances to define outliers. Outlier detection methods that use probability densities treat outliers as observations that are very unlikely given the other observations. Outlier detection methods that use distances treat outliers as observations that lie far from other observations.
 
-In this paper, we take a probability density approach to outlier detection. We propose a new outlier detection algorithm that we call *lookout*, which uses leave-one-out kernel density estimates to identify the most unlikely observations. We address the challenge of bandwidth selection by using persistent homology --- a concept in topological data analysis --- and use extreme value theory (EVT) to identify outliers based on their leave-one-out density estimates. 
+In this paper, we take a probability density approach to outlier detection. We propose a new outlier detection algorithm that we call *lookout*, which uses leave-one-out kernel density estimates to identify the most unlikely observations. We address the challenge of bandwidth selection by using persistent homology --- a concept in topological data analysis --- and use extreme value theory (EVT) to identify outliers based on their leave-one-out density estimates.
 
 The main challenge in using kernel density estimates for outlier detection is the selection of the bandwidth. @Schubert2014 employ kernel density estimates to detect outliers using $k$-nearest neighbor distances where $k$ is a user-specified parameter, which determines bandwidth. @Qin2019 employ kernel density estimates to detect outliers in streaming data. They too have a radius parameter, which is equivalent to the bandwidth that needs to be specified by the user. @Tang2017 use reverse and shared $k$ nearest neighbors to compute kernel density estimates and identify outliers. They also have a user defined parameter $k$ that denotes the reverse $k$ nearest neighbors. The oddstream algorithm  [@talagala2019anomaly] computes kernel density estimates on a 2-dimensional projection defined by the first two principal components, and so bandwidths need to be selected. We avoid subjective user-choice, and the inappropriate use of bandwidths optimized for some other purpose, by proposing  the use of persistent homology as a new tool for bandwidth selection.
 
@@ -122,29 +123,29 @@ We have used the R packages `TDAstats` [@tdastatsR] and `ggtda` [@ggdta] for all
 
 In this Section we briefly go through three different topics:
 
-1. topological data analysis and persistent homology,
-2. extreme value theory and the peaks over threshold approach and
+1. topological data analysis and persistent homology;
+2. extreme value theory and the peaks-over-threshold approach; and
 3. kernel density estimation.
 
 ## Topological data analysis and persistent homology {#subsec:tda}
 
 Topological data analysis is the study of data using topological constructs. It is about inferring high dimensional structure from low dimensional representations such as points and assembling discrete points to construct global structures [@ghrist2008barcodes]. Persistent homology is a method in algebraic topology that computes topological features of a space that persist across multiple scales or spatial resolutions. These features include connected components, topological circles and trapped volumes. Features that persist for a wider range of spatial resolutions represent robust, intrinsic features of the data while features that sporadically change are perturbations resulting from noise. Persistent homology has been used in a wide variety of applications including biology [@topaz2015topological], computer graphics [@carlsson2008local] and engineering [@perea2015sliding]. In this Section we will give a brief overview of persistent homology without delving into the mathematical details. Readers are referred to @ghrist2008barcodes and @Carlsson2009 for an overview and @wasserman2018topological for a statistical viewpoint on the subject.
 
-### Simplicial complex {#subsubsec:simplicialcomplex}
+### Simplicial complex {-}
 
-It starts with a data cloud representing a collection of points. This set of points is used to construct a graph where the points are considered vertices and the edges are determined by the distance between the points. Given a proximity parameter $\epsilon$ two vertices are connected by an edge if the distance between these two points are less than or equal to $\epsilon$. Starting from this graph a simplicial complex --- a space built from simple pieces --- is constructed. A simplicial complex is a finite set of $k$-simplices, where $k$ denotes the dimension. To give some examples, a point is a $0$-simplex, an edge a $1$-simplex, a triangle a $2$-simplex and a tetrahedron a $3$-simplex. Suppose $S$ denotes a simplicial complex, which includes a $k$-simplex $\gamma$. Then all non-empty subsets of $\beta \subset \gamma$ are also included in $S$. For example if $S$ contains a triangle $pqr$, then the edges $pq$, $qr$ and $rs$, and the vertices $p$, $q$ and $r$ are also in $S$.
+Consider a data cloud representing a collection of points. This set of points is used to construct a graph where the points are considered vertices and the edges are determined by the distance between the points. Given a proximity parameter $\varepsilon$, two vertices are connected by an edge if the distance between these two points is less than or equal to $\varepsilon$. Starting from this graph, a simplicial complex --- a space built from simple pieces --- is constructed. A simplicial complex is a finite set of $k$-simplices, where $k$ denotes the dimension. To give some examples, a point is a $0$-simplex, an edge a $1$-simplex, a triangle a $2$-simplex, and a tetrahedron a $3$-simplex. Suppose $S$ denotes a simplicial complex that includes a $k$-simplex $\gamma$. Then all non-empty subsets of $\beta \subset \gamma$ are also included in $S$. For example, if $S$ contains a triangle $pqr$, then the edges $pq$, $qr$ and $rs$, and the vertices $p$, $q$ and $r$, are also in $S$.
 
-The *Vietoris-Rips* complex and the *Cech* complex are two types of $k$-simplicial complexes. We will construct a Vietoris-Rips complex from the data cloud as it is more computationally efficient than the Cech complex [@ghrist2008barcodes]. Given a set of points and a proximity parameter $\epsilon > 0$, $k+1$ points within a distance of $\epsilon$ to each other form a $k$-simplex. For example, consider 5 points $p$, $q$, $r$, $s$ and $t$ and suppose the distance between any two points except $t$ is less than $\epsilon$. Then we can construct the edges $pq$, $pr$, $ps$, $qr$, $qs$ and $rs$. From the edges $pq$, $qr$ and $rp$ we can construct the triangle $pqr$, from $pq$, $qs$ and $sp$ the triangle $pqs$ and so on, because the distance between any two points $p$, $q$, $r$ and $s$ is bounded by $\epsilon$. By constructing the $4$ triangles $pqr$, $qrs$, $rsp$ and $spq$ we can construct the tetrahedron $pqrs$. The vertex $t$ is not connected to this $3$-simplex because the distance between $t$ and the other vertices is greater than $\epsilon$. As such, the simplicial complex resulting from these 5 points consists of the tetrahedron $pqrs$ and all the subset $k$-simplices and the vertex $t$. Figure \ref{fig:tetrahedron} shows this simplicial complex on the left and another example on the right.
+The *Vietoris-Rips* complex and the *Cech* complex are two types of $k$-simplicial complexes. We will construct a Vietoris-Rips complex from the data cloud as it is more computationally efficient than the Cech complex [@ghrist2008barcodes]. Given a set of points and a proximity parameter $\varepsilon > 0$, $k+1$ points within a distance of $\varepsilon$ to each other form a $k$-simplex. For example, consider 5 points $p$, $q$, $r$, $s$ and $t$ and suppose the distance between any two points except $t$ is less than $\varepsilon$. Then we can construct the edges $pq$, $pr$, $ps$, $qr$, $qs$ and $rs$. From the edges $pq$, $qr$ and $rp$ we can construct the triangle $pqr$, from $pq$, $qs$ and $sp$ the triangle $pqs$ and so on, because the distance between any two points $p$, $q$, $r$ and $s$ is bounded by $\varepsilon$. By constructing the $4$ triangles $pqr$, $qrs$, $rsp$ and $spq$ we can construct the tetrahedron $pqrs$. The vertex $t$ is not connected to this $3$-simplex because the distance between $t$ and the other vertices is greater than $\varepsilon$. The simplicial complex resulting from these 5 points consists of the tetrahedron $pqrs$ and all the subset $k$-simplices and the vertex $t$. Figure \ref{fig:tetrahedron} shows this simplicial complex on the left and another example on the right.
 
-```{r tetrahedron, fig.height=3, fig.cap="The figure on the left shows the points $p$, $q$, $r$, $s$ and $t$ with a proximity parameter $\\epsilon = 0.5$ and the resulting Rips complex consisting of the tetrahedron $pqrs$, triangles $pqr$, $qrs$, $rsp$, $pqs$, edges $pq$, $qr$, $rs$, $sp$, $qs$, $pr$ and vertices $p$, $q$, $r$, $s$ and $t$. The figure on the right shows $8$ points and the resulting Rips complex with $\\epsilon=4/3$."}
+```{r tetrahedron, fig.height=3, fig.cap="The figure on the left shows the points $p$, $q$, $r$, $s$ and $t$ with a proximity parameter $\\varepsilon = 0.5$ and the resulting Rips complex consisting of the tetrahedron $pqrs$, triangles $pqr$, $qrs$, $rsp$, $pqs$, edges $pq$, $qr$, $rs$, $sp$, $qs$, $pr$ and vertices $p$, $q$, $r$, $s$ and $t$. The figure on the right shows $8$ points and the resulting Rips complex with $\\varepsilon=4/3$."}
 d <- tibble(
   point = c("p", "q", "r", "s", "t"),
   x = c(0, 0.2, 0, 0.1, 0.75),
   y = c(0, 0.2, 0.2, 0, 0.75)
 )
 # compute the persistent homology
-ph <- as_tibble(TDAstats::calculate_homology(as.matrix(d[,2:3]), dim = 1))
-ph <- transform(ph, dim = as.factor(dimension))
+#ph <- as_tibble(TDAstats::calculate_homology(as.matrix(d[,2:3]), dim = 1))
+#ph <- transform(ph, dim = as.factor(dimension))
 prox <- 0.5
 
 p1 <- ggplot(d, aes(x = x, y = y, label = point)) +
@@ -162,8 +163,8 @@ X <- tibble(
   y = rnorm(8)
 )
 # compute the persistent homology
-ph <- as.tibble(TDAstats::calculate_homology(as.matrix(X), dim = 1))
-ph <- transform(ph, dim = as.factor(dimension))
+#ph <- as.tibble(TDAstats::calculate_homology(as.matrix(X), dim = 1))
+#ph <- transform(ph, dim = as.factor(dimension))
 
 prox <- 4 / 3
 p2 <- ggplot(X, aes(x = x, y = y)) +
@@ -178,7 +179,9 @@ p2 <- ggplot(X, aes(x = x, y = y)) +
 p1 | p2
 ```
 
-```{r annulus, fig.cap="Rips complexes resulting from different $\\epsilon$ values. The figures in the top left, top right, bottom left and bottom right show the Rip complexes resulting from $\\epsilon = 0.1, 0.3, 0.8$ and $1.5$ respectively."}
+### Persistent homology {-}
+
+```{r annulus, fig.cap="Rips complexes resulting from different $\\varepsilon$ values.", fig.width=7, fig.height=7}
 outer_radius <- 1
 inner_radius <- 0.7
 n <- 50
@@ -188,9 +191,9 @@ X <- tibble(
   x = rho * cos(theta),
   y = rho * sin(theta)
 )
-ph <- TDAstats::calculate_homology(as.matrix(X), dim = 1)
-ph <- as.tibble(ph)
-ph <- transform(ph, dim = as.factor(dimension))
+#ph <- TDAstats::calculate_homology(as.matrix(X), dim = 1)
+#ph <- as.tibble(ph)
+#ph <- transform(ph, dim = as.factor(dimension))
 
 prox <- 0.1
 p3 <- ggplot(X, aes(x = x, y = y)) +
@@ -200,7 +203,9 @@ p3 <- ggplot(X, aes(x = x, y = y)) +
   geom_point() +
   stat_vietoris0() +
   stat_vietoris1(diameter = prox, alpha = .25) +
-  stat_vietoris2(diameter = prox, fill = "darkgoldenrod")
+  stat_vietoris2(diameter = prox, fill = "darkgoldenrod") +
+  labs(subtitle = TeX(sprintf('$\\epsilon$ = %.1f', prox))) +
+  xlim(-1.75,1.75) + ylim(-1.75,1.75)
 
 prox <- 0.3
 p4 <- ggplot(X, aes(x = x, y = y)) +
@@ -210,7 +215,9 @@ p4 <- ggplot(X, aes(x = x, y = y)) +
   geom_point() +
   stat_vietoris0() +
   stat_vietoris1(diameter = prox, alpha = .25) +
-  stat_vietoris2(diameter = prox, fill = "darkgoldenrod")
+  stat_vietoris2(diameter = prox, fill = "darkgoldenrod") +
+  labs(subtitle = TeX(sprintf('$\\epsilon$ = %.1f', prox))) +
+  xlim(-1.75,1.75) + ylim(-1.75,1.75)
 
 prox <- 0.8
 p5 <- ggplot(X, aes(x = x, y = y)) +
@@ -220,7 +227,9 @@ p5 <- ggplot(X, aes(x = x, y = y)) +
   geom_point() +
   stat_vietoris0() +
   stat_vietoris1(diameter = prox, alpha = .25) +
-  stat_vietoris2(diameter = prox, fill = "darkgoldenrod")
+  stat_vietoris2(diameter = prox, fill = "darkgoldenrod") +
+  labs(subtitle = TeX(sprintf('$\\epsilon$ = %.1f', prox))) +
+  xlim(-1.75,1.75) + ylim(-1.75,1.75)
 
 prox <- 1.5
 p6 <- ggplot(X, aes(x = x, y = y)) +
@@ -230,16 +239,16 @@ p6 <- ggplot(X, aes(x = x, y = y)) +
   geom_point() +
   stat_vietoris0() +
   stat_vietoris1(diameter = prox, alpha = .25) +
-  stat_vietoris2(diameter = prox, fill = "darkgoldenrod")
+  stat_vietoris2(diameter = prox, fill = "darkgoldenrod") +
+  labs(subtitle = TeX(sprintf('$\\epsilon$ = %.1f', prox))) +
+  xlim(-1.75,1.75) + ylim(-1.75,1.75)
 
 (p3 | p4) / (p5 | p6)
 ```
 
-### Persistent homology {#subsec:persistenthomology}
+Given a point cloud of data, the resulting Rips complex depends on the value of the proximity parameter $\varepsilon$. As we increase $\varepsilon$, topological features such as connected components and holes appear and disappear. This is the focus of persistent homology. For example, in Figure&nbsp;\ref{fig:annulus}, we start with a large number of connected components (top-left) and as $\varepsilon$ increases to $0.8$ the number of connected components merge and decrease to 1 (bottom-left). Around this $\varepsilon$ value a hole appears and as $\varepsilon$ increases to $1.5$, it too disappears (bottom-right). The appearances and disappearances of these topological features are referred to as births and deaths and are illustrated using a *barcode* or a *persistence diagram*.
 
-Given a point cloud of data, the resulting Rips complex depends on the value of $\epsilon$. As such, the question arises which $\epsilon$ is most representative of the structure of the data cloud. Keeping the question of best $\epsilon$ aside for a moment, we turn our attention to topological features, such as connected components and holes that has been the focus of persistent homology. As we increase the proximity parameter $\epsilon$, these topological features appear and disappear. For example in Figure \ref{fig:annulus}, we start with a large number of connected components (top-left) and as $\epsilon$ increases to $0.8$ the number of connected components merge and decrease to 1 (bottom-left). Around this $\epsilon$ value a hole appears and as $\epsilon$ increases to $1.5$, it too disappears (bottom-right). The appearances and disappearances of these topological features are referred to as births and deaths and are illustrated using a *barcode* or a *persistence diagram*.
-
-Figure \ref{fig:barcodeandpersistence} shows the barcode and the persistence diagram of the point cloud shown in Figure \ref{fig:annulus}. The barcode consists of a set of horizontal line segments, each line segment denoting a feature that starts at its birth diameter and ends at its death diameter. These line segments are grouped by their dimension. The orange lines in Figure \ref{fig:barcodeandpersistence} denote the zero dimensional holes, which are connected components and blue lines denote one dimensional holes. The longer blue line which is born at 0.53 and dies at 1.35 corresponds to the hole at the center of the point cloud in Figure \ref{fig:annulus}. Such features that continue for a large range of $\epsilon$, represent structural properties of the data that are of interest to us. The same information is presented differently in the persistence diagram, where the birth and the death of each feature is denoted by a point. Points away from the diagonal inform about the structure of the data while points closer to the diagonal are perturbations related to noise.
+Figure \ref{fig:barcodeandpersistence} shows the barcode and the persistence diagram of the point cloud shown in Figure \ref{fig:annulus}. The barcode consists of a set of horizontal line segments, each line segment denoting a feature that starts at its birth diameter and ends at its death diameter. These line segments are grouped by their dimension. The orange lines in Figure \ref{fig:barcodeandpersistence} denote the zero dimensional holes, which are connected components and blue lines denote one dimensional holes. The longer blue line which is born at 0.53 and dies at 1.35 corresponds to the hole at the center of the point cloud in Figure \ref{fig:annulus}. Such features that continue for a large range of $\varepsilon$, represent structural properties of the data that are of interest to us. The same information is presented differently in the persistence diagram, where the birth and the death of each feature is denoted by a point. Points away from the diagonal inform about the structure of the data while points closer to the diagonal are perturbations related to noise.
 
 Betti numbers denoted by $\beta_k$ give the number of $k$-dimensional holes of a simplicial complex. The number of connected components is given by $\beta_0$ and the number of one-dimensional holes is given by $\beta_1$. The number of two-dimensional holes, which are trapped volumes or voids is given by $\beta_2$. The Betti numbers can also be computed from the barcode by drawing a vertical line at the desired diameter and counting the points of intersection for each dimension. For example, in Figure \ref{fig:barcodeandpersistence} the Betti numbers corresponding to the simplicial complex at diameter $0.5$ are $\beta_0 = 1$ and $\beta_1 = 0$.
 
@@ -263,6 +272,8 @@ pst <- plot_persist(ph1) + xlab("Birth") + ylab("Death")
 
 bcd | pst
 ```
+
+The question arises: which $\varepsilon$ is most representative of the structure of the data cloud?
 
 ## Extreme value theory {#subsec:evt}
 
