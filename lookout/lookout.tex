@@ -287,13 +287,10 @@ Monash University
  \lfoot{\sf Kandanaarachchi, Hyndman: \@date}
 \makeatother
 
-%% Any special functions or other packages can be loaded here.
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
-%\usepackage{algorithmic}
-\usepackage{amsmath, amsfonts, bm, mathtools}
+\usepackage{amsmath, amsfonts, bm, mathtools, todonotes}
 \mathtoolsset{showonlyrefs}
 \newcommand{\argmax}{\mathop{\text{arg\,max}}}
-
 
 
 \usepackage{amsthm}
@@ -384,11 +381,7 @@ The \emph{Vietoris-Rips} complex and the \emph{Cech} complex are two types of \(
 \caption{\label{fig:annulus}Rips complexes resulting from different \(\varepsilon\) values.}
 \end{figure}
 
-Given a point cloud of data, the resulting Rips complex depends on the value of the proximity parameter \(\varepsilon\). As we increase \(\varepsilon\), topological features such as connected components and holes appear and disappear. This is the focus of persistent homology. For example, in Figure~\ref{fig:annulus}, we start with a large number of connected components (top-left) and as \(\varepsilon\) increases to \(0.8\) the number of connected components merge and decrease to 1 (bottom-left). Around this \(\varepsilon\) value a hole appears and as \(\varepsilon\) increases to \(1.5\), it too disappears (bottom-right). The appearances and disappearances of these topological features are referred to as births and deaths and are illustrated using a \emph{barcode} or a \emph{persistence diagram}.
-
-Figure \ref{fig:barcodeandpersistence} shows the barcode and the persistence diagram of the point cloud shown in Figure \ref{fig:annulus}. The barcode consists of a set of horizontal line segments, each line segment denoting a feature that starts at its birth diameter and ends at its death diameter. These line segments are grouped by their dimension. The orange lines in Figure \ref{fig:barcodeandpersistence} denote the zero dimensional holes, which are connected components and blue lines denote one dimensional holes. The longer blue line which is born at 0.53 and dies at 1.35 corresponds to the hole at the center of the point cloud in Figure \ref{fig:annulus}. Such features that continue for a large range of \(\varepsilon\), represent structural properties of the data that are of interest to us. The same information is presented differently in the persistence diagram, where the birth and the death of each feature is denoted by a point. Points away from the diagonal inform about the structure of the data while points closer to the diagonal are perturbations related to noise.
-
-Betti numbers denoted by \(\beta_k\) give the number of \(k\)-dimensional holes of a simplicial complex. The number of connected components is given by \(\beta_0\) and the number of one-dimensional holes is given by \(\beta_1\). The number of two-dimensional holes, which are trapped volumes or voids is given by \(\beta_2\). The Betti numbers can also be computed from the barcode by drawing a vertical line at the desired diameter and counting the points of intersection for each dimension. For example, in Figure \ref{fig:barcodeandpersistence} the Betti numbers corresponding to the simplicial complex at diameter \(0.5\) are \(\beta_0 = 1\) and \(\beta_1 = 0\).
+Given a point cloud of data, the resulting Rips complex depends on the value of the proximity parameter \(\varepsilon\). As we increase \(\varepsilon\), topological features such as connected components and holes appear and disappear. This is the focus of persistent homology. For example, in Figure~\ref{fig:annulus}, we start with a large number of connected components (top-left) and as \(\varepsilon\) increases to \(0.8\) the number of connected components merge and decrease to 1 (bottom-left). Around this value of \(\varepsilon\), a hole appears and as \(\varepsilon\) increases to \(1.5\), it disappears (bottom-right). The appearances and disappearances of these topological features are referred to as births and deaths and are illustrated using a \emph{barcode} or a \emph{persistence diagram}.
 
 \begin{figure}
 \centering
@@ -396,40 +389,40 @@ Betti numbers denoted by \(\beta_k\) give the number of \(k\)-dimensional holes 
 \caption{\label{fig:barcodeandpersistence}The graph on the left shows the barcode of the point cloud in Figure \ref{fig:annulus} and the graph on the right shows the persistence diagram.}
 \end{figure}
 
-The question arises: which \(\varepsilon\) is most representative of the structure of the data cloud?
+Figure \ref{fig:barcodeandpersistence} shows the barcode and the persistence diagram of the point cloud shown in Figure \ref{fig:annulus}. The barcode comprises a set of horizontal line segments, each denoting a feature that starts at its birth diameter and ends at its death diameter. These line segments are grouped by their dimension. The orange lines in Figure \ref{fig:barcodeandpersistence} denote the zero dimensional holes, which are connected components and blue lines denote one dimensional holes. The longer blue line which is born at 0.51 and dies at 1.33, corresponds to the hole at the center of the point cloud in Figure \ref{fig:annulus}. Such features that continue for a large range of \(\varepsilon\), represent structural properties of the data that are of interest to us. The same information is presented differently in the persistence diagram, where the birth and the death of each feature is denoted by a point. Points away from the diagonal inform about the structure of the data while points closer to the diagonal are perturbations related to noise. In this plot, the triangle near the top represents the same feature as the long blue line in the left plot.
+
+Betti numbers denoted by \(\beta_k\) give the number of \(k\)-dimensional holes of a simplicial complex. The number of connected components is given by \(\beta_0\) and the number of one-dimensional holes is given by \(\beta_1\). The number of two-dimensional holes, which are trapped volumes or voids is given by \(\beta_2\). The Betti numbers can also be computed from the barcode by drawing a vertical line at the desired diameter and counting the points of intersection for each dimension. For example, in Figure \ref{fig:barcodeandpersistence} the Betti numbers corresponding to the simplicial complex at diameter \(0.6\) are \(\beta_0 = 0\) and \(\beta_1 = 1\).
+
+These considerations lead to a natural question: which \(\varepsilon\) is most representative of the structure of the data cloud? We will return to this question later.
 
 \hypertarget{subsec:evt}{%
 \subsection{Extreme value theory}\label{subsec:evt}}
 
-Extreme Value Analysis (EVA) is used to model rare, extremal events, which often have a big societal impact such as a 100-year flood. EVA is used in many industries including hydrology, finance and insurance \autocite{Reiss2001}. For example, setting premiums so that massive insurance losses are mitigated is just as important, if not more than achieving profits on average. Due to its applicability, Extreme Value Theory (EVT) has also been used in outlier detection \autocite{wilkinson2017visualizing,talagala2019anomaly}. In this section we will give a brief introduction to EVA using the notation in \textcite{coles2001introduction}.
+Extreme Value Theory is used to model rare, extremal events. It is used in many industries including hydrology (to study 100-year floods), finance (to explore extreme risks) and insurance (to mitigate against losses due to disasters) \autocite{Reiss2001}. EVT has also been used in outlier detection \autocite{wilkinson2017visualizing,talagala2019anomaly}. In this section we will give a brief introduction to EVT using the notation in \textcite{coles2001introduction}.
 
-Consider \(n\) independent and identically distributed random variables \(X_1, \dots, X_n\) with a distribution function \(F(x) = P\{X \leq x\}\). Then the maximum of these \(n\) random variables is
-\begin{equation}\label{eq:evt1}
-    M_n = \max \{X_1, \dots, X_n\} .
-\end{equation}
-If \(F\) is known, the distribution of \(M_n\) can be derived for any value of \(n\) as
+Consider \(n\) independent and identically distributed random variables \(X_1, \dots, X_n\) with a distribution function \(F(x) = P\{X \leq x\}\). Then the maximum of these \(n\) random variables is \(M_n = \max \{X_1, \dots, X_n\}\). If \(F\) is known, the distribution of \(M_n\) is given by
 \begin{align}\label{eq:evt2}
     P\{M_n \leq z \}
      & = P\{X_1 \leq z,  \dots,  X_n \leq z \} ,          \\
      & = P\{X_1 \leq z\} \times \dots \times P\{X_n \leq z\} , \\
      & = \left(F(z)\right)^n  .
 \end{align}
-However, \(F\) is not known in practice. This gap is filled by Extreme Value Theory, which studies approximate families of models for \(F^n\) so that extremes can be modeled and uncertainty quantified. Similar to the Central Limit Theorem for means, the Fisher-Tippet-Gnedenko Theorem, also known as the the extreme value theorem or the extremal types theorem states that under certain conditions, a scaled maximum \(\frac{M_n - a_n}{b_n}\), if \(a_n\) and \(b_n\) exist, have certain limit distributions.
+However, \(F\) is usually not known in practice. This gap is filled by Extreme Value Theory, which studies approximate families of models for \(F^n\) so that extremes can be modeled and uncertainty quantified. Similar to the Central Limit Theorem for means, the Fisher-Tippet-Gnedenko Theorem states that under certain conditions, a scaled maximum \(\frac{M_n - a_n}{b_n}\) can have certain limit distributions.
 
-\begin{theorem}[Fisher-Tippett-Gnedenko] \label{thm:FisherTippett}
-    If there exist sequences such that
+\begin{theorem}[Fisher-Tippett-Gnedenko]\label{thm:FisherTippett}
+    If there exist sequences $\{a_n\}$ and $\{b_n\}$ such that
     $$
         P\left\{ \frac{(M_n - a_n)}{b_n} \leq z \right\} \rightarrow G(z) \quad \text{as} \quad n \to \infty,
     $$
     where $G$ is a non-degenerate distribution function, then $G$ belongs to one of the following families:
     \begin{align}\label{eq:EVT3}
-        \text{I}   & : G(z) = \exp\left(-\exp \left[- \left(\frac{z-b}{a}\right) \right] \right), \quad -\infty < z < \infty , \\
-        \text{II}  & : G(z) =
+        &\text{Gumbel} :  && G(z) = \exp\left(-\exp \left[- \Big(\frac{z-b}{a}\Big) \right] \right), \quad -\infty < z < \infty , \\
+        &\text{Fréchet} : && G(z) =
         \begin{cases}
             0 ,                                                           & z \leq b  , \\
             \exp \left( - \left( \frac{z-b}{a}\right)^{-\alpha} \right) , & z > b    ,
-        \end{cases}                                                                                                \\
-        \text{III} & : G(z) =
+        \end{cases}                     \\
+        &\text{Weibull} : && G(z) =
         \begin{cases}
             \exp \left( - \left(- \left[\frac{z-b}{a}\right]\right)^{\alpha} \right) , & z < b  ,    \\
             1 ,                                                                        & z \geq b  ,
@@ -438,9 +431,11 @@ However, \(F\) is not known in practice. This gap is filled by Extreme Value The
     for parameters $a, b$ and $\alpha$ where $a, \alpha >0$.
 \end{theorem}
 
-The distribution types I, II and III are known as Gumbel, Fréchet and Weibull families respectively. These three families of distributions can be further combined into a single family by using the following distribution function known as the Generalized Extreme Value (GEV) distribution,
+\todo[inline]{Using $a$ and $\alpha$ is confusing notation. Is this standard?}
+
+These three families of distributions can be further combined into a single family by using the following distribution function known as the Generalized Extreme Value (GEV) distribution,
 \begin{equation}\label{eq:EVT4}
-    G(z) = \exp\left\{ -\left[ 1 + \xi\left(\frac{z - \mu}{\sigma} \right)\right]^{-1/\xi} \right\} ,
+    G(z) = \exp\left\{ -\left[ 1 + \xi\Big(\frac{z - \mu}{\sigma} \Big)\right]^{-1/\xi} \right\} ,
 \end{equation}
 where the domain of the function is \(\{z: 1 + \xi (z - \mu)/\sigma >0 \}\) and the parameters \(\mu, \xi \in \mathbb{R}\) and \(\sigma > 0\). The parameter \(\mu\) is called the location parameter and \(\sigma\) is called the scale parameter. The parameter \(\xi\) is called the shape parameter and it determines the behavior of the tails and differentiates between the Gumbel, Fréchet and Weibull distributions. When \(\xi = 0\) we obtain a Gumbel distribution with exponentially decaying tails. When \(\xi < 0\) we get a Weibull distribution with a finite upper end and when \(\xi > 0\) we get a Fréchet family of distributions with polynomially decaying tails.
 
@@ -470,17 +465,16 @@ The distribution function
 \end{equation}
 describes the \emph{exceedances} above the threshold \(u\). If \(F\) is known we could compute this probability. However, as \(F\) is not known in practice we use approximations based on the Generalized Pareto Distribution \autocite{Pickands1975}.
 
-\begin{theorem}[Pickands] Let $X_1,  X_2, \dots,  X_n$ be a sequence of independent random variables with a common distribution function $F$, and let
-    $$ M_n = \max \{X_1, \dots, X_n \}  . $$
-    Suppose $F$ satisfies Theorem \ref{thm:FisherTippett} so that for large $n$
-    $$ P\{ M_n \leq z \} \approx G(z) , $$
-    where
-    $$ G(z) = \exp\left\{ -\left[ 1 + \xi\left(\frac{z - \mu}{\sigma} \right)\right]^{-1/\xi} \right\} , $$
+\begin{theorem}[Pickands]
+  Let $X_1,  X_2, \dots,  X_n$ be a sequence of independent random variables with a common distribution function $F$, and let $M_n = \max \{X_1, \dots, X_n \}$. Suppose $F$ satisfies Theorem \ref{thm:FisherTippett} so that for large $n$, $P\{ M_n \leq z \} \approx G(z)$, where
+    $$
+    G(z) = \exp\left\{ -\left[ 1 + \xi\Big(\frac{z - \mu}{\sigma} \Big)\right]^{-1/\xi} \right\},
+  $$
     for some $\mu, \xi \in \mathbb{R}$ and $\sigma >0$. Then for large enough $u$, the distribution function of $(X-u)$ conditional on $X > u$, is approximately
     \begin{equation}\label{eq:POT4}
-        H(y) = 1 - \left( 1 + \frac{\xi y}{\sigma_u} \right)^{-1/\xi} ,
+        H(y) = 1 - \Big( 1 + \frac{\xi y}{\sigma_u} \Big)^{-1/\xi} ,
     \end{equation}
-    where the domain of $H$ is $\{y: y >0  \text{and}   (1 + \xi y)/\sigma_u >0 \}$ , where $\sigma_u = \sigma + \xi(u- \mu)$.
+    where the domain of $H$ is $\{y: y >0 \text{~and~} (1 + \xi y)/\sigma_u >0 \}$, and $\sigma_u = \sigma + \xi(u- \mu)$.
 \end{theorem}
 
 The family of distributions defined by equation \eqref{eq:POT4} is called the \textbf{Generalized Pareto Distribution} (GPD). We note that the GPD parameters are determined from the associated GEV parameters. In particular, the shape parameter \(\xi\) is the same in both distributions.
@@ -492,41 +486,34 @@ For a chosen threshold \(u\), the parameters of the GPD can be estimated by stan
 
 In this Section we review some basics of kernel density estimation. Consider a univariate kernel density estimator for a sample \(x_1, x_2, \dots, x_n \in \mathbb{R}\) given by
 \begin{equation}\label{eq:kde1}
-    \hat{f}(x;h) = \frac{1}{nh}\sum_{i=1}^n K\left(\frac{x-x_i}{h}\right) = \frac{1}{n} \sum_{i=1}^n K_h(x-x_i) ,
+    \hat{f}(x;h) = \frac{1}{n} \sum_{i=1}^n K_h(x-x_i),
 \end{equation}
 where \(K\) denotes the kernel and \(K_h(t) = K(t/h)/h\). The Gaussian kernel is given by \(K(x) = \frac{1}{\sqrt{2\pi }}\exp(-x^2/2)\), and the Epanechnikov kernel is given by \(K(x) = \frac{3}{4}\left(1 - x^2 \right)_+\).
 In order to match the variances of different kernels, we consider the centralized second order moment of \(K\)
 \(\mu_2(K) = \int z^2 K(z) dz\), and scale \(K\) such that \(\mu_2(\tilde{K}) = 1\). By doing a change of variables for the Epanechnikov kernel we obtain
-\begin{equation}\label{eq:kde5}
-    \tilde{K}(x) = \frac{3}{4 \sqrt{5}}\left(1 - \frac{x^2}{5} \right)_+  ,
-\end{equation}
-giving \(\mu_2(\tilde{K}) = 1\).
+\(\tilde{K}(x) = \frac{3}{4 \sqrt{5}}(1 - x^2/5)_+\), giving \(\mu_2(\tilde{K}) = 1\).
 
 The leave-one-out kernel density estimator is given by
 \begin{equation}\label{eq:kde9}
-    \hat{f}_{-j}(x;h) = \frac{1}{(n-1)h}\sum_{i \neq j} K\left(\frac{x-x_i}{h}\right) ,
+    \hat{f}_{-j}(x;h) = \frac{1}{n-1}\sum_{i \neq j} K_h(x-x_i),
 \end{equation}
-where \(x_j\) is left out. We further simplify it and obtain
-\begin{align}\label{eq:kde10}
-    \hat{f}_{-j}(x_j;h)
-      & = \frac{1}{(n-1)h}\sum_{i \neq j} K\left(\frac{x_j-x_i}{h}\right) , \notag                                                  \\
-      & = \frac{1}{(n-1)h} \left(\sum_{i = 1}^n K\left(\frac{x_j-x_i}{h}\right) - K\left(\frac{x_j-x_j}{h}\right) \right)  , \notag \\
-      & = \frac{1}{(n-1)h} \left(\sum_{i = 1}^n K\left(\frac{x_j-x_i}{h}\right) - K\left(0\right) \right)  , \notag                 \\
-      & = \frac{n}{n-1} \hat{f}(x_j;h) - \frac{1}{(n-1)h} K\left(0\right)  .
-\end{align}
-As such, it is easy to compute the leave-one-out estimate at \(x_j\) by leaving out \(x_j\) using \(\hat{f}(x_j;h)\).
+which can be simplified to
+\begin{equation}\label{eq:kde9b}
+  \hat{f}_{-j}(x_j;h) = \big[n\hat{f}(x_j;h) - K_h(0)\big]/(n-1)
+\end{equation}
+when evaluated at the observation omitted.
 
 Next, we consider the multivariate kernel estimator
 \begin{equation}\label{eq:kde6}
-    \hat{f}\left(\bm{x}; \bm{H}\right) = \frac{1}{n|\bm{H}|^{1/2}} \sum_{i=1}^n K\left(\bm{H}^{-1/2}(\bm{x} -\bm{x}_i) \right) = \frac{1}{n} \sum_{i=1}^n K_{\bm{H}}\left(\bm{x} -\bm{x}_i \right) ,
+    \hat{f}(\bm{x}; \bm{H}) = \frac{1}{n} \sum_{i=1}^n K_{\bm{H}}\left(\bm{x} -\bm{x}_i \right) ,
 \end{equation}
 where \(\mathbf{x} \in \mathbb{R}^p\), \(\bm{H}\) denotes a \(p \times p\) positive definite bandwidth matrix and \(K_{\bm{H}}(\bm{z}) = \bm{H}^{-1/2} K(\bm{H}^{-1/2} \bm{z})\). The multivariate Gaussian kernel is given by
 \begin{equation}\label{eq:kde7}
-    K(\bm{x}) = \frac{1}{(2\pi)^{p/2}} \exp\left( -\frac{1}{2} \| \bm{x} \| ^2\right) ,
+    K(\bm{x}) = \frac{1}{(2\pi)^{p/2}} \exp( \| \bm{x} \| ^2/2) ,
 \end{equation}
 and the multivariate scaled Epanechnikov kernel by
 \begin{equation}\label{eq:kde8}
-    K(\bm{x}) = \frac{p+2}{c_p}\left(1 - \frac{\| \bm{x} \| ^2}{5} \right)_+  ,
+    K(\bm{x}) = \frac{p+2}{c_p}(1 - \| \bm{x} \| ^2 / 5)_+  ,
 \end{equation}
 where \(c_p\) is the volume of the unit sphere in \(\mathbb{R}^p\).
 
