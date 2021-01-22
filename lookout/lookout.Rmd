@@ -181,7 +181,9 @@ p1 | p2
 
 ### Persistent homology {-}
 
-```{r annulus, fig.cap="Rips complexes resulting from different $\\varepsilon$ values.", fig.width=7, fig.height=7}
+Given a point cloud of data, the resulting Rips complex depends on the value of the proximity parameter $\varepsilon$. As we increase $\varepsilon$, topological features such as connected components and holes appear and disappear. This is the focus of persistent homology. For example, in Figure&nbsp;\ref{fig:annulus}, we start with a large number of connected components (top-left) and as $\varepsilon$ increases to $0.8$ the number of connected components merge and decrease to 1 (bottom-left). Around this value of $\varepsilon$, a hole appears and as $\varepsilon$ increases to $1.5$, it disappears (bottom-right). The appearances and disappearances of these topological features are referred to as births and deaths and are illustrated using a *barcode* or a *persistence diagram*.
+
+```{r annulus, fig.cap="Rips complexes resulting from different $\\varepsilon$ values.", fig.width=6, fig.height=6}
 outer_radius <- 1
 inner_radius <- 0.7
 n <- 50
@@ -245,8 +247,6 @@ p6 <- ggplot(X, aes(x = x, y = y)) +
 
 (p3 | p4) / (p5 | p6)
 ```
-
-Given a point cloud of data, the resulting Rips complex depends on the value of the proximity parameter $\varepsilon$. As we increase $\varepsilon$, topological features such as connected components and holes appear and disappear. This is the focus of persistent homology. For example, in Figure&nbsp;\ref{fig:annulus}, we start with a large number of connected components (top-left) and as $\varepsilon$ increases to $0.8$ the number of connected components merge and decrease to 1 (bottom-left). Around this value of $\varepsilon$, a hole appears and as $\varepsilon$ increases to $1.5$, it disappears (bottom-right). The appearances and disappearances of these topological features are referred to as births and deaths and are illustrated using a *barcode* or a *persistence diagram*.
 
 ```{r barcodeandpersistence, fig.cap="The graph on the left shows the barcode of the point cloud in Figure \\ref{fig:annulus} and the graph on the right shows the persistence diagram.", dependson="annulus"}
 # compute the persistent homology
@@ -361,25 +361,23 @@ We will use the leave-one-out kernel density estimator given by
 \end{equation}
 which can be simplified to
 \begin{equation}\label{eq:kde9b}
-  \hat{f}_{-j}(\bm{x}_j;\bm{H}) = \big[n\hat{f}(\bm{x}_j;\bm{H}) - K_{\bm{H}}(\bm{0})\big]/(n-1)
+  \hat{f}_{-j}(\bm{x}_j;\bm{H}) = \big[n\hat{f}(\bm{x}_j;\bm{H}) - \bm{H}^{-1/2}K(\bm{0})\big]/(n-1)
 \end{equation}
 when evaluated at the observation omitted.
 
-
+A major challenge in using kernel density estimates for outlier detection is selecting the appropriate bandwidth. There is a large body of literature on kernel density estimation and bandwidth selection [@Scott1994;@Wang2019] that focuses on computing density estimates that represent the data as accurately as possible, where measures of accuracy have certain asymptotic properties.  However, our goal is somewhat different as we are interested in finding outliers in the data, rather than finding a good representation for the rest of the data. Often the usual bandwidth selection methods result in bandwidths that are too small and can cause the kernel density estimates of the boundary and near-boundary points to be confused with outliers. In high dimensions this problem is exacerbated due to the sparsity of the data. Thus, we need a bandwidth that assists outlier detection. A too small bandwidth causes everything to be outliers, while too large a bandwidth will lead to outliers being hidden.
 
 # Methodology {#sec:lookout}
 
 ## Bandwidth selection using TDA {#subsec:selectingBandwidth}
 
-The main challenge in using kernel density estimates for outlier detection is selecting the appropriate bandwidth. There is a large body of literature on kernel density estimation and bandwidth selection [@Scott1994;@Wang2019] that focuses on computing density estimates that represent the data as accurately as possible, where measures of accuracy have certain asymptotic properties. The most common measure of performance that evaluates kernel density estimates is the mean integrated squared error (MISE). However, our goal is somewhat different as we are interested in finding outliers in the data and thus do not interest ourselves in finding a good representation for the rest of the data. The optimal bandwidth which minimizes the MISE is generally not suitable for outlier detection. Often this bandwidth is too small and causes the kernel density estimates of the boundary and near-boundary points to be too low and similar to those of the outliers. In high dimensions this problem is exacerbated due to the sparsity of the data. Thus, we need a bandwidth that assists outlier detection. A too small bandwidth causes everything to be outliers, while too large a bandwidth hides outliers with other points.
+To select a bandwidth for a kernel density estimate designed for outlier detection, we propose to use the barcode discussed in Section \ref{subsec:tda}. First we construct the barcode of the data cloud for dimension zero using the Vietoris-Rips diameter. From the barcode we obtain the sequence of death diameters $\{d_i\}_{i = 1}^N$ for the connected components. By construction this is an increasing sequence as seen in Figure \ref{fig:barcodeandpersistence}. 
 
-To select a bandwidth for outlier detection, we use the barcode discussed in Section \ref{subsec:tda}. First we construct the barcode of the data cloud for dimension zero using the Vietoris-Rips diameter. From the barcode we obtain the sequence of death diameters for the connected components, i.e. the sequence of diameters at which connected components merge into one another and disappear. By construction this is an increasing sequence as seen in Figure \ref{fig:barcodeandpersistence}. Let us denote this sequence by $\{d_i\}_{i = 1}^N$, that is we consider the barcode to have $N$ horizontal line segments for dimension $0$. To understand this sequence better we consider an example and compare $\{d_i\}_{i = 1}^N$ with $k$ nearest neighbor distances for different $k$. Figure \ref{fig:TDAKNN} shows an annulus with some points in the center, its barcode, and the violin plot of different distances. The set $\{d_i\}_{i = 1}^N$ is denoted as TDA in Figure \ref{fig:TDAKNN} with KNN distances for $k \in \{1, 5, 10\}$ denoted by NN\_1, NN\_5 and NN\_10 respectively. We see that the TDA Rips diameters have a non-zero intersection with KNN distances for each $k$. That is, we can think of the TDA distances as a subset of the union of different KNN distances. Consequently, we can use TDA distances without having to select the parameter $k$ for KNN distances.
-
-```{r TDAKNN, fig.cap="An annulus with some points in the center on the top left. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom."}
+```{r TDAKNN, fig.cap="Top left: A scatterplot of 1000 observations with most points falling on an annulus and some points near the center. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom."}
 oo <- 10
 outer_radius <- 1
 inner_radius <- 0.7
-n <- 1000
+n <- 1000 - oo
 rho <- sqrt(abs(rnorm(n, mean = 5, sd = 1)))
 theta <- runif(n, 0, 2 * pi)
 X <- bind_rows(
@@ -396,20 +394,19 @@ g1 <- ggplot(X, aes(x, y)) +
   geom_point() +
   theme_bw()
 
-phom <- calculate_homology(X, dim = 0)
-g2 <- plot_barcode(phom)
-
 # KNN distances
+phom <- calculate_homology(X, dim = 0)
+top2 <- tail(phom[,"death"],2)
 df <- tibble(
     Type = "TDA",
-    Distance = phom[,3]
+    Distance = phom[,"death"]
   )
-nn_obj <- RANN::nn2(X, k = 11)
-for (kk in c(2, 6, 11)) {
+nn_obj <- RANN::nn2(X, k = 10+1)
+for (kk in c(1, 5, 10)) {
   df <- bind_rows(df,
     tibble(
-      Type = rep(paste0("NN_", kk - 1), NROW(nn_obj$nn.dists)),
-      Distance = nn_obj$nn.dists[, kk]
+      Type = rep(paste0("NN_", kk), NROW(nn_obj$nn.dists)),
+      Distance = nn_obj$nn.dists[, kk+1]
     )
   )
 }
@@ -427,88 +424,88 @@ g3 <- ggplot(df, aes(x = Type, y = Distance, fill = Type)) +
   xlab("Distance Type") +
   theme_bw()
 
-g4 <- plot_barcode(tail(phom, 21)) + geom_vline(xintercept = 0.436, lty = 2)
+g2 <- plot_barcode(phom) + 
+  geom_vline(xintercept = top2[1], lty = 2)
+
+g4 <- plot_barcode(tail(phom, 20)) + 
+  geom_vline(xintercept = top2[1], lty = 2)
 # g4
 
-(g1 | g2) / (g3 | g4)
+(g1 / g3) | (g2 / g4)
 ```
 
-The plot on the bottom right in Figure \ref{fig:TDAKNN} shows an enlarged version of the top part of the barcode, which contains the largest Rips diameters. A vertical dashed line is drawn at diameter 0.436, the second largest Rips diameter. As the diameter increases from 0.436 till 1.017, which is the maximum diameter, the number of connected components stay the same. For this point cloud, $(0.436, 1.017)$ is the largest diameter range for which the number of components stay the same. As such, it signifies a global structural property of the point cloud. We want to take this structure into account when selecting the bandwidth. Therefore, we choose a diameter that gives rise to persisting features, which in our case are connected components. We consider the Rips diameter intervals $(d_i, d_{i+1})$ for all $i$, and find the largest interval by computing successive differences
-\begin{equation}\label{eq:deathrad1}
-	\Delta d_i = d_{i+1} - d_i , \quad \text{for} \quad i \in \{1, \cdots, N-1 \}  .
+Consider the example shown in Figure \@ref(fig:TDAKNN). At the top left, the data are shown with most points lying on an annulus, and a few points near the centre. The barcodes for dimension 0 are shown at the top right, with lengths equal to the death diameters $\{d_i\}_{i = 1}^N$. The bottom left panel shows  violin plots comparing the death diameters (denoted by TDA) with $k$ nearest neighbor distances for $k \in \{1, 5, 10\}$. The TDA Rips diameters fall within the range of the combined KNN distances. Consequently, we can use TDA distances without having to select the parameter $k$ for KNN distances.
+
+The plot on the bottom right in Figure \ref{fig:TDAKNN} shows the largest 20 Rips diameters (out of the `r NROW(phom)` diameters shown in the top right plot). A vertical dashed line is drawn at diameter `r sprintf("%.3f",top2[1])`, the second largest Rips diameter. As the diameter increases from `r sprintf("%.3f",top2[1])` till `r sprintf("%.3f",top2[2])`, which is the maximum diameter, the number of connected components stay the same. For this point cloud, $(`r sprintf("%.3f",top2[1])`, `r sprintf("%.3f",top2[2])`)$ is the largest diameter range for which the number of components stay the same. As such, it signifies a global structural property of the point cloud. We want to take this structure into account when selecting the bandwidth. Therefore, we choose a diameter that gives rise to persisting features, which in our case are connected components. We consider the Rips diameter intervals $(d_i, d_{i+1})$ for all $i$, and find the largest interval by computing successive differences
+$\Delta d_i = d_{i+1} - d_i$, for $i \in \{1, \cdots, N-1 \}$. We choose the Rips diameter $d_i$ corresponding to the maximum $\Delta d_i$:
+\begin{equation}\label{eq:deathrad2}
+	d_* = d_{i_*} \qquad \text{where ~} i_*  = \argmax \{ \Delta d_i \}_{i=1}^{N-1}.
 \end{equation}
-We choose the Rips diameter $d_i$ that maximizes $\Delta d_i$, where
-\begin{align}\label{eq:deathrad2}
-	i_* & = \argmax \{ \Delta d_i \}_{i=1}^{N-1}  , \notag \\
-	d_* & = d_{i_*}  ,
-\end{align}
-as our chosen Rips diameter. We use this diameter $d_*$ to compute the bandwidth of the scaled Epanechnikov kernel.
-
-```{r epsilonandkernels, fig.height=3, fig.cap="The plot on the top shows two points that are $\\varepsilon = 1$ distance away from each other. The plots at the bottom show a Gaussian and an Epanechnikov kernel, with bandwidth $1$ and $2$ respectively. The choice of bandwidth makes each point contribute to the other's kernel density estimate.", fig.height=5}
-X <- tibble(
-  x = c(0,1),
-  y = c(0,0)
-)
-prox <- 1
-g5 <- ggplot(X, aes(x = x, y = y)) +
-  theme_bw() +
-  coord_fixed() +
-  stat_disk(radius = prox / 2, fill = "aquamarine3") +
-  geom_point() +
-  geom_segment(x = 0, y = 0, xend = 1, yend = 0, arrow = arrow(length = unit(0.03, "npc"))) +
-  geom_text(x = 0.5, y = 0.05, label = "1")
-
-Y <- tibble(x = seq(-2, 2, length = 1000)) %>%
-  mutate(y = dnorm(x, mean = 0, sd = 1))
-g6 <- ggplot(Y, aes(x, y)) +
-  geom_line() +
-  geom_point(x = 0, y = 0) +
-  geom_point(x = 1, y = 0) +
-  geom_segment(x = 0, y = 0, xend = 1, yend = 0) +
-  coord_fixed(ratio = 4) +
-  geom_vline(xintercept = 0, lty = 2) +
-  geom_segment(x = 1, y = -0.15, xend = 1, yend = 0.23, lty = 2) +
-  geom_ellipse(aes(x0 = 0, y0 = 0, a = 0.5, b = 0.125, angle = 0), inherit.aes = FALSE) +
-  geom_ellipse(aes(x0 = 1, y0 = 0, a = 0.5, b = 0.125, angle = 0), inherit.aes = FALSE) +
-  theme_bw()
-
-Y <- tibble(x = seq(-2, 2, length = 1000)) %>%
-  mutate(y = sqrt(4 - x^2))
-g7 <- ggplot(Y, aes(x, y)) +
-  geom_line() +
-  geom_point(x = 0, y = 0) +
-  geom_point(x = 1, y = 0) +
-  geom_segment(x = 0, y = 0, xend = 1, yend = 0) +
-  coord_fixed(ratio = 1) +
-  geom_vline(xintercept = 0, lty = 2) +
-  geom_segment(x = 1, y = -0.5, xend = 1, yend = 1.7, lty = 2) +
-  geom_circle(aes(x0 = 0, y0 = 0, r = 0.5), inherit.aes = FALSE) +
-  geom_circle(aes(x0 = 1, y0 = 0, r = 0.5), inherit.aes = FALSE) +
-  theme_bw()
-
-g5 / (g6 | g7) + plot_layout(heights=c(1,1))
-```
-
-Consider two points in the point cloud that are $\varepsilon = 1$ distance away as shown in Figure \ref{fig:epsilonandkernels}. Suppose we want these two points to contribute to each others kernel density estimates. This is illustrated in the bottom row of Figure \ref{fig:epsilonandkernels}. This can be achieved by using a range of bandwidth values. Let us consider a 1-dimensional dataset. For an Epanechnikov kernel, any bandwidth $h>\varepsilon$ would suffice. But, a larger bandwidth will make the contribution of the neighboring point higher than a smaller bandwidth. For a Gaussian kernel, there is no such restriction as any $h$ would include the other point. However, a small $h < < \varepsilon$ would make the contribution of the other point quite small. As such, we choose $h=\varepsilon$ for a Gaussian kernel where $\varepsilon$ denotes a particular choice of the Rips diameter. For the Epanechnikov kernel, we choose $h = \sqrt{5} \varepsilon$, so that it matches the variance of the Gaussian kernel.
-
-For higher dimensions, we use a bandwidth matrix of the form $\bm{H} = h\bm{I}$, and assign
+Then the bandwidth matrix is given by
 \begin{equation}\label{eq:bandwidth}
-	h = d_*^{2/p}  ,
+	\bm{H} = d_*^{2/p} \bm{I},
 \end{equation}
-giving us
+so that
 \begin{align}\label{eq:kde11}
 	\| \bm{H}^{-1/2}(\bm{x} - \bm{x}_i) \|^2
-	  & = (\bm{x} - \bm{x}_i)^T \left(\bm{H}^{-1/2}\right)^T \bm{H}^{-1/2} (\bm{x} - \bm{x}_i)  , \notag \\
-	  & = (\bm{x} - \bm{x}_i)^T \bm{H}^{-1} (\bm{x} - \bm{x}_i)  , \notag                                \\
-	  & = \frac{1}{h^p}(\bm{x} - \bm{x}_i)^T (\bm{x} - \bm{x}_i) , \notag                                \\
-	  & = \frac{1}{d_*^2}\|\bm{x} - \bm{x}_i \|^2  ,
+	  %& = (\bm{x} - \bm{x}_i)^T (\bm{H}^{-1/2})^T \bm{H}^{-1/2} (\bm{x} - \bm{x}_i)  , \notag \\
+	  %& = (\bm{x} - \bm{x}_i)^T \bm{H}^{-1} (\bm{x} - \bm{x}_i)  , \notag                                \\
+	  %& = \frac{1}{h^p}(\bm{x} - \bm{x}_i)^T (\bm{x} - \bm{x}_i) , \notag                                \\
+	  & = \frac{1}{d_*^2}\|\bm{x} - \bm{x}_i \|^2  .
 \end{align}
-where $d_*$ is the Rips diameter given in equation \eqref{eq:deathrad2}. By choosing this bandwidth we make sure that points within a distance of $d_*$ contribute to the kernel density estimate of $\bm{x}$. This diameter results in the following leave-one-out kernel density estimate
+This ensures that points within a distance of $d_*$ contribute to the kernel density estimate of $\bm{x}$, resulting in the following leave-one-out kernel density estimate
 \begin{align}\label{eq:kde12}
 	\hat{f}_{-j}(\bm{x}_j;\bm{H})
-	  & = \frac{n}{n-1} \hat{f}(\bm{x}_j;\bm{H}) - \frac{1}{(n-1)|\bm{H}|^{1/2}} K\left(\bm{0}\right)  , \notag \\
-	  & = = \frac{n}{n-1} \hat{f}(\bm{x}_j;\bm{H}) - \frac{1}{(n-1)d_*} K\left(\bm{0}\right)  .
+	  %& = \left[ n \hat{f}(\bm{x}_j;\bm{H}) - \bm{H}^{-1/2}K(\bm{0})\right]/(n-1)  \\
+	  & = \big[ n \hat{f}(\bm{x}_j;\bm{H}) - d_*^{-1} K(\bm{0})\big]/(n-1).
 \end{align}
+
+<!-- ```{r epsilonandkernels, fig.height=3, fig.cap="The plot on the top shows two points that are $\\varepsilon = 1$ distance away from each other. The plots at the bottom show a Gaussian and an Epanechnikov kernel, with bandwidth $1$ and $2$ respectively. The choice of bandwidth makes each point contribute to the other's kernel density estimate.", fig.height=5} -->
+<!-- X <- tibble( -->
+<!--   x = c(0,1), -->
+<!--   y = c(0,0) -->
+<!-- ) -->
+<!-- prox <- 1 -->
+<!-- g5 <- ggplot(X, aes(x = x, y = y)) + -->
+<!--   theme_bw() + -->
+<!--   coord_fixed() + -->
+<!--   stat_disk(radius = prox / 2, fill = "aquamarine3") + -->
+<!--   geom_point() + -->
+<!--   geom_segment(x = 0, y = 0, xend = 1, yend = 0, arrow = arrow(length = unit(0.03, "npc"))) + -->
+<!--   geom_text(x = 0.5, y = 0.05, label = "1") -->
+
+<!-- Y <- tibble(x = seq(-2, 2, length = 1000)) %>% -->
+<!--   mutate(y = dnorm(x, mean = 0, sd = 1)) -->
+<!-- g6 <- ggplot(Y, aes(x, y)) + -->
+<!--   geom_line() + -->
+<!--   geom_point(x = 0, y = 0) + -->
+<!--   geom_point(x = 1, y = 0) + -->
+<!--   geom_segment(x = 0, y = 0, xend = 1, yend = 0) + -->
+<!--   coord_fixed(ratio = 4) + -->
+<!--   geom_vline(xintercept = 0, lty = 2) + -->
+<!--   geom_segment(x = 1, y = -0.15, xend = 1, yend = 0.23, lty = 2) + -->
+<!--   geom_ellipse(aes(x0 = 0, y0 = 0, a = 0.5, b = 0.125, angle = 0), inherit.aes = FALSE) + -->
+<!--   geom_ellipse(aes(x0 = 1, y0 = 0, a = 0.5, b = 0.125, angle = 0), inherit.aes = FALSE) + -->
+<!--   theme_bw() -->
+
+<!-- Y <- tibble(x = seq(-2, 2, length = 1000)) %>% -->
+<!--   mutate(y = sqrt(4 - x^2)) -->
+<!-- g7 <- ggplot(Y, aes(x, y)) + -->
+<!--   geom_line() + -->
+<!--   geom_point(x = 0, y = 0) + -->
+<!--   geom_point(x = 1, y = 0) + -->
+<!--   geom_segment(x = 0, y = 0, xend = 1, yend = 0) + -->
+<!--   coord_fixed(ratio = 1) + -->
+<!--   geom_vline(xintercept = 0, lty = 2) + -->
+<!--   geom_segment(x = 1, y = -0.5, xend = 1, yend = 1.7, lty = 2) + -->
+<!--   geom_circle(aes(x0 = 0, y0 = 0, r = 0.5), inherit.aes = FALSE) + -->
+<!--   geom_circle(aes(x0 = 1, y0 = 0, r = 0.5), inherit.aes = FALSE) + -->
+<!--   theme_bw() -->
+
+<!-- g5 / (g6 | g7) + plot_layout(heights=c(1,1)) -->
+<!-- ``` -->
+
+<!-- Consider two points in the point cloud that are $\varepsilon = 1$ distance away as shown in Figure \ref{fig:epsilonandkernels}. Suppose we want these two points to contribute to each others kernel density estimates. This is illustrated in the bottom row of Figure \ref{fig:epsilonandkernels}. This can be achieved by using a range of bandwidth values. Let us consider a 1-dimensional dataset. For an Epanechnikov kernel, any bandwidth $h>\varepsilon$ would suffice. But, a larger bandwidth will make the contribution of the neighboring point higher than a smaller bandwidth. For a Gaussian kernel, there is no such restriction as any $h$ would include the other point. However, a small $h < < \varepsilon$ would make the contribution of the other point quite small. As such, we choose $h=\varepsilon$ for a Gaussian kernel where $\varepsilon$ denotes a particular choice of the Rips diameter. For the Epanechnikov kernel, we choose $h = \sqrt{5} \varepsilon$, so that it matches the variance of the Gaussian kernel. -->
 
 ## Algorithm *lookout*
 
