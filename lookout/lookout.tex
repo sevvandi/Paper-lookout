@@ -339,7 +339,7 @@ We have used the R packages \texttt{TDAstats} \autocite{tdastatsR} and \texttt{g
 \hypertarget{sec:methodology}{%
 \section{Mathematical background}\label{sec:methodology}}
 
-In this Section we briefly go through three different topics:
+In this section we provide some brief background on three topics that we will use in our proposed \texttt{lookout} algorithm.
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -355,13 +355,13 @@ In this Section we briefly go through three different topics:
 \hypertarget{subsec:tda}{%
 \subsection{Topological data analysis and persistent homology}\label{subsec:tda}}
 
-Topological data analysis is the study of data using topological constructs. It is about inferring high dimensional structure from low dimensional representations such as points and assembling discrete points to construct global structures \autocite{ghrist2008barcodes}. Persistent homology is a method in algebraic topology that computes topological features of a space that persist across multiple scales or spatial resolutions. These features include connected components, topological circles and trapped volumes. Features that persist for a wider range of spatial resolutions represent robust, intrinsic features of the data while features that sporadically change are perturbations resulting from noise. Persistent homology has been used in a wide variety of applications including biology \autocite{topaz2015topological}, computer graphics \autocite{carlsson2008local} and engineering \autocite{perea2015sliding}. In this Section we will give a brief overview of persistent homology without delving into the mathematical details. Readers are referred to \textcite{ghrist2008barcodes} and \textcite{Carlsson2009} for an overview and \textcite{wasserman2018topological} for a statistical viewpoint on the subject.
+Topological data analysis is the study of data using topological constructs. It is about inferring high dimensional structure from low dimensional representations such as points and assembling discrete points to construct global structures \autocite{ghrist2008barcodes}. Persistent homology is a method in algebraic topology that computes topological features of a space that persist across multiple scales or spatial resolutions. These features include connected components, topological circles and trapped volumes. Features that persist for a wider range of spatial resolutions represent robust, intrinsic features of the data while features that sporadically change are perturbations resulting from noise. Persistent homology has been used in a wide variety of applications including biology \autocite{topaz2015topological}, computer graphics \autocite{carlsson2008local} and engineering \autocite{perea2015sliding}. In this section we will give a brief overview of persistent homology without delving into the mathematical details. Readers are referred to \textcite{ghrist2008barcodes} and \textcite{Carlsson2009} for an overview and \textcite{wasserman2018topological} for a statistical viewpoint on the subject.
 
 \hypertarget{simplicial-complex}{%
 \subsubsection*{Simplicial complex}\label{simplicial-complex}}
 \addcontentsline{toc}{subsubsection}{Simplicial complex}
 
-Consider a data cloud representing a collection of points. This set of points is used to construct a graph where the points are considered vertices and the edges are determined by the distance between the points. Given a proximity parameter \(\varepsilon\), two vertices are connected by an edge if the distance between these two points is less than or equal to \(\varepsilon\). Starting from this graph, a simplicial complex --- a space built from simple pieces --- is constructed. A simplicial complex is a finite set of \(k\)-simplices, where \(k\) denotes the dimension. To give some examples, a point is a \(0\)-simplex, an edge a \(1\)-simplex, a triangle a \(2\)-simplex, and a tetrahedron a \(3\)-simplex. Suppose \(S\) denotes a simplicial complex that includes a \(k\)-simplex \(\gamma\). Then all non-empty subsets of \(\beta \subset \gamma\) are also included in \(S\). For example, if \(S\) contains a triangle \(pqr\), then the edges \(pq\), \(qr\) and \(rs\), and the vertices \(p\), \(q\) and \(r\), are also in \(S\).
+Consider a data cloud representing a collection of points. This set of points is used to construct a graph where the points are considered vertices and the edges are determined by the distance between the points. Given a proximity parameter \(\varepsilon\), two vertices are connected by an edge if the distance between these two points is less than or equal to \(\varepsilon\). Starting from this graph, a simplicial complex --- a space built from simple pieces --- is constructed. A simplicial complex is a finite set of \(k\)-simplices, where \(k\) denotes the dimension; for example, a point is a \(0\)-simplex, an edge a \(1\)-simplex, a triangle a \(2\)-simplex, and a tetrahedron a \(3\)-simplex. Suppose \(S\) denotes a simplicial complex that includes a \(k\)-simplex \(\gamma\). Then all non-empty subsets of \(\beta \subset \gamma\) are also included in \(S\). For example, if \(S\) contains a triangle \(pqr\), then the edges \(pq\), \(qr\) and \(rs\), and the vertices \(p\), \(q\) and \(r\), are also in \(S\).
 
 The \emph{Vietoris-Rips} complex and the \emph{Cech} complex are two types of \(k\)-simplicial complexes. We will construct a Vietoris-Rips complex from the data cloud as it is more computationally efficient than the Cech complex \autocite{ghrist2008barcodes}. Given a set of points and a proximity parameter \(\varepsilon > 0\), \(k+1\) points within a distance of \(\varepsilon\) to each other form a \(k\)-simplex. For example, consider 5 points \(p\), \(q\), \(r\), \(s\) and \(t\) and suppose the distance between any two points except \(t\) is less than \(\varepsilon\). Then we can construct the edges \(pq\), \(pr\), \(ps\), \(qr\), \(qs\) and \(rs\). From the edges \(pq\), \(qr\) and \(rp\) we can construct the triangle \(pqr\), from \(pq\), \(qs\) and \(sp\) the triangle \(pqs\) and so on, because the distance between any two points \(p\), \(q\), \(r\) and \(s\) is bounded by \(\varepsilon\). By constructing the \(4\) triangles \(pqr\), \(qrs\), \(rsp\) and \(spq\) we can construct the tetrahedron \(pqrs\). The vertex \(t\) is not connected to this \(3\)-simplex because the distance between \(t\) and the other vertices is greater than \(\varepsilon\). The simplicial complex resulting from these 5 points consists of the tetrahedron \(pqrs\) and all the subset \(k\)-simplices and the vertex \(t\). Figure \ref{fig:tetrahedron} shows this simplicial complex on the left and another example on the right.
 
@@ -400,14 +400,7 @@ These considerations lead to a natural question: which \(\varepsilon\) is most r
 
 Extreme Value Theory is used to model rare, extremal events. It is used in many industries including hydrology (to study 100-year floods), finance (to explore extreme risks) and insurance (to mitigate against losses due to disasters) \autocite{Reiss2001}. EVT has also been used in outlier detection \autocite{wilkinson2017visualizing,talagala2019anomaly}. In this section we will give a brief introduction to EVT using the notation in \textcite{coles2001introduction}.
 
-Consider \(n\) independent and identically distributed random variables \(X_1, \dots, X_n\) with a distribution function \(F(x) = P\{X \leq x\}\). Then the maximum of these \(n\) random variables is \(M_n = \max \{X_1, \dots, X_n\}\). If \(F\) is known, the distribution of \(M_n\) is given by
-\begin{align}\label{eq:evt2}
-    P\{M_n \leq z \}
-     & = P\{X_1 \leq z,  \dots,  X_n \leq z \} ,          \\
-     & = P\{X_1 \leq z\} \times \dots \times P\{X_n \leq z\} , \\
-     & = \left(F(z)\right)^n  .
-\end{align}
-However, \(F\) is usually not known in practice. This gap is filled by Extreme Value Theory, which studies approximate families of models for \(F^n\) so that extremes can be modeled and uncertainty quantified. Similar to the Central Limit Theorem for means, the Fisher-Tippet-Gnedenko Theorem states that under certain conditions, a scaled maximum \(\frac{M_n - a_n}{b_n}\) can have certain limit distributions.
+Consider \(n\) independent and identically distributed random variables \(X_1, \dots, X_n\) with a distribution function \(F(x) = P\{X \leq x\}\). Then the maximum of these \(n\) random variables is \(M_n = \max \{X_1, \dots, X_n\}\). If \(F\) is known, the distribution of \(M_n\) is given by \autocite[p45]{coles2001introduction} \(P\{M_n \leq z \} = \left(F(z)\right)^n\). However, \(F\) is usually not known in practice. This gap is filled by Extreme Value Theory, which studies approximate families of models for \(F^n\) so that extremes can be modeled and uncertainty quantified. The Fisher-Tippet-Gnedenko Theorem states that under certain conditions, a scaled maximum \(\frac{M_n - a_n}{b_n}\) can have certain limit distributions.
 
 \begin{theorem}[Fisher-Tippett-Gnedenko]\label{thm:FisherTippett}
     If there exist sequences $\{a_n\}$ and $\{b_n\}$ such that
@@ -431,27 +424,17 @@ However, \(F\) is usually not known in practice. This gap is filled by Extreme V
     for parameters $a, b$ and $\alpha$ where $a, \alpha >0$.
 \end{theorem}
 
-\todo[inline]{Using $a$ and $\alpha$ is confusing notation. Is this standard?}
-
 These three families of distributions can be further combined into a single family by using the following distribution function known as the Generalized Extreme Value (GEV) distribution,
 \begin{equation}\label{eq:EVT4}
     G(z) = \exp\left\{ -\left[ 1 + \xi\Big(\frac{z - \mu}{\sigma} \Big)\right]^{-1/\xi} \right\} ,
 \end{equation}
-where the domain of the function is \(\{z: 1 + \xi (z - \mu)/\sigma >0 \}\) and the parameters \(\mu, \xi \in \mathbb{R}\) and \(\sigma > 0\). The parameter \(\mu\) is called the location parameter and \(\sigma\) is called the scale parameter. The parameter \(\xi\) is called the shape parameter and it determines the behavior of the tails and differentiates between the Gumbel, Fréchet and Weibull distributions. When \(\xi = 0\) we obtain a Gumbel distribution with exponentially decaying tails. When \(\xi < 0\) we get a Weibull distribution with a finite upper end and when \(\xi > 0\) we get a Fréchet family of distributions with polynomially decaying tails.
-
-\hypertarget{block-maxima-approach}{%
-\subsubsection*{Block maxima approach}\label{block-maxima-approach}}
-\addcontentsline{toc}{subsubsection}{Block maxima approach}
-
-The GEV distributions are used to study extremes using the block maxima method. That is, observations are divided into blocks of equal length and the set of block maxima are modeled by fitting a GEV distribution. For example, one might consider yearly blocks to model the maximum daily temperature. However, this is considered a wasteful approach with respect to the data, because many data points including extremes maybe discarded by only considering the block maximum. For example, a given year may have multiple days of extreme temperatures that are higher than the maximum temperature of another year. But the block maxima approach would discard these other extremal temperatures and only consider the maximum temperature of each year.
-
-This problem is remedied by regarding the observations that exceed a high threshold as extremes. This approach is known as the Peaks Over Threshold (POT) approach and uses the Generalized Pareto Distribution (GPD).
+where the domain of the function is \(\{z: 1 + \xi (z - \mu)/\sigma >0 \}\). The location parameter is \(\mu\in\mathbb{R}\), \(\sigma>0\) is the scale parameter, while \(\xi\in\mathbb{R}\) is the shape parameter. When \(\xi = 0\) we obtain a Gumbel distribution with exponentially decaying tails. When \(\xi < 0\) we get a Weibull distribution with a finite upper end and when \(\xi > 0\) we get a Fréchet family of distributions with polynomially decaying tails.
 
 \hypertarget{the-generalized-pareto-distribution-and-the-pot-approach}{%
 \subsubsection*{The Generalized Pareto Distribution and the POT approach}\label{the-generalized-pareto-distribution-and-the-pot-approach}}
 \addcontentsline{toc}{subsubsection}{The Generalized Pareto Distribution and the POT approach}
 
-As previously, consider \(n\) independent and identically distributed random variables \(X_1, \dots, X_n\) with a distribution function \(F\). For a high threshold value \(u\), if all \(X_i > u\) are regarded as extremes, we can write the conditional probability of extreme events as
+The Peaks Over Threshold (POT) approach regards extremes as observations greater than a threshold \(u\). We can write the conditional probability of extreme events as
 \begin{equation}\label{eq:POT1}
     P\left \{X > u + y \mid X > u \right \} = \frac{1 - F(u+y)}{1 - F(u)} , \quad y >0  ,
 \end{equation}
@@ -484,38 +467,30 @@ For a chosen threshold \(u\), the parameters of the GPD can be estimated by stan
 \hypertarget{subsec:kde}{%
 \subsection{Kernel density estimation}\label{subsec:kde}}
 
-In this Section we review some basics of kernel density estimation. Consider a univariate kernel density estimator for a sample \(x_1, x_2, \dots, x_n \in \mathbb{R}\) given by
-\begin{equation}\label{eq:kde1}
-    \hat{f}(x;h) = \frac{1}{n} \sum_{i=1}^n K_h(x-x_i),
-\end{equation}
-where \(K\) denotes the kernel and \(K_h(t) = K(t/h)/h\). The Gaussian kernel is given by \(K(x) = \frac{1}{\sqrt{2\pi }}\exp(-x^2/2)\), and the Epanechnikov kernel is given by \(K(x) = \frac{3}{4}\left(1 - x^2 \right)_+\).
-In order to match the variances of different kernels, we consider the centralized second order moment of \(K\)
-\(\mu_2(K) = \int z^2 K(z) dz\), and scale \(K\) such that \(\mu_2(\tilde{K}) = 1\). By doing a change of variables for the Epanechnikov kernel we obtain
-\(\tilde{K}(x) = \frac{3}{4 \sqrt{5}}(1 - x^2/5)_+\), giving \(\mu_2(\tilde{K}) = 1\).
-
-The leave-one-out kernel density estimator is given by
-\begin{equation}\label{eq:kde9}
-    \hat{f}_{-j}(x;h) = \frac{1}{n-1}\sum_{i \neq j} K_h(x-x_i),
-\end{equation}
-which can be simplified to
-\begin{equation}\label{eq:kde9b}
-  \hat{f}_{-j}(x_j;h) = \big[n\hat{f}(x_j;h) - K_h(0)\big]/(n-1)
-\end{equation}
-when evaluated at the observation omitted.
-
-Next, we consider the multivariate kernel estimator
+For a sample \(\bm{x}_1, \bm{x}_2, \dots, \bm{x}_n \in \mathbb{R}^p\), the kernel density estimate is given by
 \begin{equation}\label{eq:kde6}
-    \hat{f}(\bm{x}; \bm{H}) = \frac{1}{n} \sum_{i=1}^n K_{\bm{H}}\left(\bm{x} -\bm{x}_i \right) ,
+  \hat{f}(\bm{x}; \bm{H}) = \frac{1}{n} \sum_{i=1}^n K_{\bm{H}}\left(\bm{x} -\bm{x}_i \right) ,
 \end{equation}
-where \(\mathbf{x} \in \mathbb{R}^p\), \(\bm{H}\) denotes a \(p \times p\) positive definite bandwidth matrix and \(K_{\bm{H}}(\bm{z}) = \bm{H}^{-1/2} K(\bm{H}^{-1/2} \bm{z})\). The multivariate Gaussian kernel is given by
+where \(\bm{H}\) denotes a \(p \times p\) positive definite bandwidth matrix, \(K_{\bm{H}}(\bm{z}) = \bm{H}^{-1/2} K(\bm{H}^{-1/2} \bm{z})\), and \(K\) is a kernel function.
+For consistency, we scale the kernels so that \(\int \|\bm{z}^2\| K(\bm{z}) d\bm{z} = 1\). The multivariate Gaussian kernel is given by
 \begin{equation}\label{eq:kde7}
-    K(\bm{x}) = \frac{1}{(2\pi)^{p/2}} \exp( \| \bm{x} \| ^2/2) ,
+  K(\bm{x}) = \frac{1}{(2\pi)^{p/2}} \exp( \| \bm{x} \| ^2/2) ,
 \end{equation}
 and the multivariate scaled Epanechnikov kernel by
 \begin{equation}\label{eq:kde8}
-    K(\bm{x}) = \frac{p+2}{c_p}(1 - \| \bm{x} \| ^2 / 5)_+  ,
+  K(\bm{x}) = \frac{p+2}{c_p}(1 - \| \bm{x} \| ^2 / 5)_+  ,
 \end{equation}
 where \(c_p\) is the volume of the unit sphere in \(\mathbb{R}^p\).
+
+We will use the leave-one-out kernel density estimator given by
+\begin{equation}\label{eq:kde9}
+    \hat{f}_{-j}(\bm{x};\bm{H}) = \frac{1}{n-1}\sum_{i \neq j} K_{\bm{H}}(\bm{x}-\bm{x}_i),
+\end{equation}
+which can be simplified to
+\begin{equation}\label{eq:kde9b}
+  \hat{f}_{-j}(\bm{x}_j;\bm{H}) = \big[n\hat{f}(\bm{x}_j;\bm{H}) - K_{\bm{H}}(\bm{0})\big]/(n-1)
+\end{equation}
+when evaluated at the observation omitted.
 
 \hypertarget{sec:lookout}{%
 \section{Methodology}\label{sec:lookout}}
@@ -663,7 +638,7 @@ Figure \ref{fig:outlierpersistence2} shows the persistence of outliers over diff
 \hypertarget{sec:simulations}{%
 \section{Experiments with synthetic data}\label{sec:simulations}}
 
-In this Section we first explore outlier persistence using simple examples. Then we conduct experiments using synthetic data comparing lookout to HDoutliers \autocite{wilkinson2017visualizing} and stray \autocite{stray}, both of which use extreme value theory to detect outliers.
+In this section we first explore outlier persistence using simple examples. Then we conduct experiments using synthetic data comparing lookout to HDoutliers \autocite{wilkinson2017visualizing} and stray \autocite{stray}, both of which use extreme value theory to detect outliers.
 
 \hypertarget{sec:PersistenceExamples}{%
 \subsection{Outlier persistence examples}\label{sec:PersistenceExamples}}
@@ -748,7 +723,7 @@ The top graph in Figure \ref{fig:ComparisonEx3} shows the outlier persistence fo
 \hypertarget{sec:applications}{%
 \section{Results on a data repository}\label{sec:applications}}
 
-For this Section we use the data repository used in \textcite{datasets}. This repository has more than \(12000\) outlier detection datasets that were prepared from classification datasets. Dataset preparation involves downsampling the minority class in classification datasets, converting the categorical variables to numerical and accounting for missing values, all of which is detailed in \textcite{normalizationoutliers}.
+For this section we use the data repository used in \textcite{datasets}. This repository has more than \(12000\) outlier detection datasets that were prepared from classification datasets. Dataset preparation involves downsampling the minority class in classification datasets, converting the categorical variables to numerical and accounting for missing values, all of which is detailed in \textcite{normalizationoutliers}.
 
 \begin{figure}
 \centering
