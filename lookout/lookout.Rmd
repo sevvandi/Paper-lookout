@@ -509,11 +509,12 @@ This ensures that points within a distance of $d_*$ contribute to the kernel den
 
 ## Algorithm *lookout*
 
-Now we have all the building blocks necessary to describe the algorithm *lookout*. Consider an $N \times p$ data matrix $\bm{X}$ with $N$ observations in $\mathbb{R}^p$. It is customary in outlier detection to scale the data so that all attributes contribute equally to outlier detection. Min-Max normalization, which scales each attribute to $[0, 1]$ has been shown effective compared to other normalization techniques [@kandanaarachchi2018normalization]. As such, we normalize the data using Min-Max. To accommodate datasets that do not need to be normalized, we make normalization a user option.
+Now we have all the building blocks necessary to describe the algorithm *lookout*. Consider an $N \times p$ data matrix $\bm{X}$ with $N$ observations in $\mathbb{R}^p$. It is customary in outlier detection to scale the data so that all variables contribute equally to outlier detection. We normalize the data using Min-Max normalization, which scales each attribute to $[0, 1]$ and has been shown to be effective compared to other normalization techniques [@kandanaarachchi2018normalization]. To accommodate datasets that do not need to be normalized, we make normalization a user option.
 
-To determine the bandwidth for kernel density estimation, we use the Rips diameter $d_*$ as specified in equation \eqref{eq:deathrad2} and use the bandwidth matrix $\bm{H} = h \bm{I}$ with $h = (d_*)^{2/p}$ as in equation \eqref{eq:bandwidth}. We use the scaled Epanechnikov kernel to compute kernel density estimates and leave-one-out kernel density estimates as in equation \eqref{eq:kde12}.
+We compute the kernel density estimates defined by \eqref{eq:kde6} and the leave-one-out kernel density estimates defined in \eqref{eq:kde12}, with the bandwidth matrix \eqref{eq:bandwidth}, and the scaled Epanechnikov kernel \eqref{eq:kde8}.
 
-Let us denote the kernel density estimate of $\bm{x}_i$ by $y_i$ and the leave-one-out kde of $\bm{x}_i$ (by leaving out $\bm{x}_i$) by $y_{-i}$. As we want to model outliers as extremes, we use $-\log(y_i)$ and $-\log(y_{-i})$ so that smaller kde values are mapped to higher values and vice versa. Then we fit a Generalized Pareto Distribution to $-\log(y_i)$ using the POT approach discussed in Section \ref{subsec:evt}. We use the $90^{\text{th}}$ percentile as the threshold for the POT approach as recommended by @bommier2014peaks. Using the fitted GPD parameters, $\mu$, $\sigma$ and $\xi$ we find the probability of the leave-one-out kde values $-\log(y_{-i})$, that is, we compute $P\left(-\log(y_{-i})|\mu, \sigma,\xi \right)$. Then, using a pre-defined cut-off probability $\alpha$, we declare points with $P\left(-\log(y_{-i})|\mu, \sigma,\xi \right) < \alpha$ as outliers. We summarize these steps in Algorithm \ref{algo:lookout}.
+Denote the kernel density estimate of $\bm{x}_i$ by $y_i$ and the leave-one-out kde of $\bm{x}_i$ (by leaving out $\bm{x}_i$) by $y_{-i}$. Then we fit a Generalized Pareto Distribution to $-\log(y_i)$ using the POT approach discussed in Section \ref{subsec:evt}. We use the $90^{\text{th}}$ percentile as the threshold for the POT approach as recommended by @bommier2014peaks. Using the fitted GPD parameters, $\mu$, $\sigma$ and $\xi$, we declare points with $P\left(-\log(y_{-i})|\mu, \sigma,\xi \right) < \alpha$ to be outliers. We summarize these steps in Algorithm \ref{algo:lookout}.
+
 \DontPrintSemicolon
 \begin{algorithm}\fontsize{11}{16}\selectfont
 	\SetKwInOut{Input}{input~~~}
@@ -523,22 +524,18 @@ Let us denote the kernel density estimate of $\bm{x}_i$ by $y_i$ and the leave-o
 	If \textit{unitize = TRUE}, then normalize the data so that each column is scaled to $[0,1]$.\\
 	Construct the persistence homology barcode of the data. \\
 	Find $d_*$ as in equation \eqref{eq:deathrad2}. \\
-	Using $h = (d_*)^{2/p}$ and $\bm{H} = h\bm{I}$ compute kernel density estimates and leave-one-out kernel density estimates using the scaled Epanechnikov kernel. \\
+	Using $\bm{H} = (d_*)^{2/p}\bm{I}$, compute kernel density estimates \eqref{eq:kde6} and leave-one-out kernel density estimates \eqref{eq:kde12} using the scaled Epanechnikov kernel \eqref{eq:kde8}. \\
 	Denote the kde of $\bm{x}_i$ by $y_i$ and leave-one-out kde by $y_{-i}$.\\
-	Using the POT approach fit a GPD to $\{-\log(y_i)\}_{i=1}^N$ and find $\mu, \sigma$ and $\xi$. \\
-	Using the GPD parameters $\mu, \sigma$ and $\xi$ find the probability of the leave-one-out kde values $\{-\log(y_{-i})\}_{i=1}^N$, i.e., $P\left(-\log(y_{-i})|\mu, \sigma, \xi \right)$ for all $i$. \\
+	Using the POT approach, fit a GPD to $\{-\log(y_i)\}_{i=1}^N$ and estimate $\mu, \sigma$ and $\xi$. \\
+	Using the GPD estimates $\hat\mu$, $\hat\sigma$ and $\hat\xi$, find the probability of the leave-one-out kde values $\{-\log(y_{-i})\}_{i=1}^N$, i.e., $P\left(-\log(y_{-i})|\mu, \sigma, \xi \right)$ for all $i$. \\
 	If $P\left(-\log(y_{-i})|\mu, \sigma, \xi \right) < \alpha$, then declare $\bm{x}_i$ as an outlier.
 	\caption{\itshape lookout.}
 	\label{algo:lookout}
 \end{algorithm}
 
-The output probability of lookout is the GPD probability of the points, and as such low probabilities indicate outliers and high probabilities indicate normal points. In addition, as we take $-\log(y_i)$ and $-\log(y_{-i})$ to fit a GPD, the scaling factor of the kernel $K(\bm{x})$ does not affect the GPD parameters as it is just an offset. For the scaled Epanechnikov kernel
-\begin{equation}\label{eq:lookout1}
-	\log(K(\bm{x})) = \log\left( \frac{p+2}{c_p}\right) + \log\left( \left(1 -\frac{\| x \|^2}{5} \right)_+\right) .
-\end{equation}
-That is, the logarithm values of all points are shifted by an equal amount because of the scaling factor in $K(\bm{x})$. It is similar for the Gaussian kernel as well. Thus, the scaling factor of the kernel can be disregarded for the algorithm lookout.
+The output probability of lookout is the GPD probability of the points, so that low probabilities indicate likely outliers and high probabilities indicate normal points. Note that the scaling factor of the kernel $K(\bm{x})$ does not affect the GPD parameters as it is just an offset after taking logs of $y_i$ or $y_i$. 
 
-The algorithm lookout has only 2 parameters, $\alpha$ and *unitize*. The parameter $\alpha$ determines the threshold for outlier detection and the parameter *unitize* gives the user an option to normalize the data. We set $\alpha= 0.05$ and *unitize* = `TRUE` as default parameter values. We use the Epanechnikov kernel in lookout due to ease of computation. However, any kernel can be incorporated as long as the variances are matched.
+The algorithm lookout has only 2 inputs, $\alpha$ and *unitize*. The parameter $\alpha$ determines the threshold for outlier detection and *unitize* gives the user an option to normalize the data. We set $\alpha= 0.05$ and *unitize* = `TRUE` as default parameter values. We use the Epanechnikov kernel in lookout due to ease of computation. However, any kernel can be incorporated as long as the variances are matched.
 
 ## Outlier persistence {#subsec:persistence}
 
