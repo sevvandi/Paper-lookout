@@ -353,7 +353,7 @@ and the multivariate scaled Epanechnikov kernel by
 \begin{equation}\label{eq:kde8}
   K(\bm{x}) = \frac{p+2}{c_p}(1 - \| \bm{x} \| ^2 / 5)_+  ,
 \end{equation}
-where $c_p$ is the volume of the unit sphere in $\mathbb{R}^p$.
+where $c_p$ is the volume of the unit sphere in $\mathbb{R}^p$ and $u_+ = \max(0,u)$.
 
 We will use the leave-one-out kernel density estimator given by
 \begin{equation}\label{eq:kde9}
@@ -603,9 +603,9 @@ We summarize these steps in Algorithm \ref{algo:persistence}.
 
 Next, we extend this notion of persistence to include significance levels $\alpha \in \{0.01,  0.02,  \dots,  0.1 \}$.
 
-We define the *strength* of an outlier to be inversely proportional to its significance level. Let $\bm{x}_j$ be an outlier identified at significance level $\alpha$, where $\alpha$ is the smallest significance level for which $\bm{x}_j$ is identified as an outlier. Then
+We define the *strength* of an outlier based on its significance level. Let $\bm{x}_j$ be an outlier identified at significance level $\alpha$, where $\alpha$ is the smallest significance level for which $\bm{x}_j$ is identified as an outlier. Then
 \begin{equation}\label{eq:strengthpersistence}
-	\text{strength} (\bm{x}_j) = \frac{0.11 - \alpha}{0.01} .
+	\text{strength} (\bm{x}_j) = \frac{(0.11 - \alpha)_+}{0.01}
 \end{equation}
 Thus, if a point is identified as an outlier with a significance level $\alpha = 0.01$, then it has strength 10, and an outlier with $\alpha = 0.1$ has strength 1. To compute persistence over significance levels, the only modification that needs to be done to Algorithm \ref{algo:persistence} is to fix $\alpha = 0.1$ and to record the minimum significance level if $P\left(-\log(y_{-i})|\mu_0, \sigma_0, \xi_0 \right) < 0.1$.
 Then we can use equation \eqref{eq:strengthpersistence} to compute its strength.
