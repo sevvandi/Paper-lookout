@@ -619,11 +619,11 @@ Figure \ref{fig:outlierpersistence2} shows the persistence of outliers over diff
 
 # Experiments with synthetic data {#sec:simulations}
 
-In this section we first explore outlier persistence using simple examples. Then we conduct experiments using synthetic data comparing lookout to HDoutliers [@wilkinson2017visualizing] and stray [@stray], both of which use extreme value theory to detect outliers.
+In this section we first explore outlier persistence using simple examples. Then we conduct experiments using synthetic data comparing lookout to HDoutliers [@wilkinson2017visualizing] and stray [@stray], both of which also use extreme value theory to detect outliers.
 
 ## Outlier persistence examples {#sec:PersistenceExamples}
 
-```{r persistenceEx, fig.cap="Examples of outlier persistence and strength. The top row shows the data with the outliers identified by lookout with $\\alpha = 0.1$ colored by its strength. The bottom row shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth."}
+```{r persistenceEx, fig.cap="Examples of outlier persistence and strength. The top row shows the data with the outliers identified by lookout with $\\alpha = 0.1$ colored by its strength. The bottom row shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth.", fig.height=7, fig.asp=1.4}
 # ---------------------------------------------------------------------
 # TASK 1 - EXAMPLE 1
 # ---------------------------------------------------------------------
@@ -639,17 +639,19 @@ X <- bind_rows(
 )
 outnew <- persisting_outliers(X, unitize = FALSE)
 g2 <- autoplot(outnew) +
-  geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed") +
-  theme(legend.position = "none")
+  geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed") 
 
 lookobj <- lookout(X, unitize = FALSE, alpha = 0.1)
 X2 <- X %>%
-  mutate(strength = pmax(0, (0.1 - lookobj$outlier_probability) / 0.01))
+  mutate(strength = pmax(0, (0.11 - lookobj$outlier_probability) / 0.01))
 g1 <- ggplot(X2, aes(x, y)) +
   geom_point(aes(color = strength)) +
   scale_colour_gradientn(colours = col_pal2) +
   theme_bw() +
   theme(legend.position = "none")
+
+extra_outlier <- X2 %>%
+  filter(strength > 0, strength < 2)
 
 # ---------------------------------------------------------------------
 # TASK 2 - EXAMPLE 2
@@ -677,7 +679,7 @@ g4 <- autoplot(outnew) +
 
 lookobj <- lookout(X, unitize = FALSE, alpha = 0.1)
 X2 <- X %>%
-  mutate(strength = pmax(0, (0.1 - lookobj$outlier_probability) / 0.01))
+  mutate(strength = pmax(0, (0.11 - lookobj$outlier_probability) / 0.01))
 g3 <- ggplot(X2, aes(x, y)) +
   geom_point(aes(color = strength)) +
   scale_colour_gradientn(colours = col_pal2) +
@@ -714,7 +716,7 @@ g6 <- autoplot(outnew) +
 
 lookobj <- lookout(X, unitize = FALSE, alpha = 0.1)
 X2 <- X %>%
-  mutate(strength = pmax(0, (0.1 - lookobj$outlier_probability) / 0.01))
+  mutate(strength = pmax(0, (0.11 - lookobj$outlier_probability) / 0.01))
 g5 <- ggplot(X2, aes(x, y)) +
   geom_point(aes(color = strength)) +
   ylab("") +
@@ -751,7 +753,7 @@ g8 <- autoplot(outnew) +
 
 lookobj <- lookout(X, unitize = FALSE, alpha = 0.1)
 X2 <- X %>%
-  mutate(strength = pmax(0, (0.1 - lookobj$outlier_probability) / 0.01))
+  mutate(strength = pmax(0, (0.11 - lookobj$outlier_probability) / 0.01))
 g7 <- ggplot(X2, aes(x, y)) +
   geom_point(aes(color = strength)) +
   ylab("") +
@@ -774,30 +776,32 @@ X <- bind_rows(
 outnew <- persisting_outliers(X, unitize = FALSE)
 g10 <- autoplot(outnew) +
   geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed") +
-  ylab("")
+  ylab("") +
+  theme(legend.position = "none")
 
 lookobj <- lookout(X, unitize = FALSE, alpha = 0.1)
 X2 <- X %>%
-  mutate(strength = pmax(0, (0.1 - lookobj$outlier_probability) / 0.01))
+  mutate(strength = pmax(0, (0.11 - lookobj$outlier_probability) / 0.01))
 g9 <- ggplot(X2, aes(x, y)) +
   geom_point(aes(color = strength)) +
   ylab("") +
   scale_colour_gradientn(colours = col_pal2) +
-  theme_bw()
+  theme_bw() +
+  theme(legend.position = "none")
 
-(g1 | g3 | g5 | g7 | g9) /
-  (g2 | g4 | g6 | g8 | g10)
+(g1 / g3 / g5 / g7 / g9) |
+  (g2 / g4 / g6 / g8 / g10)
 ```
 
-Figure \ref{fig:persistenceEx} shows 5 examples in $\mathbb{R}^2$, each showing the data, outliers identified by lookout, their strengths and the corresponding outlier persistence diagram. In each example, the outliers are placed at the end of the synthetic dataset, i.e. their observation indices are the highest. The dashed lines in the outlier persistence diagram indicate the bandwidth chosen by lookout. The graph at (row 1, column 1) show normally distributed data with 5 outliers in the top right corner, which are identified by lookout with high strength. Upon close inspection we see another point approximately at $(4,0)$, which is slightly detached from the normal set of points, also being identified by lookout with low strength. The lookout probability of this point is $0.078$, and as such it would only be identified as an outlier when $\alpha > 0.78$. We have used $\alpha = 0.1$ so that we can match the strengths of the outliers with the persistence diagram. The corresponding persistence diagram shows high strength outlier persistence for the points at the top right hand corner. Similarly, from other graphs in row 1, we see that outliers far away from high density regions are identified by lookout with high strength and points outside high density regions, but not so far away are identified with low strength. Some graphs, such as the graph in (row1, column2) is squashed horizontally making the $x$ values more condensed than the $y$ values. For the graph in (row 1, column 3) lookout has identified a cluster of outliers approximately at $(6,6)$ with high strength as well as individual points slightly away from high density regions with low strength. The difference in graph at (row 1, column 4) is that it has single outliers instead of clusters, which are again identified by lookout. For the last graph on row 1, lookout has identified a cluster of outliers at $(-0.6, 0.35)$ with low strength and the remaining outliers with high strength. From the persistence diagrams we see that many points are identified as outliers for low bandwidth values, but only a small number of outliers persist until the bandwidth is large. In addition, some outliers persist at low strength values. For example, the persistence diagram at (row 2, column 5) has outliers around index 500 with low strength persisting until large bandwidth values.
+Figure \ref{fig:persistenceEx} shows five examples in $\mathbb{R}^2$, each showing the data, outliers identified by lookout, their strengths and the corresponding outlier persistence diagram. In each example, the outliers are placed at the end of the synthetic dataset, i.e. their observation indices are the highest. The dashed lines in the outlier persistence diagram indicate the bandwidth chosen by lookout. The top left plot shows normally distributed data with 5 outliers in the top right corner, which are identified by lookout with high strength. Upon close inspection we see two further points, both approximately at $(`r sprintf("%.1f", mean(extra_outlier[['x']]))`, `r sprintf("%.1f", mean(extra_outlier[['y']]))`)$ and slightly detached from the main group of points, also being identified by lookout as outliers with low strength. The lookout probabilities of each of these points is less than 2, and so they would only be identified as outliers when $\alpha > `r 0.11 - 2*0.01`$. The corresponding persistence diagram shows high strength outlier persistence for the points at the top right hand corner. Similarly, from other graphs in column 1, we see that outliers far from high density regions are identified by lookout with high strength and points outside high density regions, but not so far away are identified with low strength. For the example in row 3, lookout has identified a cluster of outliers approximately at $(6,6)$ with high strength as well as individual points slightly away from high density regions with low strength. The example in row 5 has single outliers rather than clusters, which are again identified by lookout. For the last example in the bottom row, lookout has identified a cluster of outliers at $(-0.6, 0.35)$ with low strength and the remaining outliers with high strength. From the persistence diagrams we see that many points are identified as outliers for low bandwidth values, but only a small number of outliers persist until the bandwidth is large. In addition, some outliers persist at low strength values. For example, the persistence diagram in row 5 has outliers around index 500 with low strength persisting until large bandwidth values.
 
 From the examples in Figure \ref{fig:persistenceEx} we see that lookout selects a bandwidth appropriate for outlier detection that is neither too small nor too large. In addition, lookout identifies outliers correctly. The outlier persistence diagram gives a snapshot of the outliers for varying bandwidths and significance levels increasing our understanding of the dataset and its outliers.
 
 ## Comparison Study {#sec:SyntheticComparison}
 
-In this section we conduct 3 experiments with synthetic data. Each experiment considers 2 data distributions; the main distribution and a handful of outliers, which are distributed differently. There are several iterations to each experiment. The iterations serve as a measure of the degree of outlyingness of the small sample. The outliers start off with the main distribution and slowly move out of the main distribution with each iteration. Consequently, in the initial iterations the points in the outlying distribution are not actual outliers as they are similar to the points in the main distribution, while in the later iterations they are quite different from the main distribution. We repeat each iteration 10 times to account for the randomness of the data generation process.
+In this section we conduct three experiments with synthetic data. Each experiment considers two data distributions; the main distribution and a handful of outliers which are distributed differently. There are several iterations to each experiment. The iterations serve as a measure of the degree of outlyingness of the small sample. The outliers start off with the main distribution and slowly move out of the main distribution with each iteration. Consequently, in the initial iterations the points in the outlying distribution are not actual outliers as they are similar to the points in the main distribution, while in the later iterations they are quite different from the main distribution. We repeat each iteration 10 times to account for the randomness of the data generation process.
 
-We compare the results of lookout with 2 other algorithms; HDoutliers [@wilkinson2017visualizing] and stray [@stray], as both these algorithms use extreme value theory for outlier detection. For all three algorithms we use $\alpha = 0.05$. We use two evaluation metrics suited for imbalanced datasets: the F-measure and the geometric mean of sensitivity and specificity denoted by Gmean. The F-measure is defined as
+We compare the results of lookout with 2 other algorithms; HDoutliers [@wilkinson2017visualizing] and stray [@stray], as both these algorithms also use extreme value theory for outlier detection. For all three algorithms we use $\alpha = 0.05$. We use two evaluation metrics suited for imbalanced datasets: the F-measure and the geometric mean of sensitivity and specificity denoted by Gmean. The F-measure is defined as
 \begin{equation}\label{eq:fmeasure}
 	\text{F-measure} = 2\frac{\text{precision} \times \text{recall}}{\left( \text{precision} + \text{recall} \right) }  ,
 \end{equation}
@@ -819,9 +823,9 @@ where *tn* denotes the true negatives (predicted = false, actual = false). In fa
 
 ### Experiment 1 {-}
 
-For this experiment we consider two normally distributed samples in $\mathbb{R}^6$; one large and one small starting at the same location with the small sample slowly moving out in each iteration. The set of points belonging to the small sample are considered outliers. We consider 400 points in the bigger sample and 5 in the outlying sample, placed at indices 401 - 405. The points in the larger sample are distributed in each dimension as $\mathcal{N}(0, 1)$. The outliers differ from the normal points only in one dimension, i.e. they are distributed as $\mathcal{N}\left(2 + (i-1)/2, 0.2 \right)$, where $i$ denotes the iteration. As such, in the first iteration the outliers are distributed as $\mathcal{N}\left(2  , 0.2 \right)$ in the first dimension and in the tenth iteration they are distributed as $\mathcal{N}\left(6.5  , 0.2 \right)$, showing that it has clearly moved out from the main distribution. Each iteration is repeated 10 times to account for randomness.
+For this experiment we consider two normally distributed samples in $\mathbb{R}^6$; one large and one small starting at the same location with the small sample slowly moving out in each iteration. The set of points belonging to the small sample are considered outliers. We consider 400 points in the bigger sample and 5 in the outlying sample, placed at indices 401--405. The points in the larger sample are distributed in each dimension as $\mathcal{N}(0, 1)$. The outliers differ from the normal points in only one dimension; i.e. they are distributed as $\mathcal{N}\left(2 + (i-1)/2, 0.2 \right)$, where $i$ denotes the iteration. In the first iteration the outliers are distributed as $\mathcal{N}\left(2, 0.2 \right)$ in the first dimension and in the tenth iteration they are distributed as $\mathcal{N}\left(6.5, 0.2 \right)$. Each iteration is repeated 10 times to account for randomness.
 
-```{r ComparisonEx1, fig.cap="Experiment 1 with outliers moving out from the normal distribution in $\\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the corresponding outlier persistence plot. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions."}
+```{r ComparisonEx1, fig.cap="Experiment 1 with outliers moving out from the normal distribution in $\\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the corresponding outlier persistence plot. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. In this experiment, stray and HDoutliers gave identical results."}
 values <- rep(0, 10)
 pp <- 10
 hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <-
@@ -1032,13 +1036,13 @@ g4 <- ggplot(dfl, aes(Iteration, value)) +
 (g1 | g2) / (g3 | g4)
 ```
 
-The graph at the top left of Figure \ref{fig:ComparisonEx2} shows the points in the final iteration and repetition. The graph on the top right shows the outlier persistence for the final iteration and repetition. The outliers are placed at indices 801 - 805 and we see that they are not identified as outliers for small bandwidth values because the outliers are clustered together. This shows the importance of bandwidth selection for outlier detection when using kernel density estimates. The bandwidth selected by lookout is shown as a dashed line. The bottom two graphs show the mean F-measure and Gmean of the 3 algorithms for each iterations over 10 repetitions. We see that lookout identifies the outliers earlier compared stray and HDoutliers, which does not identify any outliers.
+The graph at the top left of Figure \ref{fig:ComparisonEx2} shows the points in the final iteration and repetition. The graph on the top right shows the outlier persistence for the final iteration and repetition. The outliers are placed at indices 801--805 and we see that they are not identified as outliers for small bandwidth values because the outliers are clustered together. This shows the importance of bandwidth selection for outlier detection when using kernel density estimates. The bandwidth selected by lookout is shown as a dashed line. The bottom two graphs show the mean F-measure and Gmean of the 3 algorithms for each iteration over 10 repetitions. We see that lookout identifies the outliers earlier than stray while HDoutliers does not identify any outliers.
 
 ### Experiment 3 {-}
 
-For this experiment we consider a unit cube in $\mathbb{R}^{20}$ with 500 points. Of these points 499 are uniformly distributed in each direction and the remaining point is considered an outlier. The outlier moves towards the point $\left( 0.9, 0.9, \dots, 0.9 \right)$ with each iteration. For the $i^{\text{th}}$ iteration the first $i$ coordinates of the outlier are each equal to $0.9$ and the remaining coordinates are uniformly distributed in $(0,1)$. The index of the outlier is 500. Each iteration is repeated 10 times with different randomizations.
+For this experiment we consider a unit cube in $\mathbb{R}^{20}$ with 500 points, of which 499 points are uniformly distributed in each direction and the remaining point is an outlier. The outlier moves towards the point $\left( 0.9, 0.9, \dots, 0.9 \right)$ with each iteration. For the $i^{\text{th}}$ iteration the first $i$ coordinates of the outlier are each equal to $0.9$ and the remaining coordinates are uniformly distributed in $(0,1)$. The index of the outlier is 500. Each iteration is repeated 10 times with different randomizations.
 
-```{r ComparisonEx3, fig.cap="Experiment 3 with an outlier moving to $(0.9, 0.9, \\dots)$. Graph on the top shows the outlier persistence plot for the last iteration and repetition. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions."}
+```{r ComparisonEx3, fig.cap="Experiment 3 with an outlier moving to $(0.9, 0.9, \\dots)$. Graph on the top shows the outlier persistence plot for the last iteration and repetition. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. In this experiment, stray and HDoutliers gave identical results."}
 values <- rep(0, 10)
 pp <- 10
 dd <- 19
@@ -1124,7 +1128,7 @@ g4 <- ggplot(df, aes(Iteration, value)) +
 g2 / (g3 | g4)
 ```
 
-The top graph in Figure \ref{fig:ComparisonEx3} shows the outlier persistence for the last iteration and repetition. The dashed line shows the bandwidth chosen by lookout. The two graphs at the bottom show the comparison with HDoutliers and stray for each iteration averaged over the repetitions. We see that HDoutliers and stray do not identify the outlier for any iteration. Lookout clearly gives better performance and achieves an average Gmean of 0.999 from the $16^{\text{th}}$ iteration onward.
+The top graph in Figure \ref{fig:ComparisonEx3} shows the outlier persistence for the last iteration and repetition. The dashed line shows the bandwidth chosen by lookout. The two graphs at the bottom show the comparison with HDoutliers and stray for each iteration averaged over the repetitions. We see that HDoutliers and stray do not identify the outlier for 19 of the 20 iterations. Lookout clearly gives better performance and achieves an average Gmean of 0.999 from the $16^{\text{th}}$ iteration onward.
 
 # Results on a data repository {#sec:applications}
 
@@ -1239,13 +1243,15 @@ fmeas <- stats %>%
   pull(median)
 ```
 
-From the graphs in Figure \ref{fig:lvplots} we see that the total area of the letter-value plots above zero is larger than the area below zero. This signifies that more datasets have positive Gmean and F-measure values for lookout - HDoutliers and lookout - stray performance values compared to the negative values. This is confirmed by the results in Table \ref{tab:table}. We see that for both Gmean and F-measure the median, mean and the 95\% confidence interval from Student's t-tests are away from zero. In fact, the Gmean has median values `r sprintf("%.4f",gmean[1])` and `r sprintf("%.4f",gmean[2])` for lookout - HDoutliers and lookout - stray respectively. Similarly, the corresponding F-measure values are `r sprintf("%.4f",fmeas[1])` and `r sprintf("%.4f",fmeas[2])`. Given that both Gmean and F-measure are bounded by 1, this shows that lookout gives better performance than HDoutliers or stray.
+From the graphs in Figure \ref{fig:lvplots} we see that the total area of the letter-value plots above zero is larger than the area below zero. This signifies that more datasets have positive Gmean and F-measure values for lookout - HDoutliers and lookout - stray performance values compared to the negative values. This is confirmed by the results in Table \ref{tab:table}. We see that for both Gmean and F-measure, the median, mean and the 95\% confidence interval from Student's t-tests are away from zero. In fact, the Gmean has median values `r sprintf("%.4f",gmean[1])` and `r sprintf("%.4f",gmean[2])` for lookout - HDoutliers and lookout - stray respectively. Similarly, the corresponding F-measure values are `r sprintf("%.4f",fmeas[1])` and `r sprintf("%.4f",fmeas[2])`. Given that both Gmean and F-measure are bounded by 1, this shows that lookout gives better performance than HDoutliers or stray.
 
 # Conclusions {#sec:conclusions}
 
-Outlier detection methods that use kernel density estimates generally employ a user defined parameter to construct the bandwidth. Selecting a bandwidth for outlier detection is different from selecting a bandwidth for general data representation, because the goal is to make outliers have lower density estimates compared to the non-outliers. In addition, it is a challenge to select an appropriate bandwidth in high dimensions. To make outliers have lower density estimates compared to the rest, a reasonably large bandwidth needs to be chosen. We introduced an algorithm called *lookout* that uses persistent homology to select the bandwidth. Lookout uses leave-one-out kernel density estimates and EVT to detect outliers. We compared the performance of lookout with HDoutliers and stray, two algorithms that use EVT to detect outliers on experimental data and on a large data repository and showed that lookout achieves better performance.
+Lookout uses leave-one-out kernel density estimates and EVT to detect outliers. Outlier detection methods that use kernel density estimates generally employ a user-defined parameter to construct the bandwidth. Selecting a bandwidth for outlier detection is different from selecting a bandwidth for general data representation, because the goal is to make outliers have lower density estimates compared to the non-outliers. In addition, it is a challenge to select an appropriate bandwidth in high dimensions. To make outliers have lower density estimates compared to the rest, a reasonably large bandwidth needs to be chosen. We introduced an algorithm called *lookout* that uses persistent homology to select the bandwidth. 
 
-We also introduced *outlier persistence*, a concept that explores the birth and death of outliers with changing bandwidth and significance values. Outlier persistence gives a bigger picture of outliers, taking a step back from fixed parameter values. It explores the bandwidth and significance parameters and highlights the outliers that persist over a range of bandwidth values and their significance levels. It is a useful measure that increases our understanding of outliers.
+We compared the performance of lookout with HDoutliers and stray, two algorithms that also use EVT to detect outliers. Our results on experimental data and on a large data repository showed that lookout achieves better performance.
+
+We also introduced the concept of *outlier persistence*, exploring the birth and death of outliers with changing bandwidth and significance values. Outlier persistence gives a bigger picture, taking a step back from fixed parameter values. It explores the bandwidth and significance parameters and highlights the outliers that persist over a range of bandwidth values and their significance levels. We suggest that it is a useful measure that increases our understanding of outliers.
 
 # Supplementary materials {#sec:suppmat}
 
