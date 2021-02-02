@@ -1,0 +1,33 @@
+---
+title: "Leave-one-out kernel density estimates for outlier detection"
+blinded: 0 # Set to 1 for blinding
+author:
+  - name: Sevvandi Kandanaarachchi
+    affiliation: RMIT University
+    thanks: sevvandi.kandanaarachchi@rmit.edu.au
+  - name: Rob J Hyndman
+    affiliation: Monash University
+abstract: "This paper introduces *lookout*, a new approach to detect outliers using leave-one-out kernel density estimates and extreme value theory. Outlier detection methods that use kernel density estimates generally employ a user defined parameter to determine the bandwidth. Lookout uses persistent homology to construct a bandwidth suitable for outlier detection without any user input. We demonstrate the effectiveness of lookout on an extensive data repository by comparing its performance with other outlier detection methods based on extreme value theory. Furthermore, we introduce *outlier persistence*, a useful concept that explores the birth and the cessation of outliers with changing bandwidth and significance levels. The R package `lookout` implements this algorithm."
+keywords: 
+  - anomaly detection
+  - topological data analysis
+  - persistent homology
+  - extreme value theory
+  - peak over thresholds
+  - generalized Pareto distribution
+bibliography: references.bib
+output:
+  bookdown::pdf_book:
+    base_format: rticles::asa_article
+    fig_caption: yes
+    fig_height: 5
+    fig_width: 8
+    dev: "pdf"
+    keep_tex: yes
+    includes:
+      in_header: preamble.tex
+---
+
+```{r child='lookout.Rmd'}
+```
+

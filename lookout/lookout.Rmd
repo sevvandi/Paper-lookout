@@ -1,39 +1,3 @@
----
-title: "Leave-one-out kernel density estimates for outlier detection"
-author:
-  - familyname: Kandanaarachchi
-    othernames: Sevvandi
-    address: RMIT University
-    email: sevvandi.kandanaarachchi@rmit.edu.au
-    correspondingauthor: true
-    qualifications: PhD
-  - familyname: Hyndman
-    email: rob.hyndman@monash.edu
-    othernames: Rob J.
-    address: Monash University
-    qualifications: PhD
-abstract: "This paper introduces *lookout*, a new approach to detect outliers using leave-one-out kernel density estimates and extreme value theory. Outlier detection methods that use kernel density estimates generally employ a user defined parameter to determine the bandwidth. Lookout uses persistent homology to construct a bandwidth suitable for outlier detection without any user input. We demonstrate the effectiveness of lookout on an extensive data repository by comparing its performance with other outlier detection methods based on extreme value theory. Furthermore, we introduce *outlier persistence*, a useful concept that explores the birth and the cessation of outliers with changing bandwidth and significance levels. The R package `lookout` implements this algorithm."
-keywords: "anomaly detection, topological data analysis, persistent homology, extreme value theory, peak over thresholds, generalized Pareto distribution"
-wpnumber: no/2021
-# jelcodes: C10,C14,C22
-blind: false
-cover: true
-toc: false
-bibliography: references.bib
-biblio-style: authoryear-comp
-keep_tex: true
-output:
-  MonashEBSTemplates::workingpaper:
-    fig_caption: yes
-    fig_height: 5
-    fig_width: 8
-    includes:
-      in_header: preamble.tex
-    keep_tex: yes
-    number_sections: yes
-    citation_package: biblatex
----
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo = FALSE,
@@ -248,7 +212,7 @@ p6 <- ggplot(X, aes(x = x, y = y)) +
 (p3 | p4) / (p5 | p6)
 ```
 
-```{r barcodeandpersistence, fig.cap="The graph on the left shows the barcode of the point cloud in Figure \\ref{fig:annulus} and the graph on the right shows the persistence diagram.", dependson="annulus"}
+```{r barcodeandpersistence, fig.cap="The graph on the left shows the barcode of the point cloud in Figure \\ref{fig:annulus} and the graph on the right shows the persistence diagram.", dependson="annulus", out.width="100%"}
 # compute the persistent homology
 ph1 <- TDAstats::calculate_homology(as.matrix(X), dim = 1)
 # plot topological barcode
@@ -373,7 +337,7 @@ A major challenge in using kernel density estimates for outlier detection is sel
 
 To select a bandwidth for a kernel density estimate designed for outlier detection, we propose to use the barcode discussed in Section \ref{subsec:tda}. First we construct the barcode of the data cloud for dimension zero using the Vietoris-Rips diameter. From the barcode we obtain the sequence of death diameters $\{d_i\}_{i = 1}^N$ for the connected components. By construction this is an increasing sequence as seen in Figure \ref{fig:barcodeandpersistence}. 
 
-```{r TDAKNN, fig.cap="Top left: A scatterplot of 1000 observations with most points falling on an annulus and some points near the center. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom."}
+```{r TDAKNN, fig.cap="Top left: A scatterplot of 1000 observations with most points falling on an annulus and some points near the center. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom.", out.width="100%"}
 oo <- 10
 outer_radius <- 1
 inner_radius <- 0.7
@@ -541,7 +505,7 @@ The algorithm lookout has only 2 inputs, $\alpha$ and *unitize*. The parameter $
 
 Lookout identifies outliers by selecting an appropriate bandwidth using TDA. If the bandwidth is changed, will the original outliers be still identified as outliers by lookout? We explore this question by varying bandwidth values in lookout. Similar work is discussed by @Minnotte1993, who introduce the Mode Tree, which tracks the modes of the kernel density estimates with changing bandwidth values. Another related idea is the SiZer map [@Chaudhuri1999], a graphical device that studies features of curves for varying bandwidth values.
 
-```{r outlierpersistence, fig.height=3, fig.cap="Outliers at the center of the annulus in the left plot showing the outlier labels 1001--1005. The outlier persistence diagram on the right with the y-axis denoting the labels. The dashed line shows the lookout bandwidth $d_*$."}
+```{r outlierpersistence, fig.height=3, fig.cap="Outliers at the center of the annulus in the left plot showing the outlier labels 1001--1005. The outlier persistence diagram on the right with the y-axis denoting the labels. The dashed line shows the lookout bandwidth $d_*$.", out.width="100%"}
 oo <- 5
 outer_radius <- 1
 inner_radius <- 0.7
@@ -623,7 +587,7 @@ In this section we first explore outlier persistence using simple examples. Then
 
 ## Outlier persistence examples {#sec:PersistenceExamples}
 
-```{r persistenceEx, fig.cap="Examples of outlier persistence and strength. The top row shows the data with the outliers identified by lookout with $\\alpha = 0.1$ colored by its strength. The bottom row shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth.", fig.height=7, fig.asp=1.4}
+```{r persistenceEx, fig.cap="Examples of outlier persistence and strength. The top row shows the data with the outliers identified by lookout with $\\alpha = 0.1$ colored by its strength. The bottom row shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth.", fig.height=6.5, fig.asp=1.2, out.width="100%"}
 # ---------------------------------------------------------------------
 # TASK 1 - EXAMPLE 1
 # ---------------------------------------------------------------------
@@ -825,7 +789,7 @@ where *tn* denotes the true negatives (predicted = false, actual = false). In fa
 
 For this experiment we consider two normally distributed samples in $\mathbb{R}^6$; one large and one small starting at the same location with the small sample slowly moving out in each iteration. The set of points belonging to the small sample are considered outliers. We consider 400 points in the bigger sample and 5 in the outlying sample, placed at indices 401--405. The points in the larger sample are distributed in each dimension as $\mathcal{N}(0, 1)$. The outliers differ from the normal points in only one dimension; i.e. they are distributed as $\mathcal{N}\left(2 + (i-1)/2, 0.2 \right)$, where $i$ denotes the iteration. In the first iteration the outliers are distributed as $\mathcal{N}\left(2, 0.2 \right)$ in the first dimension and in the tenth iteration they are distributed as $\mathcal{N}\left(6.5, 0.2 \right)$. Each iteration is repeated 10 times to account for randomness.
 
-```{r ComparisonEx1, fig.cap="Experiment 1 with outliers moving out from the normal distribution in $\\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the corresponding outlier persistence plot. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. In this experiment, stray and HDoutliers gave identical results."}
+```{r ComparisonEx1, fig.cap="Experiment 1 with outliers moving out from the normal distribution in $\\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the corresponding outlier persistence plot. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. In this experiment, stray and HDoutliers gave identical results.", out.width="100%"}
 values <- rep(0, 10)
 pp <- 10
 hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <-
@@ -931,7 +895,7 @@ The top left graph of Figure \ref{fig:ComparisonEx1} shows the first two dimensi
 
 For this experiment we consider an annulus in $\mathbb{R}^2$ with outlying points moving into the center with each iteration. We consider $800$ points in the annulus with $5$ outlying points. The outliers are normally distributed and have a smaller standard deviation compared to the other points. The mean of the outliers in the $i^{\text{th}}$ iteration is $\left( 5 - (i-1) /2,  0 \right)$, so that the outliers start at the right of the annulus with mean $(5,0)$ and move in with each iteration, ending with mean $(0,0)$. We repeat each iteration 10 times.
 
-```{r ComparisonEx2, fig.cap="Experiment 2 with outliers moving into the center of the annulus in $\\mathbb{R}^2$. Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the corresponding outlier persistence plot. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions."}
+```{r ComparisonEx2, fig.cap="Experiment 2 with outliers moving into the center of the annulus in $\\mathbb{R}^2$. Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the corresponding outlier persistence plot. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions.", out.width="100%"}
 values <- rep(0, 10)
 pp <- 10
 hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <-
@@ -1042,7 +1006,7 @@ The graph at the top left of Figure \ref{fig:ComparisonEx2} shows the points in 
 
 For this experiment we consider a unit cube in $\mathbb{R}^{20}$ with 500 points, of which 499 points are uniformly distributed in each direction and the remaining point is an outlier. The outlier moves towards the point $\left( 0.9, 0.9, \dots, 0.9 \right)$ with each iteration. For the $i^{\text{th}}$ iteration the first $i$ coordinates of the outlier are each equal to $0.9$ and the remaining coordinates are uniformly distributed in $(0,1)$. The index of the outlier is 500. Each iteration is repeated 10 times with different randomizations.
 
-```{r ComparisonEx3, fig.cap="Experiment 3 with an outlier moving to $(0.9, 0.9, \\dots)$. Graph on the top shows the outlier persistence plot for the last iteration and repetition. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. In this experiment, stray and HDoutliers gave identical results."}
+```{r ComparisonEx3, fig.cap="Experiment 3 with an outlier moving to $(0.9, 0.9, \\dots)$. Graph on the top shows the outlier persistence plot for the last iteration and repetition. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. In this experiment, stray and HDoutliers gave identical results.", out.width="100%"}
 values <- rep(0, 10)
 pp <- 10
 dd <- 19
@@ -1134,7 +1098,7 @@ The top graph in Figure \ref{fig:ComparisonEx3} shows the outlier persistence fo
 
 For this section we use the data repository used in @datasets. This repository has more than $12000$ outlier detection datasets that were prepared from classification datasets. Dataset preparation involves downsampling the minority class in classification datasets, converting the categorical variables to numerical and accounting for missing values, all of which is detailed in @normalizationoutliers.
 
-```{r lvplots, fig.cap="Letter value plots of performance differences between 1. lookout and HDoutliers, 2. lookout and stray using Gmean and Fmeasure.", fig.height=4, message=FALSE}
+```{r lvplots, fig.cap="Letter value plots of performance differences between 1. lookout and HDoutliers, 2. lookout and stray using Gmean and Fmeasure.", fig.height=4, message=FALSE, out.width="100%"}
 dat <- readr::read_csv(here::here("data_repo_output/Collated_EX2_Take1_1_alpha_point05.csv"))
 
 # Differences - gmean
