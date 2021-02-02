@@ -4,8 +4,11 @@
 .Ruserdata
 
 *.out
-*_cache/
-*_files/
+lookout/*_cache/
+lookout/*_files/
+lookout/figure/
+lookout/cache/*
+lookout.md
 
 *.Ruserdata
 
