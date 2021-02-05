@@ -1,7 +1,7 @@
 ---
 title: "Leave-one-out kernel density estimates for outlier detection"
 blinded: 0 # Set to 1 for blinding
-author:
+authors:
   - name: Sevvandi Kandanaarachchi
     affiliation: RMIT University
     thanks: sevvandi.kandanaarachchi@rmit.edu.au
