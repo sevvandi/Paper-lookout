@@ -302,20 +302,6 @@ Monash University
 \renewcommand{\bottomfraction}{0.85}
 \renewcommand{\textfraction}{0.15}
 \renewcommand{\floatpagefraction}{0.7}
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{array}
-\usepackage{multirow}
-\usepackage{wrapfig}
-\usepackage{float}
-\usepackage{colortbl}
-\usepackage{pdflscape}
-\usepackage{tabu}
-\usepackage{threeparttable}
-\usepackage{threeparttablex}
-\usepackage[normalem]{ulem}
-\usepackage{makecell}
-\usepackage{xcolor}
 
 
 \usepackage{amsthm}
@@ -599,18 +585,18 @@ If a point is identified as an outlier by the lookout algorithm for a range of b
 
 In the example in Figure \ref{fig:outlierpersistence}, we see that the points 1001--1005 are identified as outliers in the outlier persistence diagram for a large range of bandwidth values. The Rips diameter \(d_*\) selected by lookout is shown by a vertical dashed line. Many points are identified as outliers for small bandwidth values but do not continue to be outliers for long; these outliers are born at small bandwidth values and die out after a relatively short increase in bandwidth. Some points are never identified as outliers, even at small bandwidths.
 
-The outlier persistence diagram is a tool to observe the persistence of outliers with changing bandwidth values. We vary the bandwidth values while keeping the GPD parameters fixed at the values obtained using \(d_*\) as in equation \eqref{eq:deathrad2}. The death diameter sequence \(d_i\) is used to construct the set of bandwidth values used in this plot. We use \(\ell\) bandwidth values starting from the \(\beta^{\text{th}}\) percentile of sequence \(\{d_i\}\) ending at \(\lambda \times \max_i{d_i}\). The parameters \(\ell, \beta\) and \(\lambda\) are user-defined with default values \(\ell = 20\), \(\beta= 90\) and \(\lambda = \sqrt{5}\). Increasing \(\ell\) gives better granularity but increases the computational burden. As the death diameters are tightly packed, the default value of \(90^{\text{th}}\) percentile gives a small enough starting bandwidth and \(\sqrt{5} \max_i{d_i}\) gives a large ending bandwidth.
+The outlier persistence diagram is a tool to observe the persistence of outliers with changing bandwidth values. We vary the bandwidth values while keeping the GPD parameters fixed at the values obtained using \(d_*\) as in equation \eqref{eq:deathrad2}. The death diameter sequence \(d_i\) is used to construct the set of bandwidth values used in this plot. We use \(\ell\) bandwidth values starting from the \(\beta^{\text{th}}\) percentile of sequence \(\{d_i\}\) ending at \(\sqrt{5} \times \max_i{d_i}\). The parameters \(\ell\) and \(\beta\) are user-defined with default values \(\ell = 20\) and \(\beta= 90\). Increasing \(\ell\) gives better granularity but increases the computational burden. As the death diameters are tightly packed, the default value of \(90^{\text{th}}\) percentile gives a small enough starting bandwidth and \(\sqrt{5} \max_i{d_i}\) gives a large ending bandwidth.
 We summarize these steps in Algorithm \ref{algo:persistence}.
 
 \DontPrintSemicolon
 \begin{algorithm}\fontsize{11}{16}\selectfont
     \SetKwInOut{Input}{input~~~}
     \SetKwInOut{Output}{output}
-    \Input{~ The data matrix $\bm{X}$, parameters $\alpha$, \textit{unitize} and bandwidth range parameters $\ell$, $\beta$ and $\lambda$}
-    \Output{~ An $N \times \ell $ binary matrix $\bm{Y}$ where $N$ denotes the number of observations and $\ell$ denotes the number bandwidth values with $y_{ik} = 1$ if the $i^{\text{th}}$ observation is identified as an outlier for bandwidth index ${k}$. }
+    \Input{~ The data matrix $\bm{X}$, parameters $\alpha$, \textit{unitize} and bandwidth range parameters $\ell$ and $\beta$}
+    \Output{~ An $N \times \ell $ binary matrix $\bm{Y}$ where $N$ denotes the number of observations and $\ell$ denotes the number of bandwidth values with $y_{ik} = 1$ if the $i^{\text{th}}$ observation is identified as an outlier for bandwidth index ${k}$. }
     Initialize matrix $\bm{Y}$ to zero. \\
     Run Algorithm \ref{algo:lookout} to determine the death diameter sequence $\{d_i\}$ and the GPD parameters $\mu_0$, $\sigma_0$ and $\xi_0$. \\
-    Construct an equidistant bandwidth sequence of length $\ell$ starting from the $\beta^{\text{th}}$ percentile of $\{d_i\}$ to $ \lambda \max_i d_i$. Call the bandwidth sequence $\{b_k\}_{k=1}^{\ell}$. \\
+    Construct an equidistant bandwidth sequence of length $\ell$ starting from the $\beta^{\text{th}}$ percentile of $\{d_i\}$ to $\sqrt{5} \max_i d_i$. Call the bandwidth sequence $\{b_k\}_{k=1}^{\ell}$. \\
     \For{$k$ from $1$ to $\ell$}{
     Using $h = (b_k)^{2/p}$ and $\bm{H} = h\bm{I}$ compute kernel density estimates and leave-one-out kernel density estimates using the scaled Epanechnikov kernel. \\
     Denote the kde of $\bm{x}_i$ by $y_i$ and leave-one-out kde by $y_{-i}$.\\
@@ -647,10 +633,10 @@ In this section we first explore outlier persistence using simple examples. Then
 \subsection{Outlier persistence examples}\label{sec:PersistenceExamples}}
 
 \begin{figure}
-\includegraphics[width=1\linewidth]{lookout_wp_files/figure-latex/persistenceEx-1} \caption{Examples of outlier persistence and strength. The top row shows the data with the outliers identified by lookout with $\alpha = 0.1$ colored by its strength. The bottom row shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth.}\label{fig:persistenceEx}
+\includegraphics[width=1\linewidth]{lookout_wp_files/figure-latex/persistenceEx-1} \caption{Examples of outlier persistence and strength. The left column shows the data with the outliers identified by lookout with $\alpha = 0.1$ colored by its strength. The right column shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth.}\label{fig:persistenceEx}
 \end{figure}
 
-Figure \ref{fig:persistenceEx} shows five examples in \(\mathbb{R}^2\), each showing the data, outliers identified by lookout, their strengths and the corresponding outlier persistence diagram. In each example, the outliers are placed at the end of the synthetic dataset, i.e.~their observation indices are the highest. The dashed lines in the outlier persistence diagram indicate the bandwidth chosen by lookout. The top left plot shows normally distributed data with 5 outliers in the top right corner, which are identified by lookout with high strength. Upon close inspection we see two further points, both approximately at \((-2.6, 1.8)\) and slightly detached from the main group of points, also being identified by lookout as outliers with low strength. The lookout probabilities of each of these points is less than 2, and so they would only be identified as outliers when \(\alpha > 0.09\). The corresponding persistence diagram shows high strength outlier persistence for the points at the top right hand corner. Similarly, from other graphs in column 1, we see that outliers far from high density regions are identified by lookout with high strength and points outside high density regions, but not so far away are identified with low strength. For the example in row 3, lookout has identified a cluster of outliers approximately at \((6,6)\) with high strength as well as individual points slightly away from high density regions with low strength. The example in row 5 has single outliers rather than clusters, which are again identified by lookout. For the last example in the bottom row, lookout has identified a cluster of outliers at \((-0.6, 0.35)\) with low strength and the remaining outliers with high strength. From the persistence diagrams we see that many points are identified as outliers for low bandwidth values, but only a small number of outliers persist until the bandwidth is large. In addition, some outliers persist at low strength values. For example, the persistence diagram in row 5 has outliers around index 500 with low strength persisting until large bandwidth values.
+Figure \ref{fig:persistenceEx} shows five examples in \(\mathbb{R}^2\), each showing the data, outliers identified by lookout, their strengths and the corresponding outlier persistence diagram. In each example, the outliers are placed at the end of the synthetic dataset, i.e.~their observation indices are the highest. The dashed lines in the outlier persistence diagram indicate the bandwidth chosen by lookout. The top left plot shows normally distributed data with 5 outliers in the top right corner, which are identified by lookout with high strength. Upon close inspection we see two further points, both approximately at \((-2.6, 1.8)\) and slightly detached from the main group of points, also being identified by lookout as outliers with low strength. The lookout strength of each of these points is less than 2, and so they would only be identified as outliers when \(\alpha > 0.09\). The corresponding persistence diagram shows high strength outlier persistence for the points at the top right hand corner. Similarly, from other graphs in column 1, we see that outliers far from high density regions are identified by lookout with high strength and points outside high density regions, but not so far away are identified with low strength. For the example in row 3, lookout has identified a cluster of outliers approximately at \((6,6)\) with high strength as well as individual points slightly away from high density regions with low strength. The example in row 5 has single outliers rather than clusters, which are again identified by lookout. For the last example in the bottom row, lookout has identified a cluster of outliers at \((-0.6, 0.35)\) with low strength and the remaining outliers with high strength. From the persistence diagrams we see that many points are identified as outliers for low bandwidth values, but only a small number of outliers persist until the bandwidth is large. In addition, some outliers persist at low strength values. For example, the persistence diagram in row 5 has outliers around index 500 with low strength persisting until large bandwidth values.
 
 From the examples in Figure \ref{fig:persistenceEx} we see that lookout selects a bandwidth appropriate for outlier detection that is neither too small nor too large. In addition, lookout identifies outliers correctly. The outlier persistence diagram gives a snapshot of the outliers for varying bandwidths and significance levels increasing our understanding of the dataset and its outliers.
 
