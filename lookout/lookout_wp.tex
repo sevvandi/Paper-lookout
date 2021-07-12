@@ -672,7 +672,7 @@ where \emph{tn} denotes the true negatives (predicted = false, actual = false). 
 For this experiment we consider two normally distributed samples in \(\mathbb{R}^6\); one large and one small starting at the same location with the small sample slowly moving out in each iteration. The set of points belonging to the small sample are considered outliers. We consider 400 points in the bigger sample and 5 in the outlying sample, placed at indices 401--405. The points in the larger sample are distributed in each dimension as \(\mathcal{N}(0, 1)\). The outliers differ from the normal points in only one dimension; i.e.~they are distributed as \(\mathcal{N}\left(2 + (i-1)/2, 0.2 \right)\), where \(i\) denotes the iteration. In the first iteration the outliers are distributed as \(\mathcal{N}\left(2, 0.2 \right)\) in the first dimension and in the tenth iteration they are distributed as \(\mathcal{N}\left(6.5, 0.2 \right)\). Each iteration is repeated 10 times to account for randomness.
 
 \begin{figure}
-\includegraphics[width=1\linewidth]{lookout_wp_files/figure-latex/ComparisonEx1-1} \caption{Experiment 1 with outliers moving out from the normal distribution in $\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the corresponding outlier persistence plot. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. In this experiment, stray and HDoutliers gave identical results.}\label{fig:ComparisonEx1}
+\includegraphics[width=1\linewidth]{lookout_wp_files/figure-latex/ComparisonEx1-1} \caption{Experiment 1 with outliers moving out from the normal distribution in $\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition.  The graph on the top right shows the performance comparison between lookout, HDoutliers, stray, kdeos and rdos using AUC, Fmeasure and Gmean over 10 repetitions. Fmeasure and Gmean are used for algorithms that identify outliers, while AUC is used for algorithms that rank outliers. In this experiment, stray and HDoutliers gave identical results. The graph on the bottom left shows the time taken for these 5 algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.}\label{fig:ComparisonEx1}
 \end{figure}
 
 The top left graph of Figure \ref{fig:ComparisonEx1} shows the first two dimensions of this experimental dataset in its last iteration and repetition with outliers identified by lookout shown in different colors. The top right graph shows the corresponding outlier persistence plot for this data with the dashed line denoting the lookout bandwidth. The graphs at the bottom show the performance of lookout, HDoutliers and stray with \(\alpha = 0.05\). The mean F-measure of the 10 repetitions for each iteration is shown in the graph at the bottom left and the mean Gmean is shown at the bottom right. We see that for each iteration lookout surpasses HDoutliers and stray significantly.
@@ -684,7 +684,7 @@ The top left graph of Figure \ref{fig:ComparisonEx1} shows the first two dimensi
 For this experiment we consider an annulus in \(\mathbb{R}^2\) with outlying points moving into the center with each iteration. We consider \(800\) points in the annulus with \(5\) outlying points. The outliers are normally distributed and have a smaller standard deviation compared to the other points. The mean of the outliers in the \(i^{\text{th}}\) iteration is \(\left( 5 - (i-1) /2, 0 \right)\), so that the outliers start at the right of the annulus with mean \((5,0)\) and move in with each iteration, ending with mean \((0,0)\). We repeat each iteration 10 times.
 
 \begin{figure}
-\includegraphics[width=1\linewidth]{lookout_wp_files/figure-latex/ComparisonEx2-1} \caption{Experiment 2 with outliers moving into the center of the annulus in $\mathbb{R}^2$. Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the corresponding outlier persistence plot. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions.}\label{fig:ComparisonEx2}
+\includegraphics[width=1\linewidth]{lookout_wp_files/figure-latex/ComparisonEx2-1} \caption{Experiment 2 with outliers moving into the center of the annulus in $\mathbb{R}^2$. Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the performance comparison between lookout, HDoutliers, stray, kdeos and rdos using AUC, Fmeasure and Gmean over 10 repetitions. The graph on the bottom left shows the time taken for these 5 algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.}\label{fig:ComparisonEx2}
 \end{figure}
 
 The graph at the top left of Figure \ref{fig:ComparisonEx2} shows the points in the final iteration and repetition. The graph on the top right shows the outlier persistence for the final iteration and repetition. The outliers are placed at indices 801--805 and we see that they are not identified as outliers for small bandwidth values because the outliers are clustered together. This shows the importance of bandwidth selection for outlier detection when using kernel density estimates. The bandwidth selected by lookout is shown as a dashed line. The bottom two graphs show the mean F-measure and Gmean of the 3 algorithms for each iteration over 10 repetitions. We see that lookout identifies the outliers earlier than stray while HDoutliers does not identify any outliers.
@@ -696,10 +696,31 @@ The graph at the top left of Figure \ref{fig:ComparisonEx2} shows the points in 
 For this experiment we consider a unit cube in \(\mathbb{R}^{20}\) with 500 points, of which 499 points are uniformly distributed in each direction and the remaining point is an outlier. The outlier moves towards the point \(\left( 0.9, 0.9, \dots, 0.9 \right)\) with each iteration. For the \(i^{\text{th}}\) iteration the first \(i\) coordinates of the outlier are each equal to \(0.9\) and the remaining coordinates are uniformly distributed in \((0,1)\). The index of the outlier is 500. Each iteration is repeated 10 times with different randomizations.
 
 \begin{figure}
-\includegraphics[width=1\linewidth]{lookout_wp_files/figure-latex/ComparisonEx3-1} \caption{Experiment 3 with an outlier moving to $(0.9, 0.9, \dots)$. Graph on the top shows the outlier persistence plot for the last iteration and repetition. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. In this experiment, stray and HDoutliers gave identical results.}\label{fig:ComparisonEx3}
+\includegraphics[width=1\linewidth]{lookout_wp_files/figure-latex/ComparisonEx3-1} \caption{Experiment 3 with an outlier moving to $(0.9, 0.9, \dots)$. Graph on the top shows the performance comparison between lookout, HDoutliers, stray, KDEOS and RDOS using AUC, Fmeasure and Gmean over 10 repetitions. The graph on the bottom left shows the time taken for these 5 algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.}\label{fig:ComparisonEx3}
 \end{figure}
 
 The top graph in Figure \ref{fig:ComparisonEx3} shows the outlier persistence for the last iteration and repetition. The dashed line shows the bandwidth chosen by lookout. The two graphs at the bottom show the comparison with HDoutliers and stray for each iteration averaged over the repetitions. We see that HDoutliers and stray do not identify the outlier for 19 of the 20 iterations. Lookout clearly gives better performance and achieves an average Gmean of 0.999 from the \(16^{\text{th}}\) iteration onward.
+
+\todo{Make this table blue!}
+
+\textcolor{blue}{Table SHOWS}
+
+\begin{table}
+
+\caption{\label{tab:zerooutliers}Specificity for lookout, HDoutliers and stray algorithms when no outliers are present.}
+\centering
+\begin{tabular}[t]{rrrrrrr}
+\toprule
+\multicolumn{1}{c}{\textbf{}} & \multicolumn{2}{c}{\textbf{lookout}} & \multicolumn{2}{c}{\textbf{stray}} & \multicolumn{2}{c}{\textbf{HDoutliers}} \\
+\cmidrule(l{3pt}r{3pt}){2-3} \cmidrule(l{3pt}r{3pt}){4-5} \cmidrule(l{3pt}r{3pt}){6-7}
+Experiment & mean & sd & mean & sd & mean & sd\\
+\midrule
+1 & 0.9941 & 0.0031 & 1 & 0 & 1.0000 & 0e+00\\
+2 & 0.9924 & 0.0024 & 1 & 0 & 0.9999 & 4e-04\\
+3 & 0.9942 & 0.0032 & 1 & 0 & 1.0000 & 0e+00\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \hypertarget{sec:applications}{%
 \section{Results on a data repository}\label{sec:applications}}

@@ -1,3 +1,8 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo = FALSE,
@@ -18,6 +23,8 @@ library(TDAstats)
 library(patchwork)
 library(ggrepel)
 library(latex2exp)
+library(DDoutlier)
+library(pROC)
 
 set.seed(2021)
 
@@ -63,6 +70,22 @@ col_pal2 <- col_pal1 <- c(
   "grey", "#ffffcc", "#ffeda0", "#fed976", "#feb24c",
   "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026"
 )
+
+diff_metrics_2 <- function(act, pred){
+  # positives to be denoted by 1 and negatives with 0
+  n <- length(act)
+  tp <- sum((act==1)&(pred==1))
+  tn <- sum((act==0)&(pred==0))
+  fp <- sum((act==0)&(pred==1))
+  fn <- sum((act==1)&(pred==0))
+
+  sp <- tn/(tn + fp)
+
+
+  out <- data.frame(N=n, true_pos = tp, true_neg= tn, false_pos = fp, false_neg= fn, specificity = sp)
+
+  return(out)
+}
 ```
 
 # Introduction
@@ -789,11 +812,16 @@ where *tn* denotes the true negatives (predicted = false, actual = false). In fa
 
 For this experiment we consider two normally distributed samples in $\mathbb{R}^6$; one large and one small starting at the same location with the small sample slowly moving out in each iteration. The set of points belonging to the small sample are considered outliers. We consider 400 points in the bigger sample and 5 in the outlying sample, placed at indices 401--405. The points in the larger sample are distributed in each dimension as $\mathcal{N}(0, 1)$. The outliers differ from the normal points in only one dimension; i.e. they are distributed as $\mathcal{N}\left(2 + (i-1)/2, 0.2 \right)$, where $i$ denotes the iteration. In the first iteration the outliers are distributed as $\mathcal{N}\left(2, 0.2 \right)$ in the first dimension and in the tenth iteration they are distributed as $\mathcal{N}\left(6.5, 0.2 \right)$. Each iteration is repeated 10 times to account for randomness.
 
-```{r ComparisonEx1, fig.cap="Experiment 1 with outliers moving out from the normal distribution in $\\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the corresponding outlier persistence plot. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. In this experiment, stray and HDoutliers gave identical results.", out.width="100%"}
+```{r ComparisonEx1, fig.cap="Experiment 1 with outliers moving out from the normal distribution in $\\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition.  The graph on the top right shows the performance comparison between lookout, HDoutliers, stray, kdeos and rdos using AUC, Fmeasure and Gmean over 10 repetitions. Fmeasure and Gmean are used for algorithms that identify outliers, while AUC is used for algorithms that rank outliers. In this experiment, stray and HDoutliers gave identical results. The graph on the bottom left shows the time taken for these 5 algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.", out.width="100%", message=FALSE}
+set.seed(123)
 values <- rep(0, 10)
 pp <- 10
 hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <-
   stray_gmean <- stray_fmeasure <- matrix(0, nrow = pp, ncol = 10)
+
+lookout_roc <- kdeos_roc <- rdos_roc <- matrix(0, nrow=pp, ncol=10)
+
+hdoutliers_time <- lookout_time <- stray_time <- kdeos_time <- rdos_time <- matrix(0, nrow=pp*10, ncol=5)
 
 for (kk in seq(pp)) {
   X <- bind_cols(
@@ -810,29 +838,52 @@ for (kk in seq(pp)) {
     x1_2 <- rnorm(5, mean = 2 + (i-1)*0.5, sd = 0.2)
     X <- X %>% mutate(x1 = c(x1_1, x1_2))
 
+    ll <- (kk-1)*10 + i
+
     # STRAY
-    strayout <- stray::find_HDoutliers(X, knnsearchtype = "kd_tree", alpha = 0.05)
+    tt <- system.time(strayout <- stray::find_HDoutliers(X, knnsearchtype = "kd_tree", alpha=0.05))
     straylabs <- rep(0, 405)
     straylabs[strayout$outliers] <- 1
     strayoutput <- diff_metrics(labs, straylabs)
     stray_gmean[kk, i] <- strayoutput$gmean
     stray_fmeasure[kk, i] <- strayoutput$fmeasure
+    stray_time[ll, ] <- tt
 
     # LOOKOUT
-    lookoutobj <- lookout(X, alpha = 0.05, unitize = TRUE)
+    tt <- system.time(lookoutobj <- lookout(X, alpha=0.05, unitize = TRUE))
     lookoutlabs <- rep(0, 405)
-    lookoutlabs[lookoutobj$outliers[, 1]] <- 1
+    lookoutlabs[lookoutobj$outliers[ ,1]] <- 1
     lookoutput <- diff_metrics(labs, lookoutlabs)
     lookout_gmean[kk, i] <- lookoutput$gmean
     lookout_fmeasure[kk, i] <- lookoutput$fmeasure
+    lookout_scores <- lookoutobj$outlier_scores
+    roc_obj <- roc(labs, lookout_scores, direction="<")
+    lookout_roc[kk, i] <- roc_obj$auc
+    lookout_time[ll, ] <- tt
+
 
     # HDOUTLIERS
-    hdoutobj <- HDoutliers(X, alpha = 0.05)
+    tt <- system.time(hdoutobj <- HDoutliers(X, alpha=0.05))
     hdoutlabs <- rep(0, dim(X)[1])
     hdoutlabs[hdoutobj] <- 1
     hdoutput <- diff_metrics(labs, hdoutlabs)
     hdoutliers_gmean[kk, i] <- hdoutput$gmean
     hdoutliers_fmeasure[kk, i] <- hdoutput$fmeasure
+    hdoutliers_time[ll, ] <- tt
+
+
+    # KDEOS
+    tt <- system.time(kdeos_scores <- DDoutlier::KDEOS(X)) # using default parameters
+    roc_obj <- roc(labs, kdeos_scores, direction="<")
+    kdeos_roc[kk, i] <- roc_obj$auc
+    kdeos_time[ll, ] <- tt
+
+    # RDOS
+    tt <- system.time(rdos_scores <- DDoutlier::RDOS(X)) # using default parameters
+    roc_obj <- roc(labs, rdos_scores, direction="<")
+    rdos_roc[kk, i] <- roc_obj$auc
+    rdos_time[ll, ] <- tt
+
   }
 }
 
@@ -854,39 +905,94 @@ str_mean <- colMeans(stray_fmeasure)
 lookout_mean <- colMeans(lookout_fmeasure)
 hdoutliers_mean <- colMeans(hdoutliers_fmeasure)
 
-df <- tibble(
-    Iteration = seq(10),
-    stray = str_mean,
-    lookout = lookout_mean,
-    HDoutliers = hdoutliers_mean
-  ) %>%
-  pivot_longer(-Iteration, names_to = "Method")
-g3 <- ggplot(df, aes(Iteration, value)) +
-  geom_line(aes(color = Method), size = 1) +
-  ylab("Fmeasure") +
-  theme_bw() +
-  scale_x_continuous(breaks = 1:10) +
-  theme(legend.position = "none")
+# Commented these lines as we're putting together the graphs - SK
+# df <- tibble(
+#     Iteration = seq(10),
+#     stray = str_mean,
+#     lookout = lookout_mean,
+#     HDoutliers = hdoutliers_mean
+#   ) %>%
+#   pivot_longer(-Iteration, names_to = "Method")
+# g3 <- ggplot(df, aes(Iteration, value)) +
+#   geom_line(aes(color = Method), size = 1) +
+#   ylab("Fmeasure") +
+#   theme_bw() +
+#   scale_x_continuous(breaks = 1:10) +
+#   theme(legend.position = "none")
+
+dfl1 <- tibble(
+  Iteration = seq(10),
+  stray = str_mean,
+  lookout = lookout_mean,
+  HDoutliers = hdoutliers_mean
+) %>%
+  pivot_longer(-Iteration, names_to = "Algorithm") %>%
+  mutate(Metric = 'Fmeasure')
+
 
 # PLOT GEOMETRIC MEAN OF SENSITIVITY AND SPECIFICITY
 str_mean <- colMeans(stray_gmean)
 lookout_mean <- colMeans(lookout_gmean)
 hdoutliers_mean <- colMeans(hdoutliers_gmean)
 
-df <- tibble(
-    Iteration = seq(10),
-    stray = str_mean,
-    lookout = lookout_mean,
-    HDoutliers = hdoutliers_mean
-  ) %>%
-  pivot_longer(-Iteration, names_to = "Method")
-g4 <- ggplot(df, aes(Iteration, value)) +
-  geom_line(aes(color = Method), size = 1) +
-  ylab("Gmean") +
-  scale_x_continuous(breaks = 1:10) +
-  theme_bw()
+# df <- tibble(
+#     Iteration = seq(10),
+#     stray = str_mean,
+#     lookout = lookout_mean,
+#     HDoutliers = hdoutliers_mean
+#   ) %>%
+#   pivot_longer(-Iteration, names_to = "Method")
+# g4 <- ggplot(df, aes(Iteration, value)) +
+#   geom_line(aes(color = Method), size = 1) +
+#   ylab("Gmean") +
+#   scale_x_continuous(breaks = 1:10) +
+#   theme_bw()
 
-(g1 | g2) / (g3 | g4)
+dfl2 <- tibble(
+  Iteration = seq(10),
+  stray = str_mean,
+  lookout = lookout_mean,
+  HDoutliers = hdoutliers_mean
+) %>%
+  pivot_longer(-Iteration, names_to = "Algorithm") %>%
+  mutate(Metric = 'Gmean')
+
+# AUC FOR KDEOS, RDOS AND LOOKOUT
+kdeos_mean <- colMeans(kdeos_roc)
+lookout_mean <-  colMeans(lookout_roc)
+rdos_mean <-  colMeans(rdos_roc)
+
+
+dfl3 <- tibble(
+  Iteration = seq(10),
+  kdeos = kdeos_mean,
+  lookout = lookout_mean,
+  rdos = rdos_mean
+) %>%
+  pivot_longer(-Iteration, names_to = "Algorithm") %>%
+  mutate(Metric = 'AUC')
+
+dfl <- bind_rows(dfl1, dfl2, dfl3)
+
+g3 <- ggplot(dfl, aes(x=Iteration, y=value)) + geom_line(aes(color=Algorithm), size=1) + ylab("Performance") + facet_wrap(~Metric) + scale_x_continuous(breaks=2*(1:5)) + theme_bw()
+
+
+# TIME TAKEN
+
+dftime <- tibble(
+  Run = seq(100),
+  stray = stray_time[ ,3],
+  lookout = lookout_time[ ,3],
+  HDoutliers = hdoutliers_time[ ,3], 
+  kdeos = kdeos_time[ ,3], 
+  rdow = rdos_time[ ,3]
+) %>%
+  pivot_longer(-Run, names_to = "Algorithm")
+
+
+g4 <- ggplot(dftime, aes(Algorithm, value)) + geom_boxplot(outlier.shape = 20)  + ylab("Time (mins)") + coord_flip() + theme_bw()
+
+(g1 | g3) / (g4 | g2)
 ```
 
 The top left graph of Figure \ref{fig:ComparisonEx1} shows the first two dimensions of this experimental dataset in its last iteration and repetition with outliers identified by lookout shown in different colors. The top right graph shows the corresponding outlier persistence plot for this data with the dashed line denoting the lookout bandwidth. The graphs at the bottom show the performance of lookout, HDoutliers and stray with $\alpha = 0.05$. The mean F-measure of the 10 repetitions for each iteration is shown in the graph at the bottom left and the mean Gmean is shown at the bottom right. We see that for each iteration lookout surpasses HDoutliers and stray significantly.
@@ -895,11 +1001,16 @@ The top left graph of Figure \ref{fig:ComparisonEx1} shows the first two dimensi
 
 For this experiment we consider an annulus in $\mathbb{R}^2$ with outlying points moving into the center with each iteration. We consider $800$ points in the annulus with $5$ outlying points. The outliers are normally distributed and have a smaller standard deviation compared to the other points. The mean of the outliers in the $i^{\text{th}}$ iteration is $\left( 5 - (i-1) /2,  0 \right)$, so that the outliers start at the right of the annulus with mean $(5,0)$ and move in with each iteration, ending with mean $(0,0)$. We repeat each iteration 10 times.
 
-```{r ComparisonEx2, fig.cap="Experiment 2 with outliers moving into the center of the annulus in $\\mathbb{R}^2$. Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the corresponding outlier persistence plot. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions.", out.width="100%"}
+```{r ComparisonEx2, fig.cap="Experiment 2 with outliers moving into the center of the annulus in $\\mathbb{R}^2$. Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the performance comparison between lookout, HDoutliers, stray, kdeos and rdos using AUC, Fmeasure and Gmean over 10 repetitions. The graph on the bottom left shows the time taken for these 5 algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.", out.width="100%", message=FALSE}
+set.seed(1234)
 values <- rep(0, 10)
 pp <- 10
 hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <-
   stray_gmean <- stray_fmeasure <- matrix(0, nrow = pp, ncol = 10)
+
+lookout_roc <- kdeos_roc <- rdos_roc <- matrix(0, nrow=pp, ncol=10)
+
+hdoutliers_time <- lookout_time <- stray_time <- kdeos_time <- rdos_time <- matrix(0, nrow=pp*10, ncol=5)
 
 for (kk in seq(pp)) {
   nn <- 805
@@ -918,29 +1029,51 @@ for (kk in seq(pp)) {
     X[nn - 5 + seq(5), 1] <- rnorm(5, 5 - (i-1)*0.5, sd = 0.1)
     X[nn - 5 + seq(5), 2] <- rnorm(5, 0, sd = 0.1)
 
+    ll <- (kk-1)*10 + i
     # STRAY
-    strayout <- stray::find_HDoutliers(X, knnsearchtype = "kd_tree", alpha = 0.05)
+    tt <- system.time(strayout <- stray::find_HDoutliers(X, knnsearchtype = "kd_tree", alpha=0.05))
     straylabs <- rep(0, nn)
     straylabs[strayout$outliers] <- 1
     strayoutput <- diff_metrics(labs, straylabs)
     stray_gmean[kk, i] <- strayoutput$gmean
     stray_fmeasure[kk, i] <- strayoutput$fmeasure
+    stray_time[ll, ] <- tt
+
 
     # LOOKOUT
-    lookoutobj <- lookout(X, alpha = 0.05, unitize = TRUE)
+    tt <- system.time(lookoutobj <- lookout(X, alpha=0.05, unitize = TRUE))
     lookoutlabs <- rep(0, nn)
-    lookoutlabs[lookoutobj$outliers[, 1]] <- 1
+    lookoutlabs[lookoutobj$outliers[ ,1]] <- 1
     lookoutput <- diff_metrics(labs, lookoutlabs)
     lookout_gmean[kk, i] <- lookoutput$gmean
     lookout_fmeasure[kk, i] <- lookoutput$fmeasure
+    lookout_scores <- lookoutobj$outlier_scores
+    roc_obj <- roc(labs, lookout_scores, direction="<")
+    lookout_roc[kk, i] <- roc_obj$auc
+    lookout_time[ll, ] <- tt
+
 
     # HDOUTLIERS
-    hdoutobj <- HDoutliers(X, alpha = 0.05)
+    tt <- system.time(hdoutobj <- HDoutliers(X, alpha=0.05))
     hdoutlabs <- rep(0, nn)
     hdoutlabs[hdoutobj] <- 1
     hdoutput <- diff_metrics(labs, hdoutlabs)
     hdoutliers_gmean[kk, i] <- hdoutput$gmean
     hdoutliers_fmeasure[kk, i] <- hdoutput$fmeasure
+    hdoutliers_time[ll, ] <- tt
+
+    # KDEOS
+    tt <- system.time(kdeos_scores <- DDoutlier::KDEOS(X)) # using default parameters
+    roc_obj <- roc(labs, kdeos_scores, direction="<")
+    kdeos_roc[kk, i] <- roc_obj$auc
+    kdeos_time[ll, ] <- tt
+
+    # RDOS
+    tt <- system.time(rdos_scores <- DDoutlier::RDOS(X)) # using default parameters
+    roc_obj <- roc(labs, rdos_scores, direction="<")
+    rdos_roc[kk, i] <- roc_obj$auc
+    rdos_time[ll, ] <- tt
+
   }
 }
 
@@ -958,46 +1091,72 @@ g1 <- ggplot(X2, aes(x1, x2)) +
   theme_bw() +
   theme(legend.position = "none")
 
-# PLOT F-MEASURE
-str_mean <- apply(stray_fmeasure, 2, mean)
-lookout_mean <- apply(lookout_fmeasure, 2, mean)
-hdoutliers_mean <- apply(hdoutliers_fmeasure, 2, mean)
+# F-MEASURE
+str_mean <- colMeans(stray_fmeasure)
+lookout_mean <- colMeans(lookout_fmeasure)
+hdoutliers_mean <- colMeans(hdoutliers_fmeasure)
 
-df <- tibble(
+
+dfl1 <- tibble(
   Iteration = seq(10),
   stray = str_mean,
   lookout = lookout_mean,
   HDoutliers = hdoutliers_mean
-)
-dfl <- pivot_longer(df, cols = 2:4)
-colnames(dfl)[2] <- "Method"
-g3 <- ggplot(dfl, aes(Iteration, value)) +
-  geom_line(aes(color = Method), size = 1) +
-  ylab("Fmeasure") +
-  scale_x_continuous(breaks = 1:10) +
-  theme_bw() +
-  theme(legend.position = "none")
+) %>%
+  pivot_longer(-Iteration, names_to = "Algorithm") %>%
+  mutate(Metric = 'Fmeasure')
 
-# PLOT GEOMETRIC MEAN OF SENSITIVITY AND SPECIFICITY
-str_mean <- apply(stray_gmean, 2, mean)
-lookout_mean <- apply(lookout_gmean, 2, mean)
-hdoutliers_mean <- apply(hdoutliers_gmean, 2, mean)
 
-df <- tibble(
+# GEOMETRIC MEAN OF SENSITIVITY AND SPECIFICITY
+str_mean <- colMeans(stray_gmean)
+lookout_mean <- colMeans(lookout_gmean)
+hdoutliers_mean <- colMeans(hdoutliers_gmean)
+
+
+dfl2 <- tibble(
   Iteration = seq(10),
   stray = str_mean,
   lookout = lookout_mean,
   HDoutliers = hdoutliers_mean
-)
-dfl <- pivot_longer(df, cols = 2:4)
-colnames(dfl)[2] <- "Method"
-g4 <- ggplot(dfl, aes(Iteration, value)) +
-  geom_line(aes(color = Method), size = 1) +
-  ylab("Gmean") +
-  scale_x_continuous(breaks = 1:10) +
-  theme_bw()
+) %>%
+  pivot_longer(-Iteration, names_to = "Algorithm") %>%
+  mutate(Metric = 'Gmean')
 
-(g1 | g2) / (g3 | g4)
+# AUC FOR KDEOS, RDOS AND LOOKOUT
+kdeos_mean <- colMeans(kdeos_roc)
+lookout_mean <-  colMeans(lookout_roc)
+rdos_mean <-  colMeans(rdos_roc)
+
+
+dfl3 <- tibble(
+  Iteration = seq(10),
+  kdeos = kdeos_mean,
+  lookout = lookout_mean,
+  rdos = rdos_mean
+) %>%
+  pivot_longer(-Iteration, names_to = "Algorithm") %>%
+  mutate(Metric = 'AUC')
+
+dfl <- bind_rows(dfl1, dfl2, dfl3)
+
+g3 <- ggplot(dfl, aes(x=Iteration, y=value)) + geom_line(aes(color=Algorithm), size=1) + ylab("Performance") + facet_wrap(~Metric) + scale_x_continuous(breaks=2*(1:5)) + theme_bw()
+
+
+# TIME TAKEN
+dftime <- tibble(
+  Run = seq(100),
+  stray = stray_time[ ,3],
+  lookout = lookout_time[ ,3],
+  HDoutliers = hdoutliers_time[ ,3],
+  kdeos = kdeos_time[ ,3],
+  rdow = rdos_time[ ,3]
+) %>%
+  pivot_longer(-Run, names_to = "Algorithm")
+
+
+g4 <- ggplot(dftime, aes(Algorithm, value)) + geom_boxplot(outlier.shape = 20)  + ylab("Time (mins)") + coord_flip() + theme_bw()
+
+(g1 | g3) / (g4 | g2)
 ```
 
 The graph at the top left of Figure \ref{fig:ComparisonEx2} shows the points in the final iteration and repetition. The graph on the top right shows the outlier persistence for the final iteration and repetition. The outliers are placed at indices 801--805 and we see that they are not identified as outliers for small bandwidth values because the outliers are clustered together. This shows the importance of bandwidth selection for outlier detection when using kernel density estimates. The bandwidth selected by lookout is shown as a dashed line. The bottom two graphs show the mean F-measure and Gmean of the 3 algorithms for each iteration over 10 repetitions. We see that lookout identifies the outliers earlier than stray while HDoutliers does not identify any outliers.
@@ -1006,12 +1165,19 @@ The graph at the top left of Figure \ref{fig:ComparisonEx2} shows the points in 
 
 For this experiment we consider a unit cube in $\mathbb{R}^{20}$ with 500 points, of which 499 points are uniformly distributed in each direction and the remaining point is an outlier. The outlier moves towards the point $\left( 0.9, 0.9, \dots, 0.9 \right)$ with each iteration. For the $i^{\text{th}}$ iteration the first $i$ coordinates of the outlier are each equal to $0.9$ and the remaining coordinates are uniformly distributed in $(0,1)$. The index of the outlier is 500. Each iteration is repeated 10 times with different randomizations.
 
-```{r ComparisonEx3, fig.cap="Experiment 3 with an outlier moving to $(0.9, 0.9, \\dots)$. Graph on the top shows the outlier persistence plot for the last iteration and repetition. The two graphs at the bottom show the mean F-measure and the Gmean of the 3 algorithms over 10 repetitions. In this experiment, stray and HDoutliers gave identical results.", out.width="100%"}
+```{r ComparisonEx3, fig.cap="Experiment 3 with an outlier moving to $(0.9, 0.9, \\dots)$. Graph on the top shows the performance comparison between lookout, HDoutliers, stray, KDEOS and RDOS using AUC, Fmeasure and Gmean over 10 repetitions. The graph on the bottom left shows the time taken for these 5 algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.", out.width="100%", message=FALSE}
+
 values <- rep(0, 10)
 pp <- 10
 dd <- 19
 hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <-
   stray_gmean <- stray_fmeasure <- matrix(0, nrow = pp, ncol = 20)
+
+lookout_roc <- kdeos_roc <- rdos_roc <- matrix(0, nrow=pp, ncol=20)
+
+hdoutliers_time <- lookout_time <- stray_time <- kdeos_time <- rdos_time <- matrix(0, nrow=pp*20, ncol=5)
+
+set.seed(123)
 nn <- 500
 labs <- c(rep(0, nn-1), 1)
 
@@ -1022,29 +1188,50 @@ for (kk in seq(pp)) {
   for (i in seq(20)) {
     X[nn, seq(i)] <- rep(0.9, i)
 
-    # STRAY
-    strayout <- stray::find_HDoutliers(X, knnsearchtype = "kd_tree", alpha = 0.05)
+     ll <- (kk-1)*10 + i
+     # STRAY
+    tt <- system.time(strayout <- stray::find_HDoutliers(X, knnsearchtype = "kd_tree", alpha=0.05))
     straylabs <- rep(0, nn)
     straylabs[strayout$outliers] <- 1
     strayoutput <- diff_metrics(labs, straylabs)
     stray_gmean[kk, i] <- strayoutput$gmean
     stray_fmeasure[kk, i] <- strayoutput$fmeasure
+    stray_time[ll, ] <- tt
+
 
     # LOOKOUT
-    lookoutobj <- lookout(X, alpha = 0.05, unitize = TRUE)
+    tt <- system.time(lookoutobj <- lookout(X, alpha=0.05, unitize = TRUE))
     lookoutlabs <- rep(0, nn)
-    lookoutlabs[lookoutobj$outliers[, 1]] <- 1
+    lookoutlabs[lookoutobj$outliers[ ,1]] <- 1
     lookoutput <- diff_metrics(labs, lookoutlabs)
     lookout_gmean[kk, i] <- lookoutput$gmean
     lookout_fmeasure[kk, i] <- lookoutput$fmeasure
+    lookout_scores <- lookoutobj$outlier_scores
+    roc_obj <- roc(labs, lookout_scores, direction="<")
+    lookout_roc[kk, i] <- roc_obj$auc
+    lookout_time[ll, ] <- tt
+
 
     # HDOUTLIERS
-    hdoutobj <- HDoutliers(X, alpha = 0.05)
+    tt <- system.time(hdoutobj <- HDoutliers(X, alpha=0.05))
     hdoutlabs <- rep(0, nn)
     hdoutlabs[hdoutobj] <- 1
     hdoutput <- diff_metrics(labs, hdoutlabs)
     hdoutliers_gmean[kk, i] <- hdoutput$gmean
     hdoutliers_fmeasure[kk, i] <- hdoutput$fmeasure
+    hdoutliers_time[ll, ] <- tt
+
+    # KDEOS
+    tt <- system.time(kdeos_scores <- DDoutlier::KDEOS(X)) # using default parameters
+    roc_obj <- roc(labs, kdeos_scores, direction="<")
+    kdeos_roc[kk, i] <- roc_obj$auc
+    kdeos_time[ll, ] <- tt
+
+    # RDOS
+    tt <- system.time(rdos_scores <- DDoutlier::RDOS(X)) # using default parameters
+    roc_obj <- roc(labs, rdos_scores, direction="<")
+    rdos_roc[kk, i] <- roc_obj$auc
+    rdos_time[ll, ] <- tt
   }
 }
 
@@ -1052,47 +1239,243 @@ outnew <- persisting_outliers(X)
 g2 <- autoplot(outnew) +
   geom_vline(xintercept = outnew$lookoutbw, linetype = "dashed")
 
-# PLOT F-MEASURE
+# F-MEASURE
 str_mean <- colMeans(stray_fmeasure)
 lookout_mean <- colMeans(lookout_fmeasure)
 hdoutliers_mean <- colMeans(hdoutliers_fmeasure)
 
-df <- tibble(
-    Iteration = seq(20),
-    stray = str_mean,
-    lookout = lookout_mean,
-    HDoutliers = hdoutliers_mean
-  ) %>%
-  pivot_longer(-Iteration, names_to="Method")
-g3 <- ggplot(df, aes(Iteration, value)) +
-  geom_line(aes(color = Method), size = 1) +
-  ylab("Fmeasure") +
-  scale_x_continuous(breaks = 2 * (1:10)) +
-  theme_bw() +
-  theme(legend.position = "none")
 
-# PLOT GEOMETRIC MEAN OF SENSITIVITY AND SPECIFICITY
+dfl1 <- tibble(
+  Iteration = seq(20),
+  stray = str_mean,
+  lookout = lookout_mean,
+  HDoutliers = hdoutliers_mean
+) %>%
+  pivot_longer(-Iteration, names_to = "Algorithm") %>%
+  mutate(Metric = 'Fmeasure')
+
+
+# GEOMETRIC MEAN OF SENSITIVITY AND SPECIFICITY
 str_mean <- colMeans(stray_gmean)
 lookout_mean <- colMeans(lookout_gmean)
 hdoutliers_mean <- colMeans(hdoutliers_gmean)
 
-df <- tibble(
-    Iteration = seq(20),
-    stray = str_mean,
-    lookout = lookout_mean,
-    HDoutliers = hdoutliers_mean
-  ) %>%
-  pivot_longer(-Iteration, names_to = "Method")
-g4 <- ggplot(df, aes(Iteration, value)) +
-  geom_line(aes(color = Method), size = 1) +
-  ylab("Gmean") +
-  scale_x_continuous(breaks = 2 * (1:10)) +
-  theme_bw()
 
-g2 / (g3 | g4)
+dfl2 <- tibble(
+  Iteration = seq(20),
+  stray = str_mean,
+  lookout = lookout_mean,
+  HDoutliers = hdoutliers_mean
+) %>%
+  pivot_longer(-Iteration, names_to = "Algorithm") %>%
+  mutate(Metric = 'Gmean')
+
+# AUC FOR KDEOS, RDOS AND LOOKOUT
+kdeos_mean <- colMeans(kdeos_roc)
+lookout_mean <-  colMeans(lookout_roc)
+rdos_mean <-  colMeans(rdos_roc)
+
+
+dfl3 <- tibble(
+  Iteration = seq(20),
+  kdeos = kdeos_mean,
+  lookout = lookout_mean,
+  rdos = rdos_mean
+) %>%
+  pivot_longer(-Iteration, names_to = "Algorithm") %>%
+  mutate(Metric = 'AUC')
+
+dfl <- bind_rows(dfl1, dfl2, dfl3)
+
+g3 <- ggplot(dfl, aes(x=Iteration, y=value)) + geom_line(aes(color=Algorithm), size=1) + ylab("Performance") + facet_wrap(~Metric) + scale_x_continuous(breaks=2*(1:10)) + theme_bw()
+
+
+# TIME TAKEN
+dftime <- tibble(
+  Run = seq(200),
+  stray = stray_time[ ,3],
+  lookout = lookout_time[ ,3],
+  HDoutliers = hdoutliers_time[ ,3],
+  kdeos = kdeos_time[ ,3],
+  rdow = rdos_time[ ,3]
+) %>%
+  pivot_longer(-Run, names_to = "Algorithm")
+
+
+g4 <- ggplot(dftime, aes(Algorithm, value)) + geom_boxplot(outlier.shape = 20)  + ylab("Time (mins)") + coord_flip() + theme_bw()
+
+
+g3 / (g4 | g2)
 ```
 
 The top graph in Figure \ref{fig:ComparisonEx3} shows the outlier persistence for the last iteration and repetition. The dashed line shows the bandwidth chosen by lookout. The two graphs at the bottom show the comparison with HDoutliers and stray for each iteration averaged over the repetitions. We see that HDoutliers and stray do not identify the outlier for 19 of the 20 iterations. Lookout clearly gives better performance and achieves an average Gmean of 0.999 from the $16^{\text{th}}$ iteration onward.
+
+\todo{Make this table blue!}
+\textcolor{blue}{Table SHOWS}
+
+```{r zerooutliers, fig.cap="", out.width="100%", message=FALSE}
+
+output <- matrix(0, nrow=3, ncol=6)
+colnames(output) <- c("lookout_mean", "lookout_sd", "stray_mean", "stray_sd", "hdoutliers_mean", "hdoutliers_sd")
+
+# ---------------------------------------------------------------------
+# TASK 1 - EXAMPLE 1 - NO OUTLIERS
+# ---------------------------------------------------------------------
+library(lookout)
+library(HDoutliers)
+library(stray)
+values <- rep(0, 10)
+pp <- 10
+
+hdoutliers_specificity <- stray_specificity <- lookout_specificity <-  rep(0, 10)
+
+
+set.seed(123)
+for(kk in 1:pp){
+  x2 <- rnorm(405)
+  x3 <- rnorm(405)
+  x4 <- rnorm(405)
+  x5 <- rnorm(405)
+  x6 <- rnorm(405)
+  x1 <- rnorm(405)
+
+  X <- cbind(x1,x2,x3,x4,x5,x6)
+  labs <- rep(0,405)
+
+  # STRAY
+  strayout <- stray::find_HDoutliers(X, knnsearchtype = "kd_tree", alpha=0.05)
+  straylabs <- rep(0, 405)
+  straylabs[strayout$outliers] <- 1
+  strayoutput <- diff_metrics_2(labs, straylabs)
+  stray_specificity[kk] <- strayoutput$specificity
+
+
+
+  # LOOKOUT
+  lookoutobj <- lookout(X, alpha=0.05, unitize = TRUE)
+  lookoutlabs <- rep(0, 405)
+  lookoutlabs[lookoutobj$outliers[ ,1]] <- 1
+  lookoutput <- diff_metrics_2(labs, lookoutlabs)
+  lookout_specificity[kk] <- lookoutput$specificity
+
+
+
+  # HDOUTLIERS
+  hdoutobj <- HDoutliers(X, alpha=0.05)
+  hdoutlabs <- rep(0, dim(X)[1])
+  hdoutlabs[hdoutobj] <- 1
+  hdoutput <- diff_metrics_2(labs, hdoutlabs)
+  hdoutliers_specificity[kk] <- hdoutput$specificity
+
+}
+output[1, ] <- c(mean(lookout_specificity), sd(lookout_specificity), mean(stray_specificity), sd(stray_specificity), mean(hdoutliers_specificity), sd(hdoutliers_specificity))
+
+# ---------------------------------------------------------------------
+# TASK 2 - EXAMPLE 2 - NO OUTLIERS
+# ---------------------------------------------------------------------
+hdoutliers_specificity <- stray_specificity <- lookout_specificity <-  rep(0, 10)
+
+set.seed(1234)
+for(kk in 1:pp){
+  r1 <-runif(805)
+  r2 <-rnorm(805, mean=5)
+  theta = 2*pi*r1;
+  R1 <- 2
+  R2 <- 2
+  dist = r2+R2;
+  x =  dist * cos(theta)
+  y =  dist * sin(theta)
+
+  X <- data.frame(
+    x1 = x,
+    x2 = y
+  )
+  labs <- rep(0,805)
+
+  # STRAY
+  strayout <- stray::find_HDoutliers(X, knnsearchtype = "kd_tree", alpha=0.05)
+  straylabs <- rep(0, 805)
+  straylabs[strayout$outliers] <- 1
+  strayoutput <- diff_metrics_2(labs, straylabs)
+  stray_specificity[kk] <- strayoutput$specificity
+
+
+
+  # LOOKOUT
+  lookoutobj <- lookout(X, alpha=0.05, unitize = TRUE)
+  lookoutlabs <- rep(0, 805)
+  lookoutlabs[lookoutobj$outliers[ ,1]] <- 1
+  lookoutput <- diff_metrics_2(labs, lookoutlabs)
+  lookout_specificity[kk] <- lookoutput$specificity
+
+
+
+  # HDOUTLIERS
+  hdoutobj <- HDoutliers(X, alpha=0.05)
+  hdoutlabs <- rep(0, dim(X)[1])
+  hdoutlabs[hdoutobj] <- 1
+  hdoutput <- diff_metrics_2(labs, hdoutlabs)
+  hdoutliers_specificity[kk] <- hdoutput$specificity
+
+}
+output[2, ] <- c(mean(lookout_specificity), sd(lookout_specificity), mean(stray_specificity), sd(stray_specificity), mean(hdoutliers_specificity), sd(hdoutliers_specificity))
+
+
+# ---------------------------------------------------------------------
+# TASK 3 - EXAMPLE 3 - NO OUTLIERS
+# ---------------------------------------------------------------------
+
+hdoutliers_specificity <- stray_specificity <- lookout_specificity <-  rep(0, 10)
+
+labs <- rep(0, 500)
+set.seed(123)
+for(kk in 1:pp){
+  X <- runif(500)
+  for(j in 1:19){
+    X <- cbind(X, runif(500))
+  }
+  colnames(X) <- paste("x", 1:20, sep="")
+  # STRAY
+  strayout <- stray::find_HDoutliers(X, knnsearchtype = "kd_tree", alpha=0.05)
+  straylabs <- rep(0, 500)
+  straylabs[strayout$outliers] <- 1
+  strayoutput <- diff_metrics_2(labs, straylabs)
+  stray_specificity[kk] <- strayoutput$specificity
+
+
+
+  # LOOKOUT
+  lookoutobj <- lookout(X, alpha=0.05, unitize = TRUE)
+  lookoutlabs <- rep(0, 500)
+  lookoutlabs[lookoutobj$outliers[ ,1]] <- 1
+  lookoutput <- diff_metrics_2(labs, lookoutlabs)
+  lookout_specificity[kk] <- lookoutput$specificity
+
+
+
+  # HDOUTLIERS
+  hdoutobj <- HDoutliers(X, alpha=0.05)
+  hdoutlabs <- rep(0, dim(X)[1])
+  hdoutlabs[hdoutobj] <- 1
+  hdoutput <- diff_metrics_2(labs, hdoutlabs)
+  hdoutliers_specificity[kk] <- hdoutput$specificity
+
+}
+output[3, ] <- c(mean(lookout_specificity), sd(lookout_specificity), mean(stray_specificity), sd(stray_specificity), mean(hdoutliers_specificity), sd(hdoutliers_specificity))
+
+output <- round(as.data.frame(output), 4)
+library(dplyr)
+
+headcols <- data.frame(c1 = c("", "lookout", "stray", "HDoutliers"), c2=c(1, 2, 2, 2))
+
+output %>%
+  mutate(experiment = seq(3)) %>% relocate(experiment, .before = lookout_mean ) %>%
+  knitr::kable(
+    col.names = c("Experiment", "mean","sd", "mean", "sd", "mean", "sd"),
+    booktabs = TRUE,
+    caption = "Specificity for lookout, HDoutliers and stray algorithms when no outliers are present.") %>% kableExtra::add_header_above(x, header=headcols)
+```
+
 
 # Results on a data repository {#sec:applications}
 
