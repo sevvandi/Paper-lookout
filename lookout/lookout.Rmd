@@ -101,7 +101,7 @@ The main challenge in using kernel density estimates for outlier detection is th
 
 Extreme Value Theory has been gaining popularity in outlier detection because of its rich, theoretical foundations. @Burridge2006 used EVT to detect outliers in time series data. @Clifton2014 used Generalized Pareto Distributions to model the tails in high-dimensional data and detect outliers. Other recent advances in outlier detection that use EVT include the stray [@stray], oddstream [@talagala2019anomaly] and HDoutliers [@wilkinson2017visualizing] algorithms. Of these three methods, stray is an enhancement of HDoutliers and both use distances to detect outliers, while oddstream uses kernel density estimates to detect outliers in time series data. Our approach is closest to oddstream in that we also apply EVT to functions of kernel density estimates. However, we use a different functional, and we avoid the need for an outlier-free training set.
 
-A brief introduction to persistent homology and EVT is given in Section \ref{sec:methodology}. In Section \ref{sec:lookout} we introduce the algorithm *lookout* and the concept of outlier persistence, which explores the birth and death of outliers with changing bandwidth. We show examples illustrating the usefulness of outlier persistence and conduct experiments using synthetic data to evaluate the performance of lookout in Section \ref{sec:simulations}. Using an extensive data repository of real datasets, we compare the performance of lookout to HDoutliers, stray, \textcolor{blue}{KDEOS and RDOS} in Section \ref{sec:applications}.
+A brief introduction to persistent homology and EVT is given in Section \ref{sec:methodology}. In Section \ref{sec:lookout} we introduce the algorithm *lookout* and the concept of outlier persistence, which explores the birth and death of outliers with changing bandwidth. We show examples illustrating the usefulness of outlier persistence and conduct experiments using synthetic data to evaluate the performance of lookout in Section \ref{sec:simulations}. Using an extensive data repository of real datasets, we compare the performance of lookout to HDoutliers, stray, \textcolor{blue}{KDEOS} [@Schubert2014] \textcolor{blue}{and RDOS} [@Tang2017] in Section \ref{sec:applications}.
 
 We have produced an R package `lookout` [@lookoutR] containing this algorithm. In addition, all examples in this paper are available in the supplementary material at \url{https://github.com/sevvandi/supplementary_material/tree/master/lookout}.
 
@@ -171,7 +171,7 @@ p1 | p2
 
 Given a point cloud of data, the resulting Rips complex depends on the value of the proximity parameter $\varepsilon$. As we increase $\varepsilon$, topological features such as connected components and holes appear and disappear. This is the focus of persistent homology. For example, in Figure&nbsp;\ref{fig:annulus}, we start with a large number of connected components (top-left) and as $\varepsilon$ increases to $0.8$ the number of connected components merge and decrease to 1 (bottom-left). Around this value of $\varepsilon$, a hole appears and as $\varepsilon$ increases to $1.5$, it disappears (bottom-right). The appearances and disappearances of these topological features are referred to as births and deaths and are illustrated using a *barcode* or a *persistence diagram*.
 
-```{r annulus, fig.cap="Rips complexes resulting from different $\\varepsilon$ values.", fig.width=6, fig.height=6}
+```{r annulus, fig.cap="Rips complexes resulting from different $\\varepsilon$ values.", fig.width=6, fig.height=4}
 outer_radius <- 1
 inner_radius <- 0.7
 n <- 50
@@ -258,7 +258,7 @@ beta1 <- beta %>% filter(dimension==1) %>% NROW()
 
 Figure \ref{fig:barcodeandpersistence} shows the barcode and the persistence diagram of the point cloud shown in Figure \ref{fig:annulus}. The barcode comprises a set of horizontal line segments, each denoting a feature that starts at its birth diameter and ends at its death diameter. These line segments are grouped by their dimension. The orange lines in Figure \ref{fig:barcodeandpersistence} denote the zero dimensional holes, which are connected components and blue lines denote one dimensional holes. The longer blue line which is born at `r sprintf("%.2f",longblueline$birth)` and dies at `r sprintf("%.2f",longblueline$death)`, corresponds to the hole at the center of the point cloud in Figure \ref{fig:annulus}. Such features that continue for a large range of $\varepsilon$, represent structural properties of the data that are of interest to us. The same information is presented differently in the persistence diagram, where the birth and the death of each feature is denoted by a point. Points away from the diagonal inform about the structure of the data while points closer to the diagonal are perturbations related to noise. In this plot, the triangle near the top represents the same feature as the long blue line in the left plot.
 
-Betti numbers denoted by $\beta_k$ give the number of $k$-dimensional holes of a simplicial complex. The number of connected components is given by $\beta_0$ and the number of one-dimensional holes is given by $\beta_1$. The number of two-dimensional holes, which are trapped volumes or voids is given by $\beta_2$. The Betti numbers can also be computed from the barcode by drawing a vertical line at the desired diameter and counting the points of intersection for each dimension. For example, in Figure \ref{fig:barcodeandpersistence} the Betti numbers corresponding to the simplicial complex at diameter $0.6$ are $\beta_0 = `r beta0`$ and $\beta_1 = `r beta1`$.
+<!-- Betti numbers denoted by $\beta_k$ give the number of $k$-dimensional holes of a simplicial complex. The number of connected components is given by $\beta_0$ and the number of one-dimensional holes is given by $\beta_1$. The number of two-dimensional holes, which are trapped volumes or voids is given by $\beta_2$. The Betti numbers can also be computed from the barcode by drawing a vertical line at the desired diameter and counting the points of intersection for each dimension. For example, in Figure \ref{fig:barcodeandpersistence} the Betti numbers corresponding to the simplicial complex at diameter $0.6$ are $\beta_0 = `r beta0`$ and $\beta_1 = `r beta1`$. -->
 
 These considerations lead to a natural question: which $\varepsilon$ is most representative of the structure of the data cloud? We will return to this question later.
 
@@ -607,7 +607,7 @@ Figure \ref{fig:outlierpersistence2} shows the persistence of outliers over diff
 
 # Experiments with synthetic data {#sec:simulations}
 
-In this section we first explore outlier persistence using simple examples. Then we conduct experiments using synthetic data comparing lookout to HDoutliers [@wilkinson2017visualizing] and stray [@stray], both of which also use extreme value theory to detect outliers.
+In this section we first explore outlier persistence using simple examples. Then we conduct experiments using synthetic data comparing lookout to HDoutliers [@wilkinson2017visualizing],  stray [@stray], \textcolor{blue}{KDEOS} [@Schubert2014] and \textcolor{blue}{RDOS} [@Tang2017].  Both HDoutliers and stray  use extreme value theory to detect outliers; KDEOS and RDOS use kernel density estimates. 
 
 ## Outlier persistence examples {#sec:PersistenceExamples}
 
@@ -1324,9 +1324,8 @@ g3 / (g4 | g2)
 
 
 ### \textcolor{blue}{Comparison of false positives } {-}
-\todo{Make this table blue!}
 \textcolor{blue}{
-A low false positive rate is an attractive feature for an outlier detection method. High false positives diminish user confidence with the risk of abandonment of such systems; consider a home security system with constant alarms. To get an understanding of the false positives, we redo experiments 1-3 without any outliers and compare the specificity ($tn/(tn+fp)$) of HDoutliers, stray and lookout. We repeat each experiment 10 times. As KDEOS and RDOS do not identify outliers, we do not include them in this comparison. High values of specificity is preferred with low values indicating more false positives. Table \ref{tab:zerooutliers} shows the specificity comparison results. Stray has an average specificity of 1 with zero standard deviation and HDoutliers has similar specificity for all three experiments. We see that the average specificity of lookout is greater than $0.99$ with low standard deviation values. Thus lookout's specificity is comparable to HDoutliers and stray, demonstrating that its false positive rate is low. }
+A low false positive rate is an attractive feature for an outlier detection method. High false positives diminish user confidence with the risk of abandonment of such systems; consider a home security system with constant alarms. To get an understanding of the false positives, we redo experiments 1-3 without any outliers and compare the specificity ($tn/(tn+fp)$) of HDoutliers, stray and lookout. We repeat each experiment 10 times. As KDEOS and RDOS do not identify outliers, we do not include them in this comparison. High values of specificity is preferred as low values indicate more false positives. Table \ref{tab:zerooutliers} shows the specificity comparison results. Stray has the highest, average specificity of 1 with zero standard deviation;  HDoutliers has a similar specificity for all three experiments. We see that the average specificity of lookout is greater than $0.99$ with low standard deviation values. Thus lookout's specificity is comparable to HDoutliers and stray, demonstrating that its false positive rate is low. }
 
 ```{r zerooutliers, fig.cap="", out.width="100%", message=FALSE}
 
@@ -1597,7 +1596,7 @@ output %>%
 
 ## A large data repository
 
-This repository at @datasets has more than $12000$ outlier detection datasets that were prepared from classification datasets. Dataset preparation involves downsampling the minority class in classification datasets, converting the categorical variables to numerical and accounting for missing values, all of which is detailed in @normalizationoutliers. 
+The repository at @datasets has more than $12000$ outlier detection datasets that were prepared from classification datasets. Dataset preparation involves downsampling the minority class in classification datasets, converting the categorical variables to numerical and accounting for missing values, all of which is detailed in @normalizationoutliers. 
 
 \textcolor{blue}{ We evaluate the performance of these 5 outlier detection methods on this data repository. While lookout, HDoutliers and stray gave valid output for all 12000+ datasets, RDOS and KDEOS gave errors for 5745 datasets. As such, we only compare lookout, stray and HDoutliers on this data repository.}
 
@@ -1716,7 +1715,7 @@ From the graphs in Figure \ref{fig:lvplots} we see that the total area of the le
 
 Lookout uses leave-one-out kernel density estimates and EVT to detect outliers. Outlier detection methods that use kernel density estimates generally employ a user-defined parameter to construct the bandwidth. Selecting a bandwidth for outlier detection is different from selecting a bandwidth for general data representation, because the goal is to make outliers have lower density estimates compared to the non-outliers. In addition, it is a challenge to select an appropriate bandwidth in high dimensions. To make outliers have lower density estimates compared to the rest, a reasonably large bandwidth needs to be chosen. We introduced an algorithm called *lookout* that uses persistent homology to select the bandwidth. 
 
-We compared the performance of lookout \textcolor{blue}{with 4 outlier detection algorithms, 2 of which use EVT to detect outliers and the 2 others use KDE. These algorithms are HDoutliers, stray, KDEOS and RDOS.}  Our results on experimental data and on \textcolor{blue}{two data repositories} showed that lookout achieves better performance.
+We compared the performance of lookout \textcolor{blue}{with 4 outlier detection algorithms, 2 of which use EVT to detect outliers and the others use KDE. These algorithms are HDoutliers, stray, KDEOS and RDOS.}  Our results on experimental data and on \textcolor{blue}{two data repositories} showed that lookout achieves better performance.
 
 We also introduced the concept of *outlier persistence*, exploring the birth and death of outliers with changing bandwidth and significance values. Outlier persistence gives a bigger picture, taking a step back from fixed parameter values. It explores the bandwidth and significance parameters and highlights the outliers that persist over a range of bandwidth values and their significance levels. We suggest that it is a useful measure that increases our understanding of outliers.
 
