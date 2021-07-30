@@ -622,6 +622,24 @@ Then we can use equation \eqref{eq:strengthpersistence} to compute its strength.
 
 Figure \ref{fig:outlierpersistence2} shows the persistence of outliers over different bandwidth values and significance levels for the dataset in Figure \ref{fig:outlierpersistence}. We see that points 1001--1005 are identified as outliers with high strength even for large bandwidths. This gives a comprehensive representation of outliers as it encapsulates the bandwidth as well as the strength (which corresponds to significance).
 
+\hypertarget{sec:timeseriesoutiers}{%
+\subsection{\texorpdfstring{\textcolor{blue}{Time series outliers}}{}}\label{sec:timeseriesoutiers}}
+
+\textcolor{blue}{Following} \textcite{Burridge2006} \textcolor{blue}{we extend lookout to a time series setting. They consider a time series with $k$ additive outliers defined as }
+
+\[ z_t = y_t + \sum_{j=1}^k \mathcal{I}_{\tau_j} x_{\tau_j} \, , \]
+\textcolor{blue}{where}
+\[ \mathcal{I}_{\tau_j} =  \begin{cases} 
+      1\, , & t = \tau_j \\
+      0\, ,  & t \neq \tau_j
+   \end{cases} \, ,
+\]
+\textcolor{blue}{and }
+\[ y_t = \phi y_{t-1} + u_t \, , \]
+\textcolor{blue}{with $\{u_t\}$ an autoregressive moving average process. They consider the case when  $\phi = 1$  and estimate $x_{\tau_j}$ by }
+\[ \hat{x}_{\tau_j} = \frac{1}{2}\left(\Delta z_{\tau_j} - \Delta z_{\tau_j +1}  \right)  = \frac{1}{2}\left(\Delta y_{\tau_j} - \Delta y_{\tau_j +1}  + 2 x_{\tau_j}\right) \, .\]
+\textcolor{blue}{ From the spacings of $\hat{x}_{t}$ they find outliers using  Algorithm 1 in their paper. Due to successive differences each outlier in $\{z_{t}\}$ can give rise to 3 consecutive outliers in $\{\hat{x}_{t}\}$. We extend lookout to a time series setting by using it on $\{\hat{x}_{t}\}$. To mitigate for successive outliers, we select the observation with the highest strength or the lowest probability from each set of consecutive outliers. }
+
 \hypertarget{sec:simulations}{%
 \section{Experiments with synthetic data}\label{sec:simulations}}
 
@@ -722,6 +740,35 @@ Experiment & mean & sd & mean & sd & mean & sd\\
 \textcolor{blue}{1} & \textcolor{blue}{0.9941} & \textcolor{blue}{0.0031} & \textcolor{blue}{1} & \textcolor{blue}{0} & \textcolor{blue}{1.0000} & \textcolor{blue}{0e+00}\\
 \textcolor{blue}{2} & \textcolor{blue}{0.9924} & \textcolor{blue}{0.0024} & \textcolor{blue}{1} & \textcolor{blue}{0} & \textcolor{blue}{0.9999} & \textcolor{blue}{4e-04}\\
 \textcolor{blue}{3} & \textcolor{blue}{0.9942} & \textcolor{blue}{0.0032} & \textcolor{blue}{1} & \textcolor{blue}{0} & \textcolor{blue}{1.0000} & \textcolor{blue}{0e+00}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\hypertarget{section-1}{%
+\subsection*{\texorpdfstring{\textcolor{blue}{Evaluating time series outliers }}{}}\label{section-1}}
+\addcontentsline{toc}{subsection}{\textcolor{blue}{Evaluating time series outliers }}
+
+\textcolor{blue}{
+In this section we compare the time series implementation of lookout with the outlier detection method proposed by } \textcite{Burridge2006}, \textcolor{blue}{which we denote by BT. For this example we simulate an ARIMA$(1, 1, 0)$ time series with the autoregressive parameter taking values $0.5, 0.6, 0.7, 0.8$ and $0.9$. We add an outlier to each simulated time series and repeat the simulation 10 times for each parameter value to account for randomness. Table \ref{tab:timeseriesdatviz} gives the results of lookout and BT using Gmean and Fmeasure. We see that lookout gives better performance than BT for all parameter values. 
+}
+
+\begin{table}
+
+\caption{\label{tab:timeseriesdatviz}Time series outliers performance comparison}
+\centering
+\begin{tabular}[t]{rrrrrrrrr}
+\toprule
+\multicolumn{1}{c}{\textbf{}} & \multicolumn{4}{c}{\textbf{Gmean}} & \multicolumn{4}{c}{\textbf{FMeasure}} \\
+\cmidrule(l{3pt}r{3pt}){2-5} \cmidrule(l{3pt}r{3pt}){6-9}
+\multicolumn{1}{c}{\textbf{}} & \multicolumn{2}{c}{\textbf{lookout}} & \multicolumn{2}{c}{\textbf{BT}} & \multicolumn{2}{c}{\textbf{lookout}} & \multicolumn{2}{c}{\textbf{BT}} \\
+\cmidrule(l{3pt}r{3pt}){2-3} \cmidrule(l{3pt}r{3pt}){4-5} \cmidrule(l{3pt}r{3pt}){6-7} \cmidrule(l{3pt}r{3pt}){8-9}
+AR & mean & sd & mean & sd & mean & sd & mean & sd\\
+\midrule
+\textcolor{blue}{0.5} & \textcolor{blue}{1.0} & \textcolor{blue}{0.000} & \textcolor{blue}{0.700} & \textcolor{blue}{0.483} & \textcolor{blue}{1.0} & \textcolor{blue}{0.000} & \textcolor{blue}{0.667} & \textcolor{blue}{0.471}\\
+\textcolor{blue}{0.6} & \textcolor{blue}{1.0} & \textcolor{blue}{0.000} & \textcolor{blue}{0.899} & \textcolor{blue}{0.316} & \textcolor{blue}{1.0} & \textcolor{blue}{0.000} & \textcolor{blue}{0.750} & \textcolor{blue}{0.326}\\
+\textcolor{blue}{0.7} & \textcolor{blue}{0.9} & \textcolor{blue}{0.316} & \textcolor{blue}{0.500} & \textcolor{blue}{0.527} & \textcolor{blue}{0.9} & \textcolor{blue}{0.316} & \textcolor{blue}{0.500} & \textcolor{blue}{0.527}\\
+\textcolor{blue}{0.8} & \textcolor{blue}{1.0} & \textcolor{blue}{0.000} & \textcolor{blue}{0.599} & \textcolor{blue}{0.515} & \textcolor{blue}{1.0} & \textcolor{blue}{0.000} & \textcolor{blue}{0.467} & \textcolor{blue}{0.443}\\
+\textcolor{blue}{0.9} & \textcolor{blue}{0.9} & \textcolor{blue}{0.316} & \textcolor{blue}{0.500} & \textcolor{blue}{0.527} & \textcolor{blue}{0.9} & \textcolor{blue}{0.316} & \textcolor{blue}{0.467} & \textcolor{blue}{0.502}\\
 \bottomrule
 \end{tabular}
 \end{table}
