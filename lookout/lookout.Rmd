@@ -105,7 +105,7 @@ A brief introduction to persistent homology and EVT is given in Section \ref{sec
 
 We have produced an R package `lookout` [@lookoutR] containing this algorithm. In addition, all examples in this paper are available in the supplementary material at \url{https://github.com/sevvandi/supplementary_material/tree/master/lookout}.
 
-We have used the R packages `TDAstats` [@tdastatsR] and `ggtda` [@ggdta] for all TDA and persistent homology computations and related graphs. We have used the R package `evd` [@evdR] to fit the Generalized Pareto Distribution.
+We have used the R packages `TDAstats` [@tdastatsR] and `ggtda` [@ggtda] for all TDA and persistent homology computations and related graphs. We have used the R package `evd` [@evdR] to fit the Generalized Pareto Distribution.
 
 # Mathematical background {#sec:methodology}
 
@@ -497,7 +497,7 @@ This ensures that points within a distance of $d_*$ contribute to the kernel den
 
 ## Algorithm *lookout*
 
-Now we have all the building blocks necessary to describe the algorithm *lookout*. Consider an $N \times p$ data matrix $\bm{X}$ with $N$ observations in $\mathbb{R}^p$. It is customary in outlier detection to scale the data so that all variables contribute equally to outlier detection. We normalize the data using Min-Max normalization, which scales each attribute to $[0, 1]$ and has been shown to be effective compared to other normalization techniques [@kandanaarachchi2018normalization]. To accommodate datasets that do not need to be normalized, we make normalization a user option.
+Now we have all the building blocks necessary to describe the algorithm *lookout*. Consider an $N \times p$ data matrix $\bm{X}$ with $N$ observations in $\mathbb{R}^p$. It is customary in outlier detection to scale the data so that all variables contribute equally to outlier detection. We normalize the data using Min-Max normalization, which scales each attribute to $[0, 1]$ and has been shown to be effective compared to other normalization techniques [@normalizationoutliers]. To accommodate datasets that do not need to be normalized, we make normalization a user option.
 
 We compute the kernel density estimates defined by \eqref{eq:kde6} and the leave-one-out kernel density estimates defined in \eqref{eq:kde12}, with the bandwidth matrix \eqref{eq:bandwidth}, and the scaled Epanechnikov kernel \eqref{eq:kde8}.
 
