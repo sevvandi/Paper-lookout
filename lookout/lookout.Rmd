@@ -82,7 +82,6 @@ diff_metrics_2 <- function(act, pred){
 
   sp <- tn/(tn + fp)
 
-
   out <- data.frame(N=n, true_pos = tp, true_neg= tn, false_pos = fp, false_neg= fn, specificity = sp)
 
   return(out)
@@ -121,11 +120,11 @@ Topological data analysis is the study of data using topological constructs. It 
 
 ### Simplicial complex {-}
 
-Consider a data cloud representing a collection of points. This set of points is used to construct a graph where the points are considered vertices and the edges are determined by the distance between the points. Given a proximity parameter $\varepsilon$, two vertices are connected by an edge if the distance between these two points is less than or equal to $\varepsilon$. Starting from this graph, a simplicial complex --- a space built from simple pieces --- is constructed. A simplicial complex is a finite set of $k$-simplices, where $k$ denotes the dimension; for example, a point is a $0$-simplex, an edge a $1$-simplex, a triangle a $2$-simplex, and a tetrahedron a $3$-simplex. Suppose $S$ denotes a simplicial complex that includes a $k$-simplex $\gamma$. Then all non-empty subsets of $\beta \subset \gamma$ are also included in $S$. For example, if $S$ contains a triangle $pqr$, then the edges $pq$, $qr$ and $rs$, and the vertices $p$, $q$ and $r$, are also in $S$.
+Consider a data cloud representing a collection of points. This set of points is used to construct a graph where the points are considered vertices and the edges are determined by the distance between the points. Given a proximity parameter $\varepsilon$, two vertices are connected by an edge if the distance between these two points is less than or equal to $\varepsilon$. Starting from this graph, a simplicial complex --- a space built from simple pieces --- is constructed. A simplicial complex is a finite set of $k$-simplices, where $k$ denotes the dimension; for example, a point is a 0-simplex, an edge a 1-simplex, a triangle a 2-simplex, and a tetrahedron a 3-simplex. Suppose $S$ denotes a simplicial complex that includes a $k$-simplex $\gamma$. Then all non-empty subsets of $\beta \subset \gamma$ are also included in $S$. For example, if $S$ contains a triangle $pqr$, then the edges $pq$, $qr$ and $rs$, and the vertices $p$, $q$ and $r$, are also in $S$.
 
-The *Vietoris-Rips* complex and the *Cech* complex are two types of $k$-simplicial complexes. We will construct a Vietoris-Rips complex from the data cloud as it is more computationally efficient than the Cech complex [@ghrist2008barcodes]. Given a set of points and a proximity parameter $\varepsilon > 0$, $k+1$ points within a distance of $\varepsilon$ to each other form a $k$-simplex. For example, consider 5 points $p$, $q$, $r$, $s$ and $t$ and suppose the distance between any two points except $t$ is less than $\varepsilon$. Then we can construct the edges $pq$, $pr$, $ps$, $qr$, $qs$ and $rs$. From the edges $pq$, $qr$ and $rp$ we can construct the triangle $pqr$, from $pq$, $qs$ and $sp$ the triangle $pqs$ and so on, because the distance between any two points $p$, $q$, $r$ and $s$ is bounded by $\varepsilon$. By constructing the $4$ triangles $pqr$, $qrs$, $rsp$ and $spq$ we can construct the tetrahedron $pqrs$. The vertex $t$ is not connected to this $3$-simplex because the distance between $t$ and the other vertices is greater than $\varepsilon$. The simplicial complex resulting from these 5 points consists of the tetrahedron $pqrs$ and all the subset $k$-simplices and the vertex $t$. Figure \ref{fig:tetrahedron} shows this simplicial complex on the left and another example on the right.
+The *Vietoris-Rips* complex and the *Cech* complex are two types of $k$-simplicial complexes. We will construct a Vietoris-Rips complex from the data cloud as it is more computationally efficient than the Cech complex [@ghrist2008barcodes]. Given a set of points and a proximity parameter $\varepsilon > 0$, $k+1$ points within a distance of $\varepsilon$ to each other form a $k$-simplex. For example, consider five points $p$, $q$, $r$, $s$ and $t$ and suppose the distance between any two points except $t$ is less than $\varepsilon$. Then we can construct the edges $pq$, $pr$, $ps$, $qr$, $qs$ and $rs$. From the edges $pq$, $qr$ and $rp$ we can construct the triangle $pqr$, from $pq$, $qs$ and $sp$ the triangle $pqs$ and so on, because the distance between any two points $p$, $q$, $r$ and $s$ is bounded by $\varepsilon$. By constructing the four triangles $pqr$, $qrs$, $rsp$ and $spq$ we can construct the tetrahedron $pqrs$. The vertex $t$ is not connected to this 3-simplex because the distance between $t$ and the other vertices is greater than $\varepsilon$. The simplicial complex resulting from these five points consists of the tetrahedron $pqrs$ and all the subset $k$-simplices and the vertex $t$. Figure \ref{fig:tetrahedron} shows this simplicial complex on the left and another example on the right.
 
-```{r tetrahedron, fig.height=3, fig.cap="The figure on the left shows the points $p$, $q$, $r$, $s$ and $t$ with a proximity parameter $\\varepsilon = 0.5$ and the resulting Rips complex consisting of the tetrahedron $pqrs$, triangles $pqr$, $qrs$, $rsp$, $pqs$, edges $pq$, $qr$, $rs$, $sp$, $qs$, $pr$ and vertices $p$, $q$, $r$, $s$ and $t$. The figure on the right shows $8$ points and the resulting Rips complex with $\\varepsilon=4/3$."}
+```{r tetrahedron, fig.height=3, fig.cap="The figure on the left shows the points $p$, $q$, $r$, $s$ and $t$ with a proximity parameter $\\varepsilon = 0.5$ and the resulting Rips complex consisting of the tetrahedron $pqrs$, triangles $pqr$, $qrs$, $rsp$, $pqs$, edges $pq$, $qr$, $rs$, $sp$, $qs$, $pr$ and vertices $p$, $q$, $r$, $s$ and $t$. The figure on the right shows eight points and the resulting Rips complex with $\\varepsilon=4/3$."}
 d <- tibble(
   point = c("p", "q", "r", "s", "t"),
   x = c(0, 0.2, 0, 0.1, 0.75),
@@ -579,7 +578,7 @@ We summarize these steps in Algorithm \ref{algo:persistence}.
 	Initialize matrix $\bm{Y}$ to zero. \\
 	Run Algorithm \ref{algo:lookout} to determine the death diameter sequence $\{d_i\}$ and the GPD parameters $\mu_0$, $\sigma_0$ and $\xi_0$. \\
 	Construct an equidistant bandwidth sequence of length $\ell$ starting from the $\beta^{\text{th}}$ percentile of $\{d_i\}$ to $\sqrt{5} \max_i d_i$. Call the bandwidth sequence $\{b_k\}_{k=1}^{\ell}$. \\
-	\For{$k$ from $1$ to $\ell$}{
+	\For{$k$ from 1 to $\ell$}{
 	Using $h = (b_k)^{2/p}$ and $\bm{H} = h\bm{I}$ compute kernel density estimates and leave-one-out kernel density estimates using the scaled Epanechnikov kernel. \\
 	Denote the kde of $\bm{x}_i$ by $y_i$ and leave-one-out kde by $y_{-i}$.\\
 	Using the GPD parameters $\mu_0, \sigma_0$ and $\xi_0$ find the GPD probability of the leave-one-out kde values $\{-\log(y_{-i})\}_{i=1}^N$, i.e., $P\left(-\log(y_{-i})|\mu_0, \sigma_0, \xi_0 \right)$ for all $i$. \\
@@ -607,21 +606,22 @@ Figure \ref{fig:outlierpersistence2} shows the persistence of outliers over diff
 
 ## \textcolor{blue}{Time series outliers} {#sec:timeseriesoutiers}
 
-\textcolor{blue}{Following} @Burridge2006 \textcolor{blue}{we extend lookout to a time series setting. They consider a time series with $k$ additive outliers defined as }
-
-$$ z_t = y_t + \sum_{j=1}^k \mathcal{I}_{\tau_j} x_{\tau_j} \, , $$ 
-\textcolor{blue}{where} 
-$$ \mathcal{I}_{\tau_j} =  \begin{cases} 
+\color{blue} Following @Burridge2006 we extend lookout to a time series setting. They consider a time series with $k$ additive outliers defined as
+\begin{align*}
+z_t & = y_t + \sum_{j=1}^k \mathcal{I}_{\tau_j} x_{\tau_j} , \\
+\text{where}\qquad
+  \mathcal{I}_{\tau_j} &=  \begin{cases}
       1\, , & t = \tau_j \\
       0\, ,  & t \neq \tau_j
-   \end{cases} \, ,
-$$
-\textcolor{blue}{and }
-$$ y_t = \phi y_{t-1} + u_t \, , $$
-\textcolor{blue}{with $\{u_t\}$ an autoregressive moving average process. They consider the case when  $\phi = 1$  and estimate $x_{\tau_j}$ by }
+   \end{cases} , \\
+\text{and}\qquad
+y_t &= \phi y_{t-1} + u_t ,
+\end{align*}
+with $\{u_t\}$ an autoregressive moving average process. They consider the case when  $\phi = 1$  and estimate $x_{\tau_j}$ by
 $$ \hat{x}_{\tau_j} = \frac{1}{2}\left(\Delta z_{\tau_j} - \Delta z_{\tau_j +1}  \right)  = \frac{1}{2}\left(\Delta y_{\tau_j} - \Delta y_{\tau_j +1}  + 2 x_{\tau_j}\right) \, .$$
-\textcolor{blue}{ From the spacings of $\hat{x}_{t}$ they find outliers using  Algorithm 1 in their paper. Due to successive differences each outlier in $\{z_{t}\}$ can give rise to 3 consecutive outliers in $\{\hat{x}_{t}\}$. We extend lookout to a time series setting by using it on $\{\hat{x}_{t}\}$. To mitigate for successive outliers, we select the observation with the highest strength or the lowest probability from each set of consecutive outliers. }
+From the spacings of $\hat{x}_{t}$ they find outliers using Algorithm 1 in their paper. Due to successive differences each outlier in $\{z_{t}\}$ can give rise to three consecutive outliers in $\{\hat{x}_{t}\}$. We extend lookout to a time series setting by using it on $\{\hat{x}_{t}\}$. To mitigate for successive outliers, we select the observation with the highest strength or the lowest probability from each set of consecutive outliers.
 
+\color{black}
 
 # Experiments with synthetic data {#sec:simulations}
 
@@ -805,9 +805,11 @@ From the examples in Figure \ref{fig:persistenceEx} we see that lookout selects 
 
 ## Comparison Study {#sec:SyntheticComparison}
 
-In this section we conduct three experiments with synthetic data. Each experiment considers two data distributions; the main distribution and a handful of outliers which are distributed differently. There are several iterations to each experiment. The iterations serve as a measure of the degree of outlyingness of the small sample. The outliers start off with the main distribution and slowly move out of the main distribution with each iteration. Consequently, in the initial iterations the points in the outlying distribution are not actual outliers as they are similar to the points in the main distribution, while in the later iterations they are quite different from the main distribution. We repeat each iteration 10 times to account for the randomness of the data generation process.
+In this section we conduct three experiments with synthetic data. Each experiment considers two data distributions; the main distribution and a handful of outliers which are distributed differently. There are several iterations to each experiment. The iterations serve as a measure of the degree of outlyingness of the small sample. The outliers start off with the main distribution and slowly move out of the main distribution with each iteration. Consequently, in the initial iterations the points in the outlying distribution are not actual outliers as they are similar to the points in the main distribution, while in the later iterations they are quite different from the main distribution. We repeat each iteration ten times to account for the randomness of the data generation process.
 
-We compare the results of lookout with \textcolor{blue}{4} other algorithms; HDoutliers [@wilkinson2017visualizing], stray [@stray], \textcolor{blue}{KDEOS} [@Schubert2014] \textcolor{blue}{ and RDOS} [@Tang2017]. \textcolor{blue}{ Both HDoutliers and stray use extreme value theory for outlier detection while both KDEOS and RDOS use kernel density estimates. HDoutliers and stray identify outliers, that is outliers are assigned a binary label as output of these algorithms. KDEOS and RDOS do not identify outliers. Instead, they give an anomaly score which can be used to rank outliers. As the algorithms exhibit differences in their output mechanisms, we employ different methods to compare the performance of these algorithms. To compare the performance of lookout with HDoutliers and stray we use the identified outliers. We use F-measure and the geometric mean of sensitivity and specificity denoted by Gmean, which we discuss below to compare these 3 algorithms. To compare lookout with KDEOS and RDOS we use the outlier scores and utilize the area under the Receiver Operator Characteristic curve denoted by AUC. Furthermore, the evaluation metrics F-measure, Gmean and AUC are suited for imbalanced datasets. For KDEOS and RDOS we use the default parameters. For lookout, HDoutliers and stray we use $\alpha = 0.05$. } The F-measure is defined as 
+We compare the results of lookout with \textcolor{blue}{four} other algorithms; HDoutliers [@wilkinson2017visualizing], stray [@stray], \textcolor{blue}{KDEOS} [@Schubert2014] \textcolor{blue}{ and RDOS} [@Tang2017]. \textcolor{blue}{HDoutliers and stray both use extreme value theory for outlier detection, while KDEOS and RDOS both use kernel density estimates. For KDEOS and RDOS we use the default parameters. For lookout, HDoutliers and stray we use $\alpha = 0.05$. HDoutliers and stray identify outliers explicitly. KDEOS and RDOS do not identify outliers directly; instead, they give an anomaly score which can be used to rank points according to how outlying they are. As the algorithms give different outputs, we employ different methods to compare their performance. To compare the performance of lookout with HDoutliers and stray, we assess the identified outliers based on the F-measure and the geometric mean of sensitivity and specificity denoted by Gmean, discussed below. To compare lookout with KDEOS and RDOS, we assess the outlier scores using the area under the Receiver Operator Characteristic curve denoted by AUC. Note that the evaluation metrics F-measure, Gmean and AUC are suited for unbalanced datasets.}
+
+The F-measure is defined as
 \begin{equation}\label{eq:fmeasure}
 	\text{F-measure} = 2\frac{\text{precision} \times \text{recall}}{\left( \text{precision} + \text{recall} \right) }  ,
 \end{equation}
@@ -827,14 +829,13 @@ and
 \end{equation}
 where *tn* denotes the true negatives (predicted = false, actual = false). In fact, sensitivity and recall are two different terms denoting the same quantity of interest.
 
-\textcolor{blue}{For all 3 experiments we compute the time taken for each algorithm on a Microsoft Surface Pro 3 laptop, with Intel(R) Core(TM) i5-4300U, 2.50GHz processor. We report the time taken as additional metrics.}
+\textcolor{blue}{For all three experiments we compute the time taken for each algorithm on a Microsoft Surface Pro 3 laptop, with Intel(R) Core(TM) i5-4300U, 2.50GHz processor. We report the time taken as additional metrics.}
 
 ### Experiment 1 {-}
 
-For this experiment we consider two normally distributed samples in $\mathbb{R}^6$; one large and one small starting at the same location with the small sample slowly moving out in each iteration. The set of points belonging to the small sample are considered outliers. We consider 400 points in the bigger sample and 5 in the outlying sample, placed at indices 401--405. The points in the larger sample are distributed in each dimension as $\mathcal{N}(0, 1)$. The outliers differ from the normal points in only one dimension; i.e. they are distributed as $\mathcal{N}\left(2 + (i-1)/2, 0.2 \right)$, where $i$ denotes the iteration. In the first iteration the outliers are distributed as $\mathcal{N}\left(2, 0.2 \right)$ in the first dimension and in the tenth iteration they are distributed as $\mathcal{N}\left(6.5, 0.2 \right)$. Each iteration is repeated 10 times to account for randomness.
+For this experiment we consider two normally distributed samples in $\mathbb{R}^6$; one large and one small starting at the same location with the small sample slowly moving out in each iteration. The set of points belonging to the small sample are considered outliers. We consider 400 points in the bigger sample and 5 in the outlying sample, placed at indices 401--405. The points in the larger sample are distributed in each dimension as $\mathcal{N}(0, 1)$. The outliers differ from the standard normal points in only the first dimension; i.e. they are distributed as $\mathcal{N}\left(2 + (i-1)/2, 0.2 \right)$, where $i$ denotes the iteration. In the first iteration the outliers are distributed as $\mathcal{N}\left(2, 0.2 \right)$ in the first dimension and in the tenth iteration they are distributed as $\mathcal{N}\left(6.5, 0.2 \right)$. Each iteration is repeated ten times to account for randomness.
 
-```{r ComparisonEx1, fig.cap="Experiment 1 with outliers moving out from the normal distribution in $\\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition.  The graph on the top right shows the performance comparison between lookout, HDoutliers, stray, kdeos and rdos using AUC, Fmeasure and Gmean over 10 repetitions. Fmeasure and Gmean are used for algorithms that identify outliers, while AUC is used for algorithms that rank outliers. In this experiment, stray and HDoutliers gave identical results. The graph on the bottom left shows the time taken for these 5 algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.", out.width="100%", message=FALSE}
-set.seed(123)
+```{r ComparisonEx1, fig.cap="Experiment 1 with outliers moving out from the normal distribution in $\\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the performance comparison between lookout, HDoutliers, stray, kdeos and rdos using AUC, Fmeasure and Gmean over ten repetitions. Fmeasure and Gmean are used for algorithms that identify outliers, while AUC is used for algorithms that rank outliers. In this experiment, stray and HDoutliers gave identical results. The graph on the bottom left shows the time taken for these five algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.", out.width="100%", message=FALSE}
 values <- rep(0, 10)
 pp <- 10
 hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <-
@@ -882,7 +883,6 @@ for (kk in seq(pp)) {
     lookout_roc[kk, i] <- roc_obj$auc
     lookout_time[ll, ] <- tt
 
-
     # HDOUTLIERS
     tt <- system.time(hdoutobj <- HDoutliers(X, alpha=0.05))
     hdoutlabs <- rep(0, dim(X)[1])
@@ -891,7 +891,6 @@ for (kk in seq(pp)) {
     hdoutliers_gmean[kk, i] <- hdoutput$gmean
     hdoutliers_fmeasure[kk, i] <- hdoutput$fmeasure
     hdoutliers_time[ll, ] <- tt
-
 
     # KDEOS
     tt <- system.time(kdeos_scores <- DDoutlier::KDEOS(X)) # using default parameters
@@ -950,7 +949,6 @@ dfl1 <- tibble(
   pivot_longer(-Iteration, names_to = "Algorithm") %>%
   mutate(Metric = 'Fmeasure')
 
-
 # PLOT GEOMETRIC MEAN OF SENSITIVITY AND SPECIFICITY
 str_mean <- colMeans(stray_gmean)
 lookout_mean <- colMeans(lookout_gmean)
@@ -983,7 +981,6 @@ kdeos_mean <- colMeans(kdeos_roc)
 lookout_mean <-  colMeans(lookout_roc)
 rdos_mean <-  colMeans(rdos_roc)
 
-
 dfl3 <- tibble(
   Iteration = seq(10),
   kdeos = kdeos_mean,
@@ -997,7 +994,6 @@ dfl <- bind_rows(dfl1, dfl2, dfl3)
 
 g3 <- ggplot(dfl, aes(x=Iteration, y=value)) + geom_line(aes(color=Algorithm), size=1) + ylab("Performance") + facet_wrap(~Metric) + scale_x_continuous(breaks=2*(1:5)) + theme_bw()
 
-
 # TIME TAKEN
 
 dftime <- tibble(
@@ -1010,22 +1006,20 @@ dftime <- tibble(
 ) %>%
   pivot_longer(-Run, names_to = "Algorithm")
 
-
 g4 <- ggplot(dftime, aes(Algorithm, value)) + geom_boxplot(outlier.shape = 20)  + ylab("Time (mins)") + coord_flip() + theme_bw()
 
 (g1 | g3) / (g4 | g2)
 ```
 
-The top left graph of Figure \ref{fig:ComparisonEx1} shows the first two dimensions of this experimental dataset in its last iteration and repetition with outliers identified by lookout shown in different colors.
-\textcolor{blue}{ The top right graph shows the performance comparison of lookout, HDoutliers, stray, KDEOS and RDOS. As lookout, HDoutliers and stray identify outliers, we have used the Fmeasure and Gmean to compare their performance. As KDEOS and RDOS rank outliers instead of identifying them, we have used the AUC -- the area under the ROC curve -- to compare their performance. We see that for each iteration lookout surpasses HDoutliers and stray significantly. Lookout gives much better performance than KDEOS, and from the fourth iteration onwards lookout surpasses RDOS. The graph on the bottom left shows the time taken for each algorithm. We see that RDOS takes a much longer time than the other algorithms. HDoutliers and stray are the fastest, followed by lookout. The graph on the bottom right shows the outlier persistence plot for this data with the dashed line denoting the lookout bandwidth.}
+The top left graph of Figure \ref{fig:ComparisonEx1} shows the first two dimensions of this experimental dataset in its last iteration and repetition, with outliers identified by lookout shown in different colors.
+\textcolor{blue}{The top right graph shows the performance comparison of lookout, HDoutliers, stray, KDEOS and RDOS. As lookout, HDoutliers and stray identify outliers, we have used the Fmeasure and Gmean to compare their performance. As KDEOS and RDOS rank outliers instead of identifying them, we have used the AUC --- the area under the ROC curve --- to compare their performance. We see that for each iteration lookout surpasses HDoutliers and stray significantly. Lookout gives much better performance than KDEOS, and from the fourth iteration onwards lookout surpasses RDOS. The graph on the bottom left shows the time taken for each algorithm. We see that RDOS takes a much longer time than the other algorithms. HDoutliers and stray are the fastest, followed by lookout. The graph on the bottom right shows the outlier persistence plot for this data with the dashed line denoting the lookout bandwidth.}
 <!-- The top right graph shows the corresponding outlier persistence plot for this data with the dashed line denoting the lookout bandwidth. The graphs at the bottom show the performance of lookout, HDoutliers and stray with $\alpha = 0.05$. The mean F-measure of the 10 repetitions for each iteration is shown in the graph at the bottom left and the mean Gmean is shown at the bottom right. We see that for each iteration lookout surpasses HDoutliers and stray significantly. -->
 
 ### Experiment 2 {-}
 
-For this experiment we consider an annulus in $\mathbb{R}^2$ with outlying points moving into the center with each iteration. We consider $800$ points in the annulus with $5$ outlying points. The outliers are normally distributed and have a smaller standard deviation compared to the other points. The mean of the outliers in the $i^{\text{th}}$ iteration is $\left( 5 - (i-1) /2,  0 \right)$, so that the outliers start at the right of the annulus with mean $(5,0)$ and move in with each iteration, ending with mean $(0,0)$. We repeat each iteration 10 times.
+For this experiment we consider an annulus in $\mathbb{R}^2$ with outlying points moving into the center with each iteration. We consider 800 points in the annulus with five outlying points. The outliers are normally distributed and have a smaller standard deviation compared to the other points. The mean of the outliers in the $i^{\text{th}}$ iteration is $\left(5 - (i-1) /2,  0 \right)$, so that the outliers start at the right of the annulus with mean $(5,0)$ and move in with each iteration, ending with mean $(0,0)$. We repeat each iteration ten times.
 
-```{r ComparisonEx2, fig.cap="Experiment 2 with outliers moving into the center of the annulus in $\\mathbb{R}^2$. Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the performance comparison between lookout, HDoutliers, stray, kdeos and rdos using AUC, Fmeasure and Gmean over 10 repetitions. The graph on the bottom left shows the time taken for these 5 algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.", out.width="100%", message=FALSE}
-set.seed(1234)
+```{r ComparisonEx2, fig.cap="Experiment 2 with outliers moving into the center of the annulus in $\\mathbb{R}^2$. Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the performance comparison between lookout, HDoutliers, stray, kdeos and rdos using AUC, Fmeasure and Gmean over 10 repetitions. The graph on the bottom left shows the time taken for these five algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.", out.width="100%", message=FALSE}
 values <- rep(0, 10)
 pp <- 10
 hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <-
@@ -1062,7 +1056,6 @@ for (kk in seq(pp)) {
     stray_fmeasure[kk, i] <- strayoutput$fmeasure
     stray_time[ll, ] <- tt
 
-
     # LOOKOUT
     tt <- system.time(lookoutobj <- lookout(X, alpha=0.05, unitize = TRUE))
     lookoutlabs <- rep(0, nn)
@@ -1074,7 +1067,6 @@ for (kk in seq(pp)) {
     roc_obj <- roc(labs, lookout_scores, direction="<")
     lookout_roc[kk, i] <- roc_obj$auc
     lookout_time[ll, ] <- tt
-
 
     # HDOUTLIERS
     tt <- system.time(hdoutobj <- HDoutliers(X, alpha=0.05))
@@ -1119,7 +1111,6 @@ str_mean <- colMeans(stray_fmeasure)
 lookout_mean <- colMeans(lookout_fmeasure)
 hdoutliers_mean <- colMeans(hdoutliers_fmeasure)
 
-
 dfl1 <- tibble(
   Iteration = seq(10),
   stray = str_mean,
@@ -1129,12 +1120,10 @@ dfl1 <- tibble(
   pivot_longer(-Iteration, names_to = "Algorithm") %>%
   mutate(Metric = 'Fmeasure')
 
-
 # GEOMETRIC MEAN OF SENSITIVITY AND SPECIFICITY
 str_mean <- colMeans(stray_gmean)
 lookout_mean <- colMeans(lookout_gmean)
 hdoutliers_mean <- colMeans(hdoutliers_gmean)
-
 
 dfl2 <- tibble(
   Iteration = seq(10),
@@ -1150,7 +1139,6 @@ kdeos_mean <- colMeans(kdeos_roc)
 lookout_mean <-  colMeans(lookout_roc)
 rdos_mean <-  colMeans(rdos_roc)
 
-
 dfl3 <- tibble(
   Iteration = seq(10),
   kdeos = kdeos_mean,
@@ -1164,7 +1152,6 @@ dfl <- bind_rows(dfl1, dfl2, dfl3)
 
 g3 <- ggplot(dfl, aes(x=Iteration, y=value)) + geom_line(aes(color=Algorithm), size=1) + ylab("Performance") + facet_wrap(~Metric) + scale_x_continuous(breaks=2*(1:5)) + theme_bw()
 
-
 # TIME TAKEN
 dftime <- tibble(
   Run = seq(100),
@@ -1175,7 +1162,6 @@ dftime <- tibble(
   rdos = rdos_time[ ,3]
 ) %>%
   pivot_longer(-Run, names_to = "Algorithm")
-
 
 g4 <- ggplot(dftime, aes(Algorithm, value)) + geom_boxplot(outlier.shape = 20)  + ylab("Time (mins)") + coord_flip() + theme_bw()
 
@@ -1190,8 +1176,7 @@ The graph at the top left of Figure \ref{fig:ComparisonEx2} shows the points in 
 
 For this experiment we consider a unit cube in $\mathbb{R}^{20}$ with 500 points, of which 499 points are uniformly distributed in each direction and the remaining point is an outlier. The outlier moves towards the point $\left( 0.9, 0.9, \dots, 0.9 \right)$ with each iteration. For the $i^{\text{th}}$ iteration the first $i$ coordinates of the outlier are each equal to $0.9$ and the remaining coordinates are uniformly distributed in $(0,1)$. The index of the outlier is 500. Each iteration is repeated 10 times with different randomizations.
 
-```{r ComparisonEx3, fig.cap="Experiment 3 with an outlier moving to $(0.9, 0.9, \\dots)$. Graph on the top shows the performance comparison between lookout, HDoutliers, stray, KDEOS and RDOS using AUC, Fmeasure and Gmean over 10 repetitions. The graph on the bottom left shows the time taken for these 5 algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.", out.width="100%", message=FALSE}
-
+```{r ComparisonEx3, fig.cap="Experiment 3 with an outlier moving to $(0.9, 0.9, \\dots)$. Graph on the top shows the performance comparison between lookout, HDoutliers, stray, KDEOS and RDOS using AUC, Fmeasure and Gmean over ten repetitions. The graph on the bottom left shows the time taken for these five algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.", out.width="100%", message=FALSE}
 values <- rep(0, 10)
 pp <- 10
 dd <- 19
@@ -1202,7 +1187,6 @@ lookout_roc <- kdeos_roc <- rdos_roc <- matrix(0, nrow=pp, ncol=20)
 
 hdoutliers_time <- lookout_time <- stray_time <- kdeos_time <- rdos_time <- matrix(0, nrow=pp*20, ncol=5)
 
-set.seed(123)
 nn <- 500
 labs <- c(rep(0, nn-1), 1)
 
@@ -1223,7 +1207,6 @@ for (kk in seq(pp)) {
     stray_fmeasure[kk, i] <- strayoutput$fmeasure
     stray_time[ll, ] <- tt
 
-
     # LOOKOUT
     tt <- system.time(lookoutobj <- lookout(X, alpha=0.05, unitize = TRUE))
     lookoutlabs <- rep(0, nn)
@@ -1235,7 +1218,6 @@ for (kk in seq(pp)) {
     roc_obj <- roc(labs, lookout_scores, direction="<")
     lookout_roc[kk, i] <- roc_obj$auc
     lookout_time[ll, ] <- tt
-
 
     # HDOUTLIERS
     tt <- system.time(hdoutobj <- HDoutliers(X, alpha=0.05))
@@ -1269,7 +1251,6 @@ str_mean <- colMeans(stray_fmeasure)
 lookout_mean <- colMeans(lookout_fmeasure)
 hdoutliers_mean <- colMeans(hdoutliers_fmeasure)
 
-
 dfl1 <- tibble(
   Iteration = seq(20),
   stray = str_mean,
@@ -1279,12 +1260,10 @@ dfl1 <- tibble(
   pivot_longer(-Iteration, names_to = "Algorithm") %>%
   mutate(Metric = 'Fmeasure')
 
-
 # GEOMETRIC MEAN OF SENSITIVITY AND SPECIFICITY
 str_mean <- colMeans(stray_gmean)
 lookout_mean <- colMeans(lookout_gmean)
 hdoutliers_mean <- colMeans(hdoutliers_gmean)
-
 
 dfl2 <- tibble(
   Iteration = seq(20),
@@ -1300,7 +1279,6 @@ kdeos_mean <- colMeans(kdeos_roc)
 lookout_mean <-  colMeans(lookout_roc)
 rdos_mean <-  colMeans(rdos_roc)
 
-
 dfl3 <- tibble(
   Iteration = seq(20),
   kdeos = kdeos_mean,
@@ -1314,7 +1292,6 @@ dfl <- bind_rows(dfl1, dfl2, dfl3)
 
 g3 <- ggplot(dfl, aes(x=Iteration, y=value)) + geom_line(aes(color=Algorithm), size=1) + ylab("Performance") + facet_wrap(~Metric) + scale_x_continuous(breaks=2*(1:10)) + theme_bw()
 
-
 # TIME TAKEN
 dftime <- tibble(
   Run = seq(200),
@@ -1326,20 +1303,16 @@ dftime <- tibble(
 ) %>%
   pivot_longer(-Run, names_to = "Algorithm")
 
-
 g4 <- ggplot(dftime, aes(Algorithm, value)) + geom_boxplot(outlier.shape = 20)  + ylab("Time (mins)") + coord_flip() + theme_bw()
-
 
 g3 / (g4 | g2)
 ```
 
- \textcolor{blue}{The top graph in Figure \ref{fig:ComparisonEx3} shows the performance comparison between the different algorithms. We see that RDOS performs better than lookout in the initial 8 iterations of this experiment. After the $8^{\text{th}}$ iteration lookout performs better than RDOS. We also see that lookout performs significantly better than stray and HDoutliers. The graph on the bottom left shows the time taken for the 5 algorithms. Stray is the fastest followed by HDoutliers. The slowest algorithm is RDOS. The graph in the bottom right }  shows the outlier persistence for the last iteration and repetition. The dashed line shows the bandwidth chosen by lookout.
+ \textcolor{blue}{The top graph in Figure \ref{fig:ComparisonEx3} shows the performance comparison between the different algorithms. We see that RDOS performs better than lookout in the initial eight iterations of this experiment. After the $8^{\text{th}}$ iteration, lookout performs better than RDOS. We also see that lookout performs significantly better than stray and HDoutliers. The graph on the bottom left shows the time taken for each algorithm: stray is the fastest followed by HDoutliers; the slowest algorithm is RDOS. The graph in the bottom right}  shows the outlier persistence for the last iteration and repetition. The dashed line shows the bandwidth chosen by lookout.
 
 <!-- The top graph in Figure \ref{fig:ComparisonEx3} shows the outlier persistence for the last iteration and repetition. The dashed line shows the bandwidth chosen by lookout. -->
 
 <!-- The two graphs at the bottom show the comparison with HDoutliers and stray for each iteration averaged over the repetitions. We see that HDoutliers and stray do not identify the outlier for 19 of the 20 iterations. Lookout clearly gives better performance and achieves an average Gmean of 0.999 from the $16^{\text{th}}$ iteration onward. -->
-
-
 
 ### \textcolor{blue}{Comparison of false positives } {-}
 \textcolor{blue}{
@@ -1361,8 +1334,6 @@ pp <- 10
 
 hdoutliers_specificity <- stray_specificity <- lookout_specificity <-  rep(0, 10)
 
-
-set.seed(123)
 for(kk in 1:pp){
   x2 <- rnorm(405)
   x3 <- rnorm(405)
@@ -1381,16 +1352,12 @@ for(kk in 1:pp){
   strayoutput <- diff_metrics_2(labs, straylabs)
   stray_specificity[kk] <- strayoutput$specificity
 
-
-
   # LOOKOUT
   lookoutobj <- lookout(X, alpha=0.05, unitize = TRUE)
   lookoutlabs <- rep(0, 405)
   lookoutlabs[lookoutobj$outliers[ ,1]] <- 1
   lookoutput <- diff_metrics_2(labs, lookoutlabs)
   lookout_specificity[kk] <- lookoutput$specificity
-
-
 
   # HDOUTLIERS
   hdoutobj <- HDoutliers(X, alpha=0.05)
@@ -1407,7 +1374,6 @@ output[1, ] <- c(mean(lookout_specificity), sd(lookout_specificity), mean(stray_
 # ---------------------------------------------------------------------
 hdoutliers_specificity <- stray_specificity <- lookout_specificity <-  rep(0, 10)
 
-set.seed(1234)
 for(kk in 1:pp){
   r1 <-runif(805)
   r2 <-rnorm(805, mean=5)
@@ -1431,16 +1397,12 @@ for(kk in 1:pp){
   strayoutput <- diff_metrics_2(labs, straylabs)
   stray_specificity[kk] <- strayoutput$specificity
 
-
-
   # LOOKOUT
   lookoutobj <- lookout(X, alpha=0.05, unitize = TRUE)
   lookoutlabs <- rep(0, 805)
   lookoutlabs[lookoutobj$outliers[ ,1]] <- 1
   lookoutput <- diff_metrics_2(labs, lookoutlabs)
   lookout_specificity[kk] <- lookoutput$specificity
-
-
 
   # HDOUTLIERS
   hdoutobj <- HDoutliers(X, alpha=0.05)
@@ -1452,7 +1414,6 @@ for(kk in 1:pp){
 }
 output[2, ] <- c(mean(lookout_specificity), sd(lookout_specificity), mean(stray_specificity), sd(stray_specificity), mean(hdoutliers_specificity), sd(hdoutliers_specificity))
 
-
 # ---------------------------------------------------------------------
 # TASK 3 - EXAMPLE 3 - NO OUTLIERS
 # ---------------------------------------------------------------------
@@ -1460,7 +1421,6 @@ output[2, ] <- c(mean(lookout_specificity), sd(lookout_specificity), mean(stray_
 hdoutliers_specificity <- stray_specificity <- lookout_specificity <-  rep(0, 10)
 
 labs <- rep(0, 500)
-set.seed(123)
 for(kk in 1:pp){
   X <- runif(500)
   for(j in 1:19){
@@ -1474,16 +1434,12 @@ for(kk in 1:pp){
   strayoutput <- diff_metrics_2(labs, straylabs)
   stray_specificity[kk] <- strayoutput$specificity
 
-
-
   # LOOKOUT
   lookoutobj <- lookout(X, alpha=0.05, unitize = TRUE)
   lookoutlabs <- rep(0, 500)
   lookoutlabs[lookoutobj$outliers[ ,1]] <- 1
   lookoutput <- diff_metrics_2(labs, lookoutlabs)
   lookout_specificity[kk] <- lookoutput$specificity
-
-
 
   # HDOUTLIERS
   hdoutobj <- HDoutliers(X, alpha=0.05)
@@ -1509,7 +1465,7 @@ output %>%
 
 ## \textcolor{blue}{Evaluating time series outliers }{-}
 \textcolor{blue}{
-In this section we compare the time series implementation of lookout with the outlier detection method proposed by } @Burridge2006, \textcolor{blue}{which we denote by BT. For this example we simulate an ARIMA$(1, 1, 0)$ time series with the autoregressive parameter taking values $0.5, 0.6, 0.7, 0.8$ and $0.9$. We add an outlier to each simulated time series and repeat the simulation 10 times for each parameter value to account for randomness. Table \ref{tab:timeseriesdatviz} gives the results of lookout and BT using Gmean and Fmeasure. We see that lookout gives better performance than BT for all parameter values. 
+In this section we compare the time series implementation of lookout with the outlier detection method proposed by } @Burridge2006, \textcolor{blue}{which we denote by BT. For this example we simulate an ARIMA$(1, 1, 0)$ time series with the autoregressive parameter taking values $0.5, 0.6, 0.7, 0.8$ and $0.9$. We add an outlier to each simulated time series and repeat the simulation 10 times for each parameter value to account for randomness. Table~\ref{tab:timeseriesdatviz} gives the results of lookout and BT using Gmean and Fmeasure. We see that lookout gives better performance than BT for all parameter values.
 }
 
 ```{r timeseriesdat, echo=FALSE, include=FALSE}
@@ -1532,7 +1488,6 @@ lookout_ts <- function(x, alpha = 0.1){
   }
   out
 }
-
 
 BT_outliers <- function(X, alpha=0.05, k=1){
   out <- c()
@@ -1561,8 +1516,6 @@ BT_outliers <- function(X, alpha=0.05, k=1){
   return(out)
 }
 
-
-set.seed(1)
 BT_gmean <- BT_fmeasure <- lookout_gmean  <- lookout_fmeasure <- matrix(0, nrow = 10, ncol = 5)
 for(ii in 1:5){
   ar_val = 0.4 + ii*0.1
@@ -1619,18 +1572,16 @@ output %>%
     col.names = c("AR", "mean", "sd", "mean", "sd", "mean", "sd", "mean", "sd"),
     booktabs = TRUE,
     caption = "Time series outliers performance comparison") %>% kableExtra::add_header_above(x, header=headcols2) %>% kableExtra::add_header_above(x, header=headcols) %>%  kableExtra::row_spec(1:dim(output)[1], color = "blue")
-
-
 ```
 
 # Results on two data repositories {#sec:applications}
 
-For this section we use \textcolor{blue}{two data repositories: the ODDS data repository} [@datasetsODDS] \textcolor{blue}{and the repository at} @datasets. \textcolor{blue}{Using the ODDS repository, we will look at the individual performance of 12 well known datasets to these 5 outlier detection methods. As} @datasets \textcolor{blue}{ has more than $12000$ outlier detection datasets, we will evaluate the performance of these methods on the repository and report summary statistics because the number of datasets is large. }
+For this section we use \textcolor{blue}{two data repositories: the ODDS data repository} [@datasetsODDS] \textcolor{blue}{and the KMASH repository at} @datasets. \textcolor{blue}{Using the ODDS repository, we will look at the individual performance of these five outlier detection methods applied to 12 well-known datasets. As} KMASH \textcolor{blue}{has more than 12000 outlier detection datasets, we will evaluate the performance of these methods on the repository and report summary statistics because the number of datasets is large.}
 
 ## ODDS data repository
 
 <!-- We use the two repositories in slightly different ways. We use 12 datasets from the ODDS repository and evaluate the performance of the 5 outlier detection methods on these datasets. We report the individual performance of each method on each dataset.}  -->
-<!-- @datasets has more than $12000$ outlier detection datasets that were prepared from classification datasets.  \textcolor{blue}{ We evaluate the performance of these 5 outlier detection methods on this data repository. While lookout, HDoutliers and stray gave valid output for all 12000+ datasets, RDOS and KDEOS gave errors for 5745 datasets. As such, we only compare lookout, stray and HDoutliers on this data repository. We report the summary statistics as the number of datasets is large.}   -->
+<!-- @datasets has more than 12000 outlier detection datasets that were prepared from classification datasets.  \textcolor{blue}{ We evaluate the performance of these 5 outlier detection methods on this data repository. While lookout, HDoutliers and stray gave valid output for all 12000+ datasets, RDOS and KDEOS gave errors for 5745 datasets. As such, we only compare lookout, stray and HDoutliers on this data repository. We report the summary statistics as the number of datasets is large.}   -->
 
 <!-- Dataset preparation involves downsampling the minority class in classification datasets, converting the categorical variables to numerical and accounting for missing values, all of which is detailed in @normalizationoutliers. -->
 
@@ -1646,8 +1597,7 @@ knitr::knit_hooks$set(
   } else x
 })
 
-
-folder <- "Data_Input/"
+folder <- here::here("Data_Input/")
 
 output <- data.frame(look_gmean = numeric(), stray_gmean = numeric(), hdout_gmean = numeric(), look_fmeas = numeric(), stray_fmeas = numeric(),  hdout_fmeas = numeric(), look_roc = numeric(), kdeos_roc = numeric(), rdos_roc = numeric())
 
@@ -1706,9 +1656,9 @@ for(i in 1:length(file_list)){
 }
 ```
 
-\textcolor{blue}{Table \ref{tab:ODDResults} shows the results of lookout, HDoutliers, stray, KDEOS and RDOS on  12 ODDS datasets. As previously, we have used F-measure and Gmean to compare the performance of lookout,  HDoutliers and stray, and AUC to compare lookout, KDEOS and RDOS. We see that for datasets glass, optdigits and wine, none of the 3 algorithms lookout, HDoutliers and stray identify any outliers. As such, the Gmean and F-measure are zero for these three datasets.  For the other 9 datasets lookout outperforms stray and HDoutliers.  }
+\textcolor{blue}{Table \ref{tab:ODDResults} shows the results of lookout, HDoutliers, stray, KDEOS and RDOS on the twelve ODDS datasets. As previously, we have used F-measure and Gmean to compare the performance of lookout,  HDoutliers and stray, and AUC to compare lookout, KDEOS and RDOS. We see that for datasets glass, optdigits and wine, none of the lookout, HDoutliers and stray algorithms identify any outliers. Therefore, the Gmean and F-measure are zero for these three datasets. For the other nine datasets, lookout outperforms stray and HDoutliers.}
 
-\textcolor{blue}{The AUC values in Table \ref{tab:ODDResults} show that lookout gives the best performance for 8 of the 12 datasets. For the speech dataset lookout is tied with RDOS. RDOS gives the best performance for 3 datasets. Two datasets give errors for KDEOS.
+\textcolor{blue}{The AUC values in Table \ref{tab:ODDResults} show that lookout gives the best performance for 8 of the 12 datasets. For the speech dataset lookout is tied with RDOS. RDOS gives the best performance for three datasets. Two datasets give errors for KDEOS.
 }
 
 ```{r ODDResults, dependson="ODDSdatasetswork",  fig.cap="", out.width="100%", message=FALSE, echo=FALSE}
@@ -1717,21 +1667,23 @@ output[ ,2:dim(output)[2]] <- round(output[ ,2:dim(output)[2]], 2)
 output[ ,1] <- substring(output[ ,1], 1, nchar(output[ ,1])-4)
 
 headcols <- data.frame(c1 = c("", "Gmean", "FMeasure", "AUC"), c2=c(1, 3, 3, 3))
-
-
+options(knitr.kable.NA = '')
 output %>%
-   knitr::kable(
+  knitr::kable(
     col.names = c("Filename", "lookout", "stray", "HDoutliers", "lookout", "stray", "HDoutliers", "lookout", "KDEOS", "RDOS"),
     booktabs = TRUE,
-    caption = "Performance evaluation of 12 datasets in the ODDS repository.") %>% kableExtra::add_header_above(x, header=headcols) %>%  kableExtra::row_spec(1:dim(output)[1], color = "blue")
-
+    caption = "Performance evaluation of 12 datasets in the ODDS repository."
+  ) %>%
+  kableExtra::add_header_above(header=headcols) %>%
+  kableExtra::row_spec(1:dim(output)[1], color = "blue") %>%
+  kableExtra::kable_styling(font_size=10)
 ```
 
-## A large data repository
+## KMASH data repository
 
-The repository at @datasets has more than $12000$ outlier detection datasets that were prepared from classification datasets. Dataset preparation involves downsampling the minority class in classification datasets, converting the categorical variables to numerical and accounting for missing values, all of which is detailed in @normalizationoutliers. 
+The KMASH repository at @datasets has more than 12000 outlier detection datasets that were prepared from classification datasets. Dataset preparation involved downsampling the minority class in the classification datasets, converting the categorical variables to numerical and accounting for missing values, all of which is detailed in @normalizationoutliers.
 
-\textcolor{blue}{ We evaluate the performance of these 5 outlier detection methods on this data repository. While lookout, HDoutliers and stray gave valid output for all 12000+ datasets, RDOS and KDEOS gave errors for 5745 datasets. As such, we only compare lookout, stray and HDoutliers on this data repository.}
+\textcolor{blue}{We evaluate the performance of these five outlier detection methods on this data repository. While lookout, HDoutliers and stray gave valid output for all 12000+ datasets, RDOS and KDEOS gave errors for 5745 datasets. Consequently, we only compare lookout, stray and HDoutliers on this data repository.}
 
 ```{r lvplots, fig.cap="Letter value plots of performance differences between 1. lookout and HDoutliers, 2. lookout and stray using Gmean and Fmeasure.", fig.height=4, message=FALSE, out.width="100%"}
 dat <- readr::read_csv(here::here("data_repo_output/Collated_EX2_Take1_1_alpha_point05.csv"))
@@ -1786,7 +1738,6 @@ Figure \ref{fig:lvplots} shows the letter-value plots [@lvplots] of performance 
 (a) lookout and HDoutliers and
 (b) lookout and stray,
 using Gmean and Fmeasure after removing the entries that have zero values for all three algorithms. Letter-value plots enhance traditional box-plots by including more detailed information making them suitable for large datasets. The letter-value plots in Figure \ref{fig:lvplots} are area adjusted, that is, the area of each box represents the number of points/datasets in it. The median is represented by a white line and each black box represents a fourth of the population denoted by F in the legend. The next box represents a eighth denoted by an E and each successive box represents half of the previous one.
-
 
 ```{r table, dependson='lvplots', message=FALSE}
 stats <- bind_rows(
@@ -1848,12 +1799,12 @@ From the graphs in Figure \ref{fig:lvplots} we see that the total area of the le
 
 Lookout uses leave-one-out kernel density estimates and EVT to detect outliers. Outlier detection methods that use kernel density estimates generally employ a user-defined parameter to construct the bandwidth. Selecting a bandwidth for outlier detection is different from selecting a bandwidth for general data representation, because the goal is to make outliers have lower density estimates compared to the non-outliers. In addition, it is a challenge to select an appropriate bandwidth in high dimensions. To make outliers have lower density estimates compared to the rest, a reasonably large bandwidth needs to be chosen. We introduced an algorithm called *lookout* that uses persistent homology to select the bandwidth. 
 
-We compared the performance of lookout \textcolor{blue}{with 4 outlier detection algorithms, 2 of which use EVT to detect outliers and the others use KDE. These algorithms are HDoutliers, stray, KDEOS and RDOS.}  Our results on experimental data and on \textcolor{blue}{two data repositories} showed that lookout achieves better performance.
+We compared the performance of lookout \textcolor{blue}{with four outlier detection algorithms, two of which use EVT to detect outliers and the others use KDE. These algorithms are HDoutliers, stray, KDEOS and RDOS.}  Our results on experimental data and on \textcolor{blue}{two data repositories} showed that lookout achieves better performance.
 
 We also introduced the concept of *outlier persistence*, exploring the birth and death of outliers with changing bandwidth and significance values. Outlier persistence gives a bigger picture, taking a step back from fixed parameter values. It explores the bandwidth and significance parameters and highlights the outliers that persist over a range of bandwidth values and their significance levels. We suggest that it is a useful measure that increases our understanding of outliers.
 
 # Supplementary materials {#sec:suppmat}
 
 The R package `lookout` is available at \url{https://github.com/sevvandi/lookout}.
-The outlier detection data repository used in Section \ref{sec:applications} is available at @datasets.
+The KMASH outlier detection data repository used in Section \ref{sec:applications} is available at @datasets.
 The programming scripts used in Sections \ref{sec:simulations} and \ref{sec:applications} are available at \url{https://github.com/sevvandi/supplementary_material/tree/master/lookout}.

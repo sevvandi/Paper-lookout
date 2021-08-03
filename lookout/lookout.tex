@@ -4,8 +4,8 @@
 %
 \documentclass[
 ]{article}
+\usepackage{amsmath,amssymb}
 \usepackage{lmodern}
-\usepackage{amssymb,amsmath}
 \usepackage{ifxetex,ifluatex}
 \ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
   \usepackage[T1]{fontenc}
@@ -40,15 +40,6 @@
   pdfcreator={LaTeX via pandoc}}
 \urlstyle{same} % disable monospaced font for URLs
 \usepackage[margin=1in]{geometry}
-\usepackage{longtable,booktabs}
-% Correct order of tables after \paragraph or \subparagraph
-\usepackage{etoolbox}
-\makeatletter
-\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
-\makeatother
-% Allow footnotes in longtable head/foot
-\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
-\makesavenoteenv{longtable}
 \usepackage{graphicx}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
@@ -66,6 +57,23 @@
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
 
 \author{}
 \date{\vspace{-2.5em}}
@@ -139,7 +147,9 @@ show examples illustrating the usefulness of outlier persistence and
 conduct experiments using synthetic data to evaluate the performance of
 lookout in Section \ref{sec:simulations}. Using an extensive data
 repository of real datasets, we compare the performance of lookout to
-HDoutliers and stray in Section \ref{sec:applications}.
+HDoutliers, stray, \textcolor{blue}{KDEOS} {[}@Schubert2014{]}
+\textcolor{blue}{and RDOS} {[}@Tang2017{]} in Section
+\ref{sec:applications}.
 
 We have produced an R package \texttt{lookout} {[}@lookoutR{]}
 containing this algorithm. In addition, all examples in this paper are
@@ -265,8 +275,8 @@ referred to as births and deaths and are illustrated using a
 \begin{figure}
 \centering
 \includegraphics{lookout_files/figure-latex/annulus-1.pdf}
-\caption{(\#fig:annulus)Rips complexes resulting from different
-\(\varepsilon\) values.}
+\caption{Rips complexes resulting from different \(\varepsilon\)
+values.}
 \end{figure}
 
 \begin{figure}
@@ -290,17 +300,6 @@ each feature is denoted by a point. Points away from the diagonal inform
 about the structure of the data while points closer to the diagonal are
 perturbations related to noise. In this plot, the triangle near the top
 represents the same feature as the long blue line in the left plot.
-
-Betti numbers denoted by \(\beta_k\) give the number of
-\(k\)-dimensional holes of a simplicial complex. The number of connected
-components is given by \(\beta_0\) and the number of one-dimensional
-holes is given by \(\beta_1\). The number of two-dimensional holes,
-which are trapped volumes or voids is given by \(\beta_2\). The Betti
-numbers can also be computed from the barcode by drawing a vertical line
-at the desired diameter and counting the points of intersection for each
-dimension. For example, in Figure \ref{fig:barcodeandpersistence} the
-Betti numbers corresponding to the simplicial complex at diameter
-\(0.6\) are \(\beta_0 = 0\) and \(\beta_1 = 1\).
 
 These considerations lead to a natural question: which \(\varepsilon\)
 is most representative of the structure of the data cloud? We will
@@ -688,14 +687,32 @@ This gives a comprehensive representation of outliers as it encapsulates
 the bandwidth as well as the strength (which corresponds to
 significance).
 
+\hypertarget{sec:timeseriesoutiers}{%
+\subsection{\texorpdfstring{\textcolor{blue}{Time series outliers}}{}}\label{sec:timeseriesoutiers}}
+
+\textcolor{blue}{Following} @Burridge2006
+\textcolor{blue}{we extend lookout to a time series setting. They consider a time series with $k$ additive outliers defined as }
+
+\[ z_t = y_t + \sum_{j=1}^k \mathcal{I}_{\tau_j} x_{\tau_j} \, , \]
+\textcolor{blue}{where} \[ \mathcal{I}_{\tau_j} =  \begin{cases} 
+      1\, , & t = \tau_j \\
+      0\, ,  & t \neq \tau_j
+   \end{cases} \, ,
+\] \textcolor{blue}{and } \[ y_t = \phi y_{t-1} + u_t \, , \]
+\textcolor{blue}{with $\{u_t\}$ an autoregressive moving average process. They consider the case when  $\phi = 1$  and estimate $x_{\tau_j}$ by }
+\[ \hat{x}_{\tau_j} = \frac{1}{2}\left(\Delta z_{\tau_j} - \Delta z_{\tau_j +1}  \right)  = \frac{1}{2}\left(\Delta y_{\tau_j} - \Delta y_{\tau_j +1}  + 2 x_{\tau_j}\right) \, .\]
+\textcolor{blue}{ From the spacings of $\hat{x}_{t}$ they find outliers using  Algorithm 1 in their paper. Due to successive differences each outlier in $\{z_{t}\}$ can give rise to 3 consecutive outliers in $\{\hat{x}_{t}\}$. We extend lookout to a time series setting by using it on $\{\hat{x}_{t}\}$. To mitigate for successive outliers, we select the observation with the highest strength or the lowest probability from each set of consecutive outliers. }
+
 \hypertarget{sec:simulations}{%
 \section{Experiments with synthetic data}\label{sec:simulations}}
 
 In this section we first explore outlier persistence using simple
 examples. Then we conduct experiments using synthetic data comparing
-lookout to HDoutliers {[}@wilkinson2017visualizing{]} and stray
-{[}@stray{]}, both of which also use extreme value theory to detect
-outliers.
+lookout to HDoutliers {[}@wilkinson2017visualizing{]}, stray
+{[}@stray{]}, \textcolor{blue}{KDEOS} {[}@Schubert2014{]} and
+\textcolor{blue}{RDOS} {[}@Tang2017{]}. Both HDoutliers and stray use
+extreme value theory to detect outliers; KDEOS and RDOS use kernel
+density estimates.
 
 \hypertarget{sec:PersistenceExamples}{%
 \subsection{Outlier persistence
@@ -759,13 +776,12 @@ the points in the main distribution, while in the later iterations they
 are quite different from the main distribution. We repeat each iteration
 10 times to account for the randomness of the data generation process.
 
-We compare the results of lookout with 2 other algorithms; HDoutliers
-{[}@wilkinson2017visualizing{]} and stray {[}@stray{]}, as both these
-algorithms also use extreme value theory for outlier detection. For all
-three algorithms we use \(\alpha = 0.05\). We use two evaluation metrics
-suited for imbalanced datasets: the F-measure and the geometric mean of
-sensitivity and specificity denoted by Gmean. The F-measure is defined
-as \begin{equation}\label{eq:fmeasure}
+We compare the results of lookout with \textcolor{blue}{4} other
+algorithms; HDoutliers {[}@wilkinson2017visualizing{]}, stray
+{[}@stray{]}, \textcolor{blue}{KDEOS} {[}@Schubert2014{]}
+\textcolor{blue}{ and RDOS} {[}@Tang2017{]}.
+\textcolor{blue}{ Both HDoutliers and stray use extreme value theory for outlier detection while both KDEOS and RDOS use kernel density estimates. HDoutliers and stray identify outliers, that is outliers are assigned a binary label as output of these algorithms. KDEOS and RDOS do not identify outliers. Instead, they give an anomaly score which can be used to rank outliers. As the algorithms exhibit differences in their output mechanisms, we employ different methods to compare the performance of these algorithms. To compare the performance of lookout with HDoutliers and stray we use the identified outliers. We use F-measure and the geometric mean of sensitivity and specificity denoted by Gmean, which we discuss below to compare these 3 algorithms. To compare lookout with KDEOS and RDOS we use the outlier scores and utilize the area under the Receiver Operator Characteristic curve denoted by AUC. Furthermore, the evaluation metrics F-measure, Gmean and AUC are suited for imbalanced datasets. For KDEOS and RDOS we use the default parameters. For lookout, HDoutliers and stray we use $\alpha = 0.05$. }
+The F-measure is defined as \begin{equation}\label{eq:fmeasure}
     \text{F-measure} = 2\frac{\text{precision} \times \text{recall}}{\left( \text{precision} + \text{recall} \right) }  ,
 \end{equation} where \begin{equation}\label{eq:pr}
     \text{precision} = \frac{ \textit{tp} }{\textit{tp} + \textit{fp}}  , \qquad \text{and} \qquad \text{recall} = \frac{\textit{tp}}{\textit{tp} + \textit{fn}}  ,
@@ -787,6 +803,8 @@ frequently used in a medical diagnosis context:
 \end{equation} where \emph{tn} denotes the true negatives (predicted =
 false, actual = false). In fact, sensitivity and recall are two
 different terms denoting the same quantity of interest.
+
+\textcolor{blue}{For all 3 experiments we compute the time taken for each algorithm on a Microsoft Surface Pro 3 laptop, with Intel(R) Core(TM) i5-4300U, 2.50GHz processor. We report the time taken as additional metrics.}
 
 \hypertarget{experiment-1}{%
 \subsubsection*{Experiment 1}\label{experiment-1}}
@@ -814,13 +832,8 @@ times to account for randomness.
 The top left graph of Figure \ref{fig:ComparisonEx1} shows the first two
 dimensions of this experimental dataset in its last iteration and
 repetition with outliers identified by lookout shown in different
-colors. The top right graph shows the corresponding outlier persistence
-plot for this data with the dashed line denoting the lookout bandwidth.
-The graphs at the bottom show the performance of lookout, HDoutliers and
-stray with \(\alpha = 0.05\). The mean F-measure of the 10 repetitions
-for each iteration is shown in the graph at the bottom left and the mean
-Gmean is shown at the bottom right. We see that for each iteration
-lookout surpasses HDoutliers and stray significantly.
+colors.
+\textcolor{blue}{ The top right graph shows the performance comparison of lookout, HDoutliers, stray, KDEOS and RDOS. As lookout, HDoutliers and stray identify outliers, we have used the Fmeasure and Gmean to compare their performance. As KDEOS and RDOS rank outliers instead of identifying them, we have used the AUC -- the area under the ROC curve -- to compare their performance. We see that for each iteration lookout surpasses HDoutliers and stray significantly. Lookout gives much better performance than KDEOS, and from the fourth iteration onwards lookout surpasses RDOS. The graph on the bottom left shows the time taken for each algorithm. We see that RDOS takes a much longer time than the other algorithms. HDoutliers and stray are the fastest, followed by lookout. The graph on the bottom right shows the outlier persistence plot for this data with the dashed line denoting the lookout bandwidth.}
 
 \hypertarget{experiment-2}{%
 \subsubsection*{Experiment 2}\label{experiment-2}}
@@ -841,16 +854,15 @@ times.
 \end{figure}
 
 The graph at the top left of Figure \ref{fig:ComparisonEx2} shows the
-points in the final iteration and repetition. The graph on the top right
-shows the outlier persistence for the final iteration and repetition.
-The outliers are placed at indices 801--805 and we see that they are not
-identified as outliers for small bandwidth values because the outliers
-are clustered together. This shows the importance of bandwidth selection
-for outlier detection when using kernel density estimates. The bandwidth
-selected by lookout is shown as a dashed line. The bottom two graphs
-show the mean F-measure and Gmean of the 3 algorithms for each iteration
-over 10 repetitions. We see that lookout identifies the outliers earlier
-than stray while HDoutliers does not identify any outliers.
+points in the final iteration and repetition.
+\textcolor{blue}{ The graph at the top right shows the performance comparison using AUC, F-measure and Gmean. We see that lookout performs better than the other algorithms across different metrics. The graph on the bottom left shows the time taken for each algorithm. RDOS takes much longer compared to others, while HDoutliers and stray are the fastest followed by lookout.}
+The graph on the bottom right shows the outlier persistence for the
+final iteration and repetition. The outliers are placed at indices
+801--805 and we see that they are not identified as outliers for small
+bandwidth values because the outliers are clustered together. This shows
+the importance of bandwidth selection for outlier detection when using
+kernel density estimates. The bandwidth selected by lookout is shown as
+a dashed line.
 
 \hypertarget{experiment-3}{%
 \subsubsection*{Experiment 3}\label{experiment-3}}
@@ -870,113 +882,122 @@ randomizations.
 \includegraphics[width=1\linewidth]{lookout_files/figure-latex/ComparisonEx3-1} \caption{Experiment 3 with an outlier moving to $(0.9, 0.9, \dots)$. Graph on the top shows the performance comparison between lookout, HDoutliers, stray, KDEOS and RDOS using AUC, Fmeasure and Gmean over 10 repetitions. The graph on the bottom left shows the time taken for these 5 algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.}\label{fig:ComparisonEx3}
 \end{figure}
 
-The top graph in Figure \ref{fig:ComparisonEx3} shows the outlier
-persistence for the last iteration and repetition. The dashed line shows
-the bandwidth chosen by lookout. The two graphs at the bottom show the
-comparison with HDoutliers and stray for each iteration averaged over
-the repetitions. We see that HDoutliers and stray do not identify the
-outlier for 19 of the 20 iterations. Lookout clearly gives better
-performance and achieves an average Gmean of 0.999 from the
-\(16^{\text{th}}\) iteration onward.
+\textcolor{blue}{The top graph in Figure \ref{fig:ComparisonEx3} shows the performance comparison between the different algorithms. We see that RDOS performs better than lookout in the initial 8 iterations of this experiment. After the $8^{\text{th}}$ iteration lookout performs better than RDOS. We also see that lookout performs significantly better than stray and HDoutliers. The graph on the bottom left shows the time taken for the 5 algorithms. Stray is the fastest followed by HDoutliers. The slowest algorithm is RDOS. The graph in the bottom right }
+shows the outlier persistence for the last iteration and repetition. The
+dashed line shows the bandwidth chosen by lookout.
 
-\textcolor{blue}{Table SHOWS}
+\hypertarget{section}{%
+\subsubsection*{\texorpdfstring{\textcolor{blue}{Comparison of false positives }}{}}\label{section}}
+\addcontentsline{toc}{subsubsection}{\textcolor{blue}{Comparison of false positives }}
 
-\begin{longtable}[]{@{}rrrrrrr@{}}
-\caption{Specificity for lookout, HDoutliers and stray algorithms when
-no outliers are present.}\tabularnewline
+\textcolor{blue}{
+A low false positive rate is an attractive feature for an outlier detection method. High false positives diminish user confidence with the risk of abandonment of such systems; consider a home security system with constant alarms. To get an understanding of the false positives, we redo experiments 1-3 without any outliers and compare the specificity ($tn/(tn+fp)$) of HDoutliers, stray and lookout. We repeat each experiment 10 times. As KDEOS and RDOS do not identify outliers, we do not include them in this comparison. High values of specificity is preferred as low values indicate more false positives. Table \ref{tab:zerooutliers} shows the specificity comparison results. Stray has the highest, average specificity of 1 with zero standard deviation;  HDoutliers has a similar specificity for all three experiments. We see that the average specificity of lookout is greater than $0.99$ with low standard deviation values. Thus lookout's specificity is comparable to HDoutliers and stray, demonstrating that its false positive rate is low. }
+
+\begin{table}
+
+\caption{\label{tab:zerooutliers}Specificity for lookout, HDoutliers and stray algorithms when no outliers are present.}
+\centering
+\begin{tabular}[t]{rrrrrrr}
 \toprule
-\begin{minipage}[b]{0.10\columnwidth}\raggedleft
-Experiment\strut
-\end{minipage} & \begin{minipage}[b]{0.12\columnwidth}\raggedleft
-lookout mean\strut
-\end{minipage} & \begin{minipage}[b]{0.10\columnwidth}\raggedleft
-lookout sd\strut
-\end{minipage} & \begin{minipage}[b]{0.10\columnwidth}\raggedleft
-stray mean\strut
-\end{minipage} & \begin{minipage}[b]{0.09\columnwidth}\raggedleft
-stray sd\strut
-\end{minipage} & \begin{minipage}[b]{0.15\columnwidth}\raggedleft
-HDoutliers mean\strut
-\end{minipage} & \begin{minipage}[b]{0.13\columnwidth}\raggedleft
-HDoutliers sd\strut
-\end{minipage}\tabularnewline
+\multicolumn{1}{c}{\textbf{}} & \multicolumn{2}{c}{\textbf{lookout}} & \multicolumn{2}{c}{\textbf{stray}} & \multicolumn{2}{c}{\textbf{HDoutliers}} \\
+\cmidrule(l{3pt}r{3pt}){2-3} \cmidrule(l{3pt}r{3pt}){4-5} \cmidrule(l{3pt}r{3pt}){6-7}
+Experiment & mean & sd & mean & sd & mean & sd\\
 \midrule
-\endfirsthead
-\toprule
-\begin{minipage}[b]{0.10\columnwidth}\raggedleft
-Experiment\strut
-\end{minipage} & \begin{minipage}[b]{0.12\columnwidth}\raggedleft
-lookout mean\strut
-\end{minipage} & \begin{minipage}[b]{0.10\columnwidth}\raggedleft
-lookout sd\strut
-\end{minipage} & \begin{minipage}[b]{0.10\columnwidth}\raggedleft
-stray mean\strut
-\end{minipage} & \begin{minipage}[b]{0.09\columnwidth}\raggedleft
-stray sd\strut
-\end{minipage} & \begin{minipage}[b]{0.15\columnwidth}\raggedleft
-HDoutliers mean\strut
-\end{minipage} & \begin{minipage}[b]{0.13\columnwidth}\raggedleft
-HDoutliers sd\strut
-\end{minipage}\tabularnewline
-\midrule
-\endhead
-\begin{minipage}[t]{0.10\columnwidth}\raggedleft
-1\strut
-\end{minipage} & \begin{minipage}[t]{0.12\columnwidth}\raggedleft
-0.9940741\strut
-\end{minipage} & \begin{minipage}[t]{0.10\columnwidth}\raggedleft
-0.0031232\strut
-\end{minipage} & \begin{minipage}[t]{0.10\columnwidth}\raggedleft
-1\strut
-\end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
-0\strut
-\end{minipage} & \begin{minipage}[t]{0.15\columnwidth}\raggedleft
-1.0000000\strut
-\end{minipage} & \begin{minipage}[t]{0.13\columnwidth}\raggedleft
-0.0000000\strut
-\end{minipage}\tabularnewline
-\begin{minipage}[t]{0.10\columnwidth}\raggedleft
-2\strut
-\end{minipage} & \begin{minipage}[t]{0.12\columnwidth}\raggedleft
-0.9924224\strut
-\end{minipage} & \begin{minipage}[t]{0.10\columnwidth}\raggedleft
-0.0023751\strut
-\end{minipage} & \begin{minipage}[t]{0.10\columnwidth}\raggedleft
-1\strut
-\end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
-0\strut
-\end{minipage} & \begin{minipage}[t]{0.15\columnwidth}\raggedleft
-0.9998758\strut
-\end{minipage} & \begin{minipage}[t]{0.13\columnwidth}\raggedleft
-0.0003928\strut
-\end{minipage}\tabularnewline
-\begin{minipage}[t]{0.10\columnwidth}\raggedleft
-3\strut
-\end{minipage} & \begin{minipage}[t]{0.12\columnwidth}\raggedleft
-0.9942000\strut
-\end{minipage} & \begin{minipage}[t]{0.10\columnwidth}\raggedleft
-0.0031903\strut
-\end{minipage} & \begin{minipage}[t]{0.10\columnwidth}\raggedleft
-1\strut
-\end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
-0\strut
-\end{minipage} & \begin{minipage}[t]{0.15\columnwidth}\raggedleft
-1.0000000\strut
-\end{minipage} & \begin{minipage}[t]{0.13\columnwidth}\raggedleft
-0.0000000\strut
-\end{minipage}\tabularnewline
+\textcolor{blue}{1} & \textcolor{blue}{0.9941} & \textcolor{blue}{0.0031} & \textcolor{blue}{1} & \textcolor{blue}{0} & \textcolor{blue}{1.0000} & \textcolor{blue}{0e+00}\\
+\textcolor{blue}{2} & \textcolor{blue}{0.9924} & \textcolor{blue}{0.0024} & \textcolor{blue}{1} & \textcolor{blue}{0} & \textcolor{blue}{0.9999} & \textcolor{blue}{4e-04}\\
+\textcolor{blue}{3} & \textcolor{blue}{0.9942} & \textcolor{blue}{0.0032} & \textcolor{blue}{1} & \textcolor{blue}{0} & \textcolor{blue}{1.0000} & \textcolor{blue}{0e+00}\\
 \bottomrule
-\end{longtable}
+\end{tabular}
+\end{table}
+
+\hypertarget{section-1}{%
+\subsection*{\texorpdfstring{\textcolor{blue}{Evaluating time series outliers }}{}}\label{section-1}}
+\addcontentsline{toc}{subsection}{\textcolor{blue}{Evaluating time series outliers }}
+
+\textcolor{blue}{
+In this section we compare the time series implementation of lookout with the outlier detection method proposed by }
+@Burridge2006,
+\textcolor{blue}{which we denote by BT. For this example we simulate an ARIMA$(1, 1, 0)$ time series with the autoregressive parameter taking values $0.5, 0.6, 0.7, 0.8$ and $0.9$. We add an outlier to each simulated time series and repeat the simulation 10 times for each parameter value to account for randomness. Table \ref{tab:timeseriesdatviz} gives the results of lookout and BT using Gmean and Fmeasure. We see that lookout gives better performance than BT for all parameter values. 
+}
+
+\begin{table}
+
+\caption{\label{tab:timeseriesdatviz}Time series outliers performance comparison}
+\centering
+\begin{tabular}[t]{rrrrrrrrr}
+\toprule
+\multicolumn{1}{c}{\textbf{}} & \multicolumn{4}{c}{\textbf{Gmean}} & \multicolumn{4}{c}{\textbf{FMeasure}} \\
+\cmidrule(l{3pt}r{3pt}){2-5} \cmidrule(l{3pt}r{3pt}){6-9}
+\multicolumn{1}{c}{\textbf{}} & \multicolumn{2}{c}{\textbf{lookout}} & \multicolumn{2}{c}{\textbf{BT}} & \multicolumn{2}{c}{\textbf{lookout}} & \multicolumn{2}{c}{\textbf{BT}} \\
+\cmidrule(l{3pt}r{3pt}){2-3} \cmidrule(l{3pt}r{3pt}){4-5} \cmidrule(l{3pt}r{3pt}){6-7} \cmidrule(l{3pt}r{3pt}){8-9}
+AR & mean & sd & mean & sd & mean & sd & mean & sd\\
+\midrule
+\textcolor{blue}{0.5} & \textcolor{blue}{1.0} & \textcolor{blue}{0.000} & \textcolor{blue}{0.700} & \textcolor{blue}{0.483} & \textcolor{blue}{1.0} & \textcolor{blue}{0.000} & \textcolor{blue}{0.667} & \textcolor{blue}{0.471}\\
+\textcolor{blue}{0.6} & \textcolor{blue}{1.0} & \textcolor{blue}{0.000} & \textcolor{blue}{0.899} & \textcolor{blue}{0.316} & \textcolor{blue}{1.0} & \textcolor{blue}{0.000} & \textcolor{blue}{0.750} & \textcolor{blue}{0.326}\\
+\textcolor{blue}{0.7} & \textcolor{blue}{0.9} & \textcolor{blue}{0.316} & \textcolor{blue}{0.500} & \textcolor{blue}{0.527} & \textcolor{blue}{0.9} & \textcolor{blue}{0.316} & \textcolor{blue}{0.500} & \textcolor{blue}{0.527}\\
+\textcolor{blue}{0.8} & \textcolor{blue}{1.0} & \textcolor{blue}{0.000} & \textcolor{blue}{0.599} & \textcolor{blue}{0.515} & \textcolor{blue}{1.0} & \textcolor{blue}{0.000} & \textcolor{blue}{0.467} & \textcolor{blue}{0.443}\\
+\textcolor{blue}{0.9} & \textcolor{blue}{0.9} & \textcolor{blue}{0.316} & \textcolor{blue}{0.500} & \textcolor{blue}{0.527} & \textcolor{blue}{0.9} & \textcolor{blue}{0.316} & \textcolor{blue}{0.467} & \textcolor{blue}{0.502}\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \hypertarget{sec:applications}{%
-\section{Results on a data repository}\label{sec:applications}}
+\section{Results on two data repositories}\label{sec:applications}}
 
-For this section we use the data repository used in @datasets. This
-repository has more than \(12000\) outlier detection datasets that were
-prepared from classification datasets. Dataset preparation involves
-downsampling the minority class in classification datasets, converting
-the categorical variables to numerical and accounting for missing
-values, all of which is detailed in @normalizationoutliers.
+For this section we use
+\textcolor{blue}{two data repositories: the ODDS data repository}
+{[}@datasetsODDS{]} \textcolor{blue}{and the repository at} @datasets.
+\textcolor{blue}{Using the ODDS repository, we will look at the individual performance of 12 well known datasets to these 5 outlier detection methods. As}
+@datasets
+\textcolor{blue}{ has more than $12000$ outlier detection datasets, we will evaluate the performance of these methods on the repository and report summary statistics because the number of datasets is large. }
+
+\hypertarget{odds-data-repository}{%
+\subsection{ODDS data repository}\label{odds-data-repository}}
+
+\textcolor{blue}{Table \ref{tab:ODDResults} shows the results of lookout, HDoutliers, stray, KDEOS and RDOS on  12 ODDS datasets. As previously, we have used F-measure and Gmean to compare the performance of lookout,  HDoutliers and stray, and AUC to compare lookout, KDEOS and RDOS. We see that for datasets glass, optdigits and wine, none of the 3 algorithms lookout, HDoutliers and stray identify any outliers. As such, the Gmean and F-measure are zero for these three datasets.  For the other 9 datasets lookout outperforms stray and HDoutliers.  }
+
+\textcolor{blue}{The AUC values in Table \ref{tab:ODDResults} show that lookout gives the best performance for 8 of the 12 datasets. For the speech dataset lookout is tied with RDOS. RDOS gives the best performance for 3 datasets. Two datasets give errors for KDEOS.
+}
+
+\begin{table}
+
+\caption{\label{tab:ODDResults}Performance evaluation of 12 datasets in the ODDS repository.}
+\centering
+\begin{tabular}[t]{lrrrrrrrrr}
+\toprule
+\multicolumn{1}{c}{\textbf{}} & \multicolumn{3}{c}{\textbf{Gmean}} & \multicolumn{3}{c}{\textbf{FMeasure}} & \multicolumn{3}{c}{\textbf{AUC}} \\
+\cmidrule(l{3pt}r{3pt}){2-4} \cmidrule(l{3pt}r{3pt}){5-7} \cmidrule(l{3pt}r{3pt}){8-10}
+Filename & lookout & stray & HDoutliers & lookout & stray & HDoutliers & lookout & KDEOS & RDOS\\
+\midrule
+\textcolor{blue}{cardio} & \textcolor{blue}{0.32} & \textcolor{blue}{0.00} & \textcolor{blue}{0.08} & \textcolor{blue}{0.19} & \textcolor{blue}{0.00} & \textcolor{blue}{0.01} & \textcolor{blue}{0.80} & \textcolor{blue}{0.48} & \textcolor{blue}{0.55}\\
+\textcolor{blue}{glass} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.51} & \textcolor{blue}{0.44} & \textcolor{blue}{0.43}\\
+\textcolor{blue}{letter} & \textcolor{blue}{0.10} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.02} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.50} & \textcolor{blue}{0.58} & \textcolor{blue}{0.91}\\
+\textcolor{blue}{lympho} & \textcolor{blue}{0.58} & \textcolor{blue}{0.41} & \textcolor{blue}{0.00} & \textcolor{blue}{0.50} & \textcolor{blue}{0.29} & \textcolor{blue}{0.00} & \textcolor{blue}{0.99} & \textcolor{blue}{0.77} & \textcolor{blue}{0.98}\\
+\textcolor{blue}{musk} & \textcolor{blue}{0.69} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.64} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{1.00} & \textcolor{blue}{NA} & \textcolor{blue}{0.22}\\
+\addlinespace
+\textcolor{blue}{optdigits} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.46} & \textcolor{blue}{0.59} & \textcolor{blue}{0.75}\\
+\textcolor{blue}{satimage-2} & \textcolor{blue}{0.96} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.94} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.98} & \textcolor{blue}{0.37} & \textcolor{blue}{0.76}\\
+\textcolor{blue}{speech} & \textcolor{blue}{0.13} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.02} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.52} & \textcolor{blue}{NA} & \textcolor{blue}{0.52}\\
+\textcolor{blue}{thyroid} & \textcolor{blue}{0.31} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.13} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.70} & \textcolor{blue}{0.60} & \textcolor{blue}{0.57}\\
+\textcolor{blue}{vowels} & \textcolor{blue}{0.24} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.09} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.62} & \textcolor{blue}{0.64} & \textcolor{blue}{0.83}\\
+\addlinespace
+\textcolor{blue}{wbc} & \textcolor{blue}{0.44} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.31} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.84} & \textcolor{blue}{0.48} & \textcolor{blue}{0.72}\\
+\textcolor{blue}{wine} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.00} & \textcolor{blue}{0.65} & \textcolor{blue}{0.50} & \textcolor{blue}{0.61}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\hypertarget{a-large-data-repository}{%
+\subsection{A large data repository}\label{a-large-data-repository}}
+
+The repository at @datasets has more than \(12000\) outlier detection
+datasets that were prepared from classification datasets. Dataset
+preparation involves downsampling the minority class in classification
+datasets, converting the categorical variables to numerical and
+accounting for missing values, all of which is detailed in
+@normalizationoutliers.
+
+\textcolor{blue}{ We evaluate the performance of these 5 outlier detection methods on this data repository. While lookout, HDoutliers and stray gave valid output for all 12000+ datasets, RDOS and KDEOS gave errors for 5745 datasets. As such, we only compare lookout, stray and HDoutliers on this data repository.}
 
 \begin{figure}
 \includegraphics[width=1\linewidth]{lookout_files/figure-latex/lvplots-1} \caption{Letter value plots of performance differences between 1. lookout and HDoutliers, 2. lookout and stray using Gmean and Fmeasure.}\label{fig:lvplots}
@@ -1045,10 +1066,11 @@ the rest, a reasonably large bandwidth needs to be chosen. We introduced
 an algorithm called \emph{lookout} that uses persistent homology to
 select the bandwidth.
 
-We compared the performance of lookout with HDoutliers and stray, two
-algorithms that also use EVT to detect outliers. Our results on
-experimental data and on a large data repository showed that lookout
-achieves better performance.
+We compared the performance of lookout
+\textcolor{blue}{with 4 outlier detection algorithms, 2 of which use EVT to detect outliers and the others use KDE. These algorithms are HDoutliers, stray, KDEOS and RDOS.}
+Our results on experimental data and on
+\textcolor{blue}{two data repositories} showed that lookout achieves
+better performance.
 
 We also introduced the concept of \emph{outlier persistence}, exploring
 the birth and death of outliers with changing bandwidth and significance
