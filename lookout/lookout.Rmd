@@ -90,13 +90,13 @@ diff_metrics_2 <- function(act, pred){
 
 # Introduction
 
-Outliers, anomalies and novelties are often interchangeably used to describe the same concept: data points that are unusual compared to the rest. The existence of multiple words to describe similar concepts arise from the growth of outlier detection and applications in multiple research areas. Indeed, outlier detection is used in diverse applications ranging from detecting security breaches in the Internet of Things networks to identifying extreme weather events. Consequently, it is important to develop robust techniques to detect outliers, which minimize costly false positives and dangerous false negatives.
+Outliers are data points that are unusual compared to the rest. They are also known as anomalies or novelties. Outlier-detection methods are used in diverse applications ranging from detecting security breaches in the Internet of Things networks to identifying extreme weather events. Whatever the application, it is important to develop robust techniques to detect outliers, which minimize costly false positives and dangerous false negatives.
 
 This diverse literature can be divided into approaches that use probability densities to define outliers, and those that use distances to define outliers. Outlier detection methods that use probability densities treat outliers as observations that are very unlikely given the other observations. Outlier detection methods that use distances treat outliers as observations that lie far from other observations.
 
-In this paper, we take a probability density approach to outlier detection. We propose a new outlier detection algorithm that we call *lookout*, which uses leave-one-out kernel density estimates to identify the most unlikely observations. We address the challenge of bandwidth selection by using persistent homology --- a concept in topological data analysis --- and use extreme value theory (EVT) to identify outliers based on their leave-one-out density estimates.
+We take a probability density approach and propose a new outlier detection algorithm that we call *lookout*, which uses leave-one-out kernel density estimates to identify the most unlikely observations. We address the challenge of bandwidth selection by using persistent homology --- a concept in topological data analysis --- and use extreme value theory (EVT) to identify outliers based on their leave-one-out density estimates.
 
-The main challenge in using kernel density estimates for outlier detection is the selection of the bandwidth. @Schubert2014 employ kernel density estimates to detect outliers using $k$-nearest neighbor distances where $k$ is a user-specified parameter, which determines bandwidth. @Qin2019 employ kernel density estimates to detect outliers in streaming data. They too have a radius parameter, which is equivalent to the bandwidth that needs to be specified by the user. @Tang2017 use reverse and shared $k$ nearest neighbors to compute kernel density estimates and identify outliers. They also have a user defined parameter $k$ that denotes the reverse $k$ nearest neighbors. The oddstream algorithm  [@talagala2019anomaly] computes kernel density estimates on a 2-dimensional projection defined by the first two principal components, and so bandwidths need to be selected. We avoid subjective user-choice, and the inappropriate use of bandwidths optimized for some other purpose, by proposing  the use of persistent homology as a new tool for bandwidth selection.
+The main challenge in using kernel density estimates for outlier detection is the selection of the bandwidth. @Schubert2014 employ kernel density estimates to detect outliers using $k$-nearest neighbor distances where $k$ is a user-specified parameter, which determines bandwidth. @Qin2019 employ kernel density estimates to detect outliers in streaming data, using a user-specified radius parameter which is equivalent to the bandwidth. @Tang2017 use reverse and shared $k$-nearest neighbors to compute kernel density estimates and identify outliers. They also have a user-defined parameter that denotes the reverse $k$-nearest neighbors. The oddstream algorithm  [@talagala2019anomaly] computes kernel density estimates on a 2-dimensional projection defined by the first two principal components, and so bandwidths need to be selected. We avoid subjective user-choice, and the inappropriate use of bandwidths optimized for some other purpose, by proposing  the use of persistent homology as a new tool for bandwidth selection.
 
 Extreme Value Theory has been gaining popularity in outlier detection because of its rich, theoretical foundations. @Burridge2006 used EVT to detect outliers in time series data. @Clifton2014 used Generalized Pareto Distributions to model the tails in high-dimensional data and detect outliers. Other recent advances in outlier detection that use EVT include the stray [@stray], oddstream [@talagala2019anomaly] and HDoutliers [@wilkinson2017visualizing] algorithms. Of these three methods, stray is an enhancement of HDoutliers and both use distances to detect outliers, while oddstream uses kernel density estimates to detect outliers in time series data. Our approach is closest to oddstream in that we also apply EVT to functions of kernel density estimates. However, we use a different functional, and we avoid the need for an outlier-free training set.
 
@@ -116,7 +116,7 @@ In this section we provide some brief background on three topics that we will us
 
 ## Topological data analysis and persistent homology {#subsec:tda}
 
-Topological data analysis is the study of data using topological constructs. It is about inferring high dimensional structure from low dimensional representations such as points and assembling discrete points to construct global structures [@ghrist2008barcodes]. Persistent homology is a method in algebraic topology that computes topological features of a space that persist across multiple scales or spatial resolutions. These features include connected components, topological circles and trapped volumes. Features that persist for a wider range of spatial resolutions represent robust, intrinsic features of the data while features that sporadically change are perturbations resulting from noise. Persistent homology has been used in a wide variety of applications including biology [@topaz2015topological], computer graphics [@carlsson2008local] and engineering [@perea2015sliding]. In this section we will give a brief overview of persistent homology without delving into the mathematical details. Readers are referred to @ghrist2008barcodes and @Carlsson2009 for an overview and @wasserman2018topological for a statistical viewpoint on the subject.
+Topological data analysis is the study of data using topological constructs, inferring high dimensional structure from low dimensional representations such as points and assembling discrete points to construct global structures [@ghrist2008barcodes]. Persistent homology is a method in algebraic topology that computes topological features of a space that persist across multiple scales or spatial resolutions. These features include connected components, topological circles and trapped volumes. Features that persist for a wider range of spatial resolutions represent robust, intrinsic features of the data while features that sporadically change are perturbations resulting from noise. Persistent homology has been used in a wide variety of applications including biology [@topaz2015topological], computer graphics [@carlsson2008local] and engineering [@perea2015sliding]. In this section we give a brief overview of persistent homology. Readers are referred to @ghrist2008barcodes and @Carlsson2009 for further details and @wasserman2018topological for a statistical viewpoint on the subject.
 
 ### Simplicial complex {-}
 
@@ -124,7 +124,7 @@ Consider a data cloud representing a collection of points. This set of points is
 
 The *Vietoris-Rips* complex and the *Cech* complex are two types of $k$-simplicial complexes. We will construct a Vietoris-Rips complex from the data cloud as it is more computationally efficient than the Cech complex [@ghrist2008barcodes]. Given a set of points and a proximity parameter $\varepsilon > 0$, $k+1$ points within a distance of $\varepsilon$ to each other form a $k$-simplex. For example, consider five points $p$, $q$, $r$, $s$ and $t$ and suppose the distance between any two points except $t$ is less than $\varepsilon$. Then we can construct the edges $pq$, $pr$, $ps$, $qr$, $qs$ and $rs$. From the edges $pq$, $qr$ and $rp$ we can construct the triangle $pqr$, from $pq$, $qs$ and $sp$ the triangle $pqs$ and so on, because the distance between any two points $p$, $q$, $r$ and $s$ is bounded by $\varepsilon$. By constructing the four triangles $pqr$, $qrs$, $rsp$ and $spq$ we can construct the tetrahedron $pqrs$. The vertex $t$ is not connected to this 3-simplex because the distance between $t$ and the other vertices is greater than $\varepsilon$. The simplicial complex resulting from these five points consists of the tetrahedron $pqrs$ and all the subset $k$-simplices and the vertex $t$. Figure \ref{fig:tetrahedron} shows this simplicial complex on the left and another example on the right.
 
-```{r tetrahedron, fig.height=3, fig.cap="The figure on the left shows the points $p$, $q$, $r$, $s$ and $t$ with a proximity parameter $\\varepsilon = 0.5$ and the resulting Rips complex consisting of the tetrahedron $pqrs$, triangles $pqr$, $qrs$, $rsp$, $pqs$, edges $pq$, $qr$, $rs$, $sp$, $qs$, $pr$ and vertices $p$, $q$, $r$, $s$ and $t$. The figure on the right shows eight points and the resulting Rips complex with $\\varepsilon=4/3$."}
+```{r tetrahedron, fig.height=2.5, fig.cap="Left: points $p$, $q$, $r$, $s$ and $t$ with a proximity parameter $\\varepsilon = 0.5$ and the resulting Rips complex consisting of the tetrahedron $pqrs$, triangles $pqr$, $qrs$, $rsp$, $pqs$, edges $pq$, $qr$, $rs$, $sp$, $qs$, $pr$ and vertices $p$, $q$, $r$, $s$ and $t$. Right: eight points and the resulting Rips complex with $\\varepsilon=4/3$."}
 d <- tibble(
   point = c("p", "q", "r", "s", "t"),
   x = c(0, 0.2, 0, 0.1, 0.75),
@@ -170,7 +170,7 @@ p1 | p2
 
 Given a point cloud of data, the resulting Rips complex depends on the value of the proximity parameter $\varepsilon$. As we increase $\varepsilon$, topological features such as connected components and holes appear and disappear. This is the focus of persistent homology. For example, in Figure&nbsp;\ref{fig:annulus}, we start with a large number of connected components (top-left) and as $\varepsilon$ increases to $0.8$ the number of connected components merge and decrease to 1 (bottom-left). Around this value of $\varepsilon$, a hole appears and as $\varepsilon$ increases to $1.5$, it disappears (bottom-right). The appearances and disappearances of these topological features are referred to as births and deaths and are illustrated using a *barcode* or a *persistence diagram*.
 
-```{r annulus, fig.cap="Rips complexes resulting from different $\\varepsilon$ values.", fig.width=6, fig.height=4}
+```{r annulus, fig.cap="Rips complexes resulting from different $\\varepsilon$ values.", fig.width=7, fig.height=4, output="100%"}
 outer_radius <- 1
 inner_radius <- 0.7
 n <- 50
@@ -232,10 +232,10 @@ p6 <- ggplot(X, aes(x = x, y = y)) +
   labs(subtitle = TeX(sprintf('$\\epsilon$ = %.1f', prox))) +
   xlim(-1.75,1.75) + ylim(-1.75,1.75)
 
-(p3 | p4) / (p5 | p6)
+(p3 | p4 | p5 | p6)
 ```
 
-```{r barcodeandpersistence, fig.cap="The graph on the left shows the barcode of the point cloud in Figure \\ref{fig:annulus} and the graph on the right shows the persistence diagram.", dependson="annulus", out.width="100%"}
+```{r barcodeandpersistence, fig.cap="Left: the barcode of the point cloud in Figure \\ref{fig:annulus}. Right: the persistence diagram.", dependson="annulus", out.width="75%", fig.align="center"}
 # compute the persistent homology
 ph1 <- TDAstats::calculate_homology(as.matrix(X), dim = 1)
 # plot topological barcode
@@ -255,7 +255,7 @@ beta0 <- beta %>% filter(dimension==0) %>% NROW()
 beta1 <- beta %>% filter(dimension==1) %>% NROW()
 ```
 
-Figure \ref{fig:barcodeandpersistence} shows the barcode and the persistence diagram of the point cloud shown in Figure \ref{fig:annulus}. The barcode comprises a set of horizontal line segments, each denoting a feature that starts at its birth diameter and ends at its death diameter. These line segments are grouped by their dimension. The orange lines in Figure \ref{fig:barcodeandpersistence} denote the zero dimensional holes, which are connected components and blue lines denote one dimensional holes. The longer blue line which is born at `r sprintf("%.2f",longblueline$birth)` and dies at `r sprintf("%.2f",longblueline$death)`, corresponds to the hole at the center of the point cloud in Figure \ref{fig:annulus}. Such features that continue for a large range of $\varepsilon$, represent structural properties of the data that are of interest to us. The same information is presented differently in the persistence diagram, where the birth and the death of each feature is denoted by a point. Points away from the diagonal inform about the structure of the data while points closer to the diagonal are perturbations related to noise. In this plot, the triangle near the top represents the same feature as the long blue line in the left plot.
+Figure \ref{fig:barcodeandpersistence} shows the barcode and the persistence diagram of the point cloud shown in Figure \ref{fig:annulus}. The barcode comprises a set of horizontal line segments, each denoting a feature that starts at its birth diameter and ends at its death diameter. These line segments are grouped by their dimension. The orange lines in Figure \ref{fig:barcodeandpersistence} denote the 0-dimensional holes (connected components) and blue lines denote 1-dimensional holes. The longer blue line which is born at `r sprintf("%.2f",longblueline$birth)` and dies at `r sprintf("%.2f",longblueline$death)`, corresponds to the hole at the center of the point cloud in Figure \ref{fig:annulus}. Features that continue for a large range of $\varepsilon$ represent structural properties of the data that are of interest to us. The same information is shown in the persistence diagram, where the birth and the death of each feature is denoted by a point. Points away from the diagonal inform about the structure of the data while points closer to the diagonal are perturbations related to noise. In this plot, the triangle near the top represents the same feature as the long blue line in the left plot.
 
 <!-- Betti numbers denoted by $\beta_k$ give the number of $k$-dimensional holes of a simplicial complex. The number of connected components is given by $\beta_0$ and the number of one-dimensional holes is given by $\beta_1$. The number of two-dimensional holes, which are trapped volumes or voids is given by $\beta_2$. The Betti numbers can also be computed from the barcode by drawing a vertical line at the desired diameter and counting the points of intersection for each dimension. For example, in Figure \ref{fig:barcodeandpersistence} the Betti numbers corresponding to the simplicial complex at diameter $0.6$ are $\beta_0 = `r beta0`$ and $\beta_1 = `r beta1`$. -->
 
@@ -360,7 +360,7 @@ A major challenge in using kernel density estimates for outlier detection is sel
 
 To select a bandwidth for a kernel density estimate designed for outlier detection, we propose to use the barcode discussed in Section \ref{subsec:tda}. First we construct the barcode of the data cloud for dimension zero using the Vietoris-Rips diameter. From the barcode we obtain the sequence of death diameters $\{d_i\}_{i = 1}^N$ for the connected components. By construction this is an increasing sequence as seen in Figure \ref{fig:barcodeandpersistence}. 
 
-```{r TDAKNN, fig.cap="Top left: A scatterplot of 1000 observations with most points falling on an annulus and some points near the center. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom.", out.width="100%"}
+```{r TDAKNN, fig.cap="Top left: A scatterplot of 1000 observations with most points falling on an annulus and some points near the center. Its TDA barcode on the top right and the violin plot of TDA death diameters and KNN distances at the bottom.", out.width="90%", fig.align='center'}
 oo <- 10
 outer_radius <- 1
 inner_radius <- 0.7
@@ -496,11 +496,9 @@ This ensures that points within a distance of $d_*$ contribute to the kernel den
 
 ## Algorithm *lookout*
 
-Now we have all the building blocks necessary to describe the algorithm *lookout*. Consider an $N \times p$ data matrix $\bm{X}$ with $N$ observations in $\mathbb{R}^p$. It is customary in outlier detection to scale the data so that all variables contribute equally to outlier detection. We normalize the data using Min-Max normalization, which scales each attribute to $[0, 1]$ and has been shown to be effective compared to other normalization techniques [@normalizationoutliers]. To accommodate datasets that do not need to be normalized, we make normalization a user option.
+Now we have the building blocks necessary to describe the algorithm *lookout*. Consider an $N \times p$ data matrix $\bm{X}$ with $N$ observations in $\mathbb{R}^p$. It is customary in outlier detection to scale the data so that all variables contribute equally. We normalize the data using Min-Max normalization, which scales each attribute to $[0, 1]$ and has been shown to be effective compared to other normalization techniques [@normalizationoutliers]. To accommodate datasets that do not need to be normalized, we make normalization optional.
 
-We compute the kernel density estimates defined by \eqref{eq:kde6} and the leave-one-out kernel density estimates defined in \eqref{eq:kde12}, with the bandwidth matrix \eqref{eq:bandwidth}, and the scaled Epanechnikov kernel \eqref{eq:kde8}.
-
-Denote the kernel density estimate of $\bm{x}_i$ by $y_i$ and the leave-one-out kde of $\bm{x}_i$ (by leaving out $\bm{x}_i$) by $y_{-i}$. Then we fit a Generalized Pareto Distribution to $-\log(y_i)$ using the POT approach discussed in Section \ref{subsec:evt}. We use the $90^{\text{th}}$ percentile as the threshold for the POT approach as recommended by @bommier2014peaks. Using the fitted GPD parameters, $\mu$, $\sigma$ and $\xi$, we declare points with $P\left(-\log(y_{-i})|\mu, \sigma,\xi \right) < \alpha$ to be outliers. We summarize these steps in Algorithm \ref{algo:lookout}.
+We compute the kernel density estimates defined by \eqref{eq:kde6} and \eqref{eq:kde12}, with the bandwidth matrix \eqref{eq:bandwidth} and the scaled Epanechnikov kernel \eqref{eq:kde8}. Denote the kernel density estimate of $\bm{x}_i$ by $y_i$ and the leave-one-out kde of $\bm{x}_i$ (by leaving out $\bm{x}_i$) by $y_{-i}$. Then we fit a Generalized Pareto Distribution to $-\log(y_i)$ using the POT approach discussed in Section \ref{subsec:evt}. We use the $90^{\text{th}}$ percentile as the threshold for the POT approach as recommended by @bommier2014peaks. Using the fitted GPD parameters, $\mu$, $\sigma$ and $\xi$, we declare points with $P\left(-\log(y_{-i})|\mu, \sigma,\xi \right) < \alpha$ to be outliers. We summarize these steps in Algorithm \ref{algo:lookout}.
 
 \DontPrintSemicolon
 \begin{algorithm}\fontsize{11}{16}\selectfont
@@ -520,15 +518,15 @@ Denote the kernel density estimate of $\bm{x}_i$ by $y_i$ and the leave-one-out 
 	\label{algo:lookout}
 \end{algorithm}
 
-The output probability of lookout is the GPD probability of the points, so that low probabilities indicate likely outliers and high probabilities indicate normal points. Note that the scaling factor of the kernel $K(\bm{x})$ does not affect the GPD parameters as it is just an offset after taking logs of $y_i$ or $y_i$. 
+The output probability of lookout is the GPD probability of the points, so that low probabilities indicate likely outliers and high probabilities indicate normal points. Note that the scaling factor of the kernel $K(\bm{x})$ does not affect the GPD parameters as it is just an offset after taking logs of $y_i$ or $y_{-i}$.
 
-The algorithm lookout has only 2 inputs, $\alpha$ and *unitize*. The parameter $\alpha$ determines the threshold for outlier detection and *unitize* gives the user an option to normalize the data. We set $\alpha= 0.05$ and *unitize* = `TRUE` as default parameter values. We use the Epanechnikov kernel in lookout due to ease of computation. However, any kernel can be incorporated as long as the variances are matched.
+The algorithm lookout has only two inputs: $\alpha$ (the threshold for outlier detection) and *unitize* (allowing optional normalization). We set $\alpha= 0.05$ and *unitize* = `TRUE` as default parameter values. We use the Epanechnikov kernel in lookout due to ease of computation. However, any kernel can be incorporated as long as the variances are matched.
 
 ## Outlier persistence {#subsec:persistence}
 
-Lookout identifies outliers by selecting an appropriate bandwidth using TDA. If the bandwidth is changed, will the original outliers be still identified as outliers by lookout? We explore this question by varying bandwidth values in lookout. Similar work is discussed by @Minnotte1993, who introduce the Mode Tree, which tracks the modes of the kernel density estimates with changing bandwidth values. Another related idea is the SiZer map [@Chaudhuri1999], a graphical device that studies features of curves for varying bandwidth values.
+Lookout identifies outliers after selecting an appropriate bandwidth using TDA. The points identified as outliers may depend on this bandwidth. We explore the relationship between outliers and bandwidth by varying bandwidth values in lookout. Similar work is discussed by @Minnotte1993, who introduce the Mode Tree, which tracks the modes of the kernel density estimates with changing bandwidth values. Another related idea is the SiZer map [@Chaudhuri1999], a graphical device that studies features of curves for varying bandwidth values.
 
-```{r outlierpersistence, fig.height=3, fig.cap="Outliers at the center of the annulus in the left plot showing the outlier labels 1001--1005. The outlier persistence diagram on the right with the y-axis denoting the labels. The dashed line shows the lookout bandwidth $d_*$.", out.width="100%"}
+```{r outlierpersistence, fig.height=3, fig.cap="Outliers at the center of the annulus in the left plot showing the outlier labels 1001--1005. The outlier persistence diagram on the right with the y-axis denoting the labels. The dashed line shows the lookout bandwidth $d_*$.", out.width="90%", fig.align="center"}
 oo <- 5
 outer_radius <- 1
 inner_radius <- 0.7
@@ -597,7 +595,7 @@ We define the *strength* of an outlier based on its significance level. Let $\bm
 Thus, if a point is identified as an outlier with a significance level $\alpha = 0.01$, then it has strength 10, and an outlier with $\alpha = 0.1$ has strength 1. To compute persistence over significance levels, the only modification that needs to be done to Algorithm \ref{algo:persistence} is to fix $\alpha = 0.1$ and to record the minimum significance level if $P\left(-\log(y_{-i})|\mu_0, \sigma_0, \xi_0 \right) < 0.1$.
 Then we can use equation \eqref{eq:strengthpersistence} to compute its strength.
 
-```{r outlierpersistence2, fig.width=6, fig.height=3, dependson="outlierpersistence", fig.cap="Outlier persistence over different bandwidth values and their strengths. The dashed line corresponds to the lookout bandwidth $d_*$.", dependson="outlierpersistence"}
+```{r outlierpersistence2, fig.width=6, fig.height=3, dependson="outlierpersistence", fig.cap="Outlier persistence over different bandwidth values and their strengths. The dashed line corresponds to the lookout bandwidth $d_*$.", dependson="outlierpersistence", out.width="80%", fig.align="center"}
 autoplot(outnew) +
   geom_vline(xintercept = lookobj$bandwidth, linetype = "dashed")
 ```
@@ -625,11 +623,9 @@ From the spacings of $\hat{x}_{t}$ they find outliers using Algorithm 1 in their
 
 # Experiments with synthetic data {#sec:simulations}
 
-In this section we first explore outlier persistence using simple examples. Then we conduct experiments using synthetic data comparing lookout to HDoutliers [@wilkinson2017visualizing],  stray [@stray], \textcolor{blue}{KDEOS} [@Schubert2014] and \textcolor{blue}{RDOS} [@Tang2017].  Both HDoutliers and stray  use extreme value theory to detect outliers; KDEOS and RDOS use kernel density estimates. 
-
 ## Outlier persistence examples {#sec:PersistenceExamples}
 
-```{r persistenceEx, fig.cap="Examples of outlier persistence and strength. The left column shows the data with the outliers identified by lookout with $\\alpha = 0.1$ colored by its strength. The right column shows the outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth.", fig.height=6.5, fig.asp=1.2, out.width="100%"}
+```{r persistenceEx, fig.cap="Examples of outlier persistence and strength. Left: data with the outliers identified by lookout with $\\alpha = 0.1$ colored by its strength. Right: outlier persistence diagrams for these examples. The dashed line corresponds to the lookout bandwidth.", fig.height=6, fig.asp=1.2, out.width="100%"}
 # ---------------------------------------------------------------------
 # TASK 1 - EXAMPLE 1
 # ---------------------------------------------------------------------
@@ -799,7 +795,7 @@ g9 <- ggplot(X2, aes(x, y)) +
   (g2 / g4 / g6 / g8 / g10)
 ```
 
-Figure \ref{fig:persistenceEx} shows five examples in $\mathbb{R}^2$, each showing the data, outliers identified by lookout, their strengths and the corresponding outlier persistence diagram. In each example, the outliers are placed at the end of the synthetic dataset, i.e. their observation indices are the highest. The dashed lines in the outlier persistence diagram indicate the bandwidth chosen by lookout. The top left plot shows normally distributed data with 5 outliers in the top right corner, which are identified by lookout with high strength. Upon close inspection we see two further points, both approximately at $(`r sprintf("%.1f", mean(extra_outlier[['x']]))`, `r sprintf("%.1f", mean(extra_outlier[['y']]))`)$ and slightly detached from the main group of points, also being identified by lookout as outliers with low strength. The lookout strength of each of these points is less than 2, and so they would only be identified as outliers when $\alpha > `r 0.11 - 2*0.01`$. The corresponding persistence diagram shows high strength outlier persistence for the points at the top right hand corner. Similarly, from other graphs in column 1, we see that outliers far from high density regions are identified by lookout with high strength and points outside high density regions, but not so far away are identified with low strength. For the example in row 3, lookout has identified a cluster of outliers approximately at $(6,6)$ with high strength as well as individual points slightly away from high density regions with low strength. The example in row 5 has single outliers rather than clusters, which are again identified by lookout. For the last example in the bottom row, lookout has identified a cluster of outliers at $(-0.6, 0.35)$ with low strength and the remaining outliers with high strength. From the persistence diagrams we see that many points are identified as outliers for low bandwidth values, but only a small number of outliers persist until the bandwidth is large. In addition, some outliers persist at low strength values. For example, the persistence diagram in row 5 has outliers around index 500 with low strength persisting until large bandwidth values.
+Figure \ref{fig:persistenceEx} shows five simple examples in $\mathbb{R}^2$, each showing the data, outliers identified by lookout, their strengths and the corresponding outlier persistence diagram. In each example, the outliers are placed at the end of the synthetic dataset. The dashed lines in the outlier persistence diagram indicate the bandwidth chosen by lookout. The top left plot shows normally distributed data with five outliers in the top right corner, which are identified by lookout with high strength. Upon close inspection we see two further points, both approximately at $(`r sprintf("%.1f", mean(extra_outlier[['x']]))`, `r sprintf("%.1f", mean(extra_outlier[['y']]))`)$ and slightly detached from the main group of points, also being identified by lookout as outliers with low strength. The lookout strength of each of these points is less than 2, and so they would only be identified as outliers when $\alpha > `r 0.11 - 2*0.01`$. The corresponding persistence diagram shows high strength outlier persistence for the points at the top right hand corner. Similarly, from other graphs in column 1, we see that outliers far from high density regions are identified by lookout with high strength and points close to but outside high density regions are identified with low strength. From the persistence diagrams we see that many points are identified as outliers for low bandwidth values, but only a small number of outliers persist until the bandwidth is large.
 
 From the examples in Figure \ref{fig:persistenceEx} we see that lookout selects a bandwidth appropriate for outlier detection that is neither too small nor too large. In addition, lookout identifies outliers correctly. The outlier persistence diagram gives a snapshot of the outliers for varying bandwidths and significance levels increasing our understanding of the dataset and its outliers.
 
@@ -807,7 +803,9 @@ From the examples in Figure \ref{fig:persistenceEx} we see that lookout selects 
 
 In this section we conduct three experiments with synthetic data. Each experiment considers two data distributions; the main distribution and a handful of outliers which are distributed differently. There are several iterations to each experiment. The iterations serve as a measure of the degree of outlyingness of the small sample. The outliers start off with the main distribution and slowly move out of the main distribution with each iteration. Consequently, in the initial iterations the points in the outlying distribution are not actual outliers as they are similar to the points in the main distribution, while in the later iterations they are quite different from the main distribution. We repeat each iteration ten times to account for the randomness of the data generation process.
 
-We compare the results of lookout with \textcolor{blue}{four} other algorithms; HDoutliers [@wilkinson2017visualizing], stray [@stray], \textcolor{blue}{KDEOS} [@Schubert2014] \textcolor{blue}{ and RDOS} [@Tang2017]. \textcolor{blue}{HDoutliers and stray both use extreme value theory for outlier detection, while KDEOS and RDOS both use kernel density estimates. For KDEOS and RDOS we use the default parameters. For lookout, HDoutliers and stray we use $\alpha = 0.05$. HDoutliers and stray identify outliers explicitly. KDEOS and RDOS do not identify outliers directly; instead, they give an anomaly score which can be used to rank points according to how outlying they are. As the algorithms give different outputs, we employ different methods to compare their performance. To compare the performance of lookout with HDoutliers and stray, we assess the identified outliers based on the F-measure and the geometric mean of sensitivity and specificity denoted by Gmean, discussed below. To compare lookout with KDEOS and RDOS, we assess the outlier scores using the area under the Receiver Operator Characteristic curve denoted by AUC. Note that the evaluation metrics F-measure, Gmean and AUC are suited for unbalanced datasets.}
+We compare the results of lookout with \textcolor{blue}{four} other algorithms; HDoutliers [@wilkinson2017visualizing], stray [@stray], \textcolor{blue}{KDEOS} [@Schubert2014] \textcolor{blue}{ and RDOS} [@Tang2017]. \textcolor{blue}{HDoutliers and stray both use extreme value theory for outlier detection, while KDEOS and RDOS both use kernel density estimates. For KDEOS and RDOS we use the default parameters. For lookout, HDoutliers and stray we use $\alpha = 0.05$.}
+
+\textcolor{blue}{HDoutliers and stray identify outliers explicitly. KDEOS and RDOS do not identify outliers directly; instead, they give an anomaly score which can be used to rank points according to how outlying they are. As the algorithms give different outputs, we employ different methods to compare their performance. To compare the performance of lookout with HDoutliers and stray, we assess the identified outliers based on the F-measure and the geometric mean of sensitivity and specificity denoted by Gmean, discussed below. To compare lookout with KDEOS and RDOS, we assess the outlier scores using the area under the Receiver Operator Characteristic curve denoted by AUC. Note that the evaluation metrics F-measure, Gmean and AUC are suited for unbalanced datasets.}
 
 The F-measure is defined as
 \begin{equation}\label{eq:fmeasure}
@@ -835,7 +833,7 @@ where *tn* denotes the true negatives (predicted = false, actual = false). In fa
 
 For this experiment we consider two normally distributed samples in $\mathbb{R}^6$; one large and one small starting at the same location with the small sample slowly moving out in each iteration. The set of points belonging to the small sample are considered outliers. We consider 400 points in the bigger sample and 5 in the outlying sample, placed at indices 401--405. The points in the larger sample are distributed in each dimension as $\mathcal{N}(0, 1)$. The outliers differ from the standard normal points in only the first dimension; i.e. they are distributed as $\mathcal{N}\left(2 + (i-1)/2, 0.2 \right)$, where $i$ denotes the iteration. In the first iteration the outliers are distributed as $\mathcal{N}\left(2, 0.2 \right)$ in the first dimension and in the tenth iteration they are distributed as $\mathcal{N}\left(6.5, 0.2 \right)$. Each iteration is repeated ten times to account for randomness.
 
-```{r ComparisonEx1, fig.cap="Experiment 1 with outliers moving out from the normal distribution in $\\mathbb{R}^6$. Graph on the top left shows the first two dimensions in the last iteration and last repetition. The graph on the top right shows the performance comparison between lookout, HDoutliers, stray, kdeos and rdos using AUC, Fmeasure and Gmean over ten repetitions. Fmeasure and Gmean are used for algorithms that identify outliers, while AUC is used for algorithms that rank outliers. In this experiment, stray and HDoutliers gave identical results. The graph on the bottom left shows the time taken for these five algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.", out.width="100%", message=FALSE}
+```{r ComparisonEx1, fig.cap="Experiment 1 with outliers moving out from the normal distribution in $\\mathbb{R}^6$. Top left: first two dimensions in the last iteration and last repetition. Top right: performance comparison between lookout, HDoutliers, stray, kdeos and rdos using AUC, Fmeasure and Gmean over ten repetitions. In this experiment, stray and HDoutliers gave identical results. Bottom left: time taken for these five algorithms. Bottom right: corresponding outlier persistence plot.", out.width="80%", fig.align="center", message=FALSE}
 values <- rep(0, 10)
 pp <- 10
 hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <-
@@ -1012,14 +1010,14 @@ g4 <- ggplot(dftime, aes(Algorithm, value)) + geom_boxplot(outlier.shape = 20)  
 ```
 
 The top left graph of Figure \ref{fig:ComparisonEx1} shows the first two dimensions of this experimental dataset in its last iteration and repetition, with outliers identified by lookout shown in different colors.
-\textcolor{blue}{The top right graph shows the performance comparison of lookout, HDoutliers, stray, KDEOS and RDOS. As lookout, HDoutliers and stray identify outliers, we have used the Fmeasure and Gmean to compare their performance. As KDEOS and RDOS rank outliers instead of identifying them, we have used the AUC --- the area under the ROC curve --- to compare their performance. We see that for each iteration lookout surpasses HDoutliers and stray significantly. Lookout gives much better performance than KDEOS, and from the fourth iteration onwards lookout surpasses RDOS. The graph on the bottom left shows the time taken for each algorithm. We see that RDOS takes a much longer time than the other algorithms. HDoutliers and stray are the fastest, followed by lookout. The graph on the bottom right shows the outlier persistence plot for this data with the dashed line denoting the lookout bandwidth.}
+\textcolor{blue}{The top right graph shows the performance comparison of lookout, HDoutliers, stray, KDEOS and RDOS. We see that for each iteration, lookout surpasses HDoutliers and stray significantly. Lookout gives much better performance than KDEOS, and from the fourth iteration onwards lookout surpasses RDOS. The graph on the bottom left shows the time taken for each algorithm. We see that RDOS takes a much longer time than the other algorithms. HDoutliers and stray are the fastest, followed by lookout. The graph on the bottom right shows the outlier persistence plot for this data with the dashed line denoting the lookout bandwidth.}
 <!-- The top right graph shows the corresponding outlier persistence plot for this data with the dashed line denoting the lookout bandwidth. The graphs at the bottom show the performance of lookout, HDoutliers and stray with $\alpha = 0.05$. The mean F-measure of the 10 repetitions for each iteration is shown in the graph at the bottom left and the mean Gmean is shown at the bottom right. We see that for each iteration lookout surpasses HDoutliers and stray significantly. -->
 
 ### Experiment 2 {-}
 
 For this experiment we consider an annulus in $\mathbb{R}^2$ with outlying points moving into the center with each iteration. We consider 800 points in the annulus with five outlying points. The outliers are normally distributed and have a smaller standard deviation compared to the other points. The mean of the outliers in the $i^{\text{th}}$ iteration is $\left(5 - (i-1) /2,  0 \right)$, so that the outliers start at the right of the annulus with mean $(5,0)$ and move in with each iteration, ending with mean $(0,0)$. We repeat each iteration ten times.
 
-```{r ComparisonEx2, fig.cap="Experiment 2 with outliers moving into the center of the annulus in $\\mathbb{R}^2$. Graph on the top left shows the points from the last iteration and repetition. The graph on the top right shows the performance comparison between lookout, HDoutliers, stray, kdeos and rdos using AUC, Fmeasure and Gmean over 10 repetitions. The graph on the bottom left shows the time taken for these five algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.", out.width="100%", message=FALSE}
+```{r ComparisonEx2, fig.cap="Experiment 2 with outliers moving into the center of the annulus in $\\mathbb{R}^2$. Top left: points from the last iteration and repetition. Top right: performance comparison between lookout, HDoutliers, stray, kdeos and rdos using AUC, Fmeasure and Gmean over 10 repetitions. Bottom left: time taken for these five algorithms. Bottom right: the corresponding outlier persistence plot.", out.width="80%", fig.align="center", message=FALSE, fig.pos="b"}
 values <- rep(0, 10)
 pp <- 10
 hdoutliers_gmean <- hdoutliers_fmeasure <- lookout_fmeasure <- lookout_gmean <-
@@ -1174,9 +1172,8 @@ The graph at the top left of Figure \ref{fig:ComparisonEx2} shows the points in 
 
 ### Experiment 3 {-}
 
-For this experiment we consider a unit cube in $\mathbb{R}^{20}$ with 500 points, of which 499 points are uniformly distributed in each direction and the remaining point is an outlier. The outlier moves towards the point $\left( 0.9, 0.9, \dots, 0.9 \right)$ with each iteration. For the $i^{\text{th}}$ iteration the first $i$ coordinates of the outlier are each equal to $0.9$ and the remaining coordinates are uniformly distributed in $(0,1)$. The index of the outlier is 500. Each iteration is repeated 10 times with different randomizations.
 
-```{r ComparisonEx3, fig.cap="Experiment 3 with an outlier moving to $(0.9, 0.9, \\dots)$. Graph on the top shows the performance comparison between lookout, HDoutliers, stray, KDEOS and RDOS using AUC, Fmeasure and Gmean over ten repetitions. The graph on the bottom left shows the time taken for these five algorithms. The graph on the bottom right shows the corresponding outlier persistence plot.", out.width="100%", message=FALSE}
+```{r ComparisonEx3, fig.cap="Experiment 3 with an outlier moving to $(0.9, 0.9, \\dots)$. Top: performance comparison between lookout, HDoutliers, stray, KDEOS and RDOS using AUC, Fmeasure and Gmean over ten repetitions. Bottom left: time taken for these five algorithms. Bottom right: corresponding outlier persistence plot.", out.width="80%", fig.align="center", message=FALSE, fig.pos="b"}
 values <- rep(0, 10)
 pp <- 10
 dd <- 19
@@ -1308,7 +1305,9 @@ g4 <- ggplot(dftime, aes(Algorithm, value)) + geom_boxplot(outlier.shape = 20)  
 g3 / (g4 | g2)
 ```
 
- \textcolor{blue}{The top graph in Figure \ref{fig:ComparisonEx3} shows the performance comparison between the different algorithms. We see that RDOS performs better than lookout in the initial eight iterations of this experiment. After the $8^{\text{th}}$ iteration, lookout performs better than RDOS. We also see that lookout performs significantly better than stray and HDoutliers. The graph on the bottom left shows the time taken for each algorithm: stray is the fastest followed by HDoutliers; the slowest algorithm is RDOS. The graph in the bottom right}  shows the outlier persistence for the last iteration and repetition. The dashed line shows the bandwidth chosen by lookout.
+For this experiment we consider a unit cube in $\mathbb{R}^{20}$ with 500 points, of which 499 points are uniformly distributed in each direction and the remaining point is an outlier. The outlier moves towards the point $\left( 0.9, 0.9, \dots, 0.9 \right)$ with each iteration. For the $i^{\text{th}}$ iteration the first $i$ coordinates of the outlier are each equal to $0.9$ and the remaining coordinates are uniformly distributed in $(0,1)$. The index of the outlier is 500. Each iteration is repeated 10 times with different randomizations.
+
+\textcolor{blue}{The top graph in Figure \ref{fig:ComparisonEx3} shows the performance comparison between the different algorithms. We see that RDOS performs better than lookout in the initial eight iterations of this experiment. After the $8^{\text{th}}$ iteration, lookout performs better than RDOS. We also see that lookout performs significantly better than stray and HDoutliers. The graph on the bottom left shows the time taken for each algorithm: stray is the fastest followed by HDoutliers; the slowest algorithm is RDOS. The graph in the bottom right}  shows the outlier persistence for the last iteration and repetition. The dashed line shows the bandwidth chosen by lookout.
 
 <!-- The top graph in Figure \ref{fig:ComparisonEx3} shows the outlier persistence for the last iteration and repetition. The dashed line shows the bandwidth chosen by lookout. -->
 
@@ -1316,9 +1315,9 @@ g3 / (g4 | g2)
 
 ### \textcolor{blue}{Comparison of false positives } {-}
 \textcolor{blue}{
-A low false positive rate is an attractive feature for an outlier detection method. High false positives diminish user confidence with the risk of abandonment of such systems; consider a home security system with constant alarms. To get an understanding of the false positives, we redo experiments 1-3 without any outliers and compare the specificity ($tn/(tn+fp)$) of HDoutliers, stray and lookout. We repeat each experiment 10 times. As KDEOS and RDOS do not identify outliers, we do not include them in this comparison. High values of specificity is preferred as low values indicate more false positives. Table \ref{tab:zerooutliers} shows the specificity comparison results. Stray has the highest, average specificity of 1 with zero standard deviation;  HDoutliers has a similar specificity for all three experiments. We see that the average specificity of lookout is greater than $0.99$ with low standard deviation values. Thus lookout's specificity is comparable to HDoutliers and stray, demonstrating that its false positive rate is low. }
+A low false positive rate is an attractive feature for an outlier detection method. High false positives diminish user confidence with the risk of abandonment of such systems; consider a home security system with constant alarms. To get an understanding of the false positives, we redo experiments 1--3 without any outliers and compare the specificity ($tn/(tn+fp)$) of HDoutliers, stray and lookout. We repeat each experiment 10 times. As KDEOS and RDOS do not identify outliers, we do not include them in this comparison. High values of specificity is preferred as low values indicate more false positives. Table \ref{tab:zerooutliers} shows the specificity comparison results. Stray has the highest, average specificity of 1 with zero standard deviation;  HDoutliers has a similar specificity for all three experiments. We see that the average specificity of lookout is greater than $0.99$ with low standard deviation values. Thus lookout's specificity is comparable to HDoutliers and stray, demonstrating that its false positive rate is low. }
 
-```{r zerooutliers, fig.cap="", out.width="100%", message=FALSE}
+```{r zerooutliers, fig.cap="", out.width="80%", fig.align="center", message=FALSE}
 
 output <- matrix(0, nrow=3, ncol=6)
 colnames(output) <- c("lookout_mean", "lookout_sd", "stray_mean", "stray_sd", "hdoutliers_mean", "hdoutliers_sd")
@@ -1460,7 +1459,9 @@ output %>%
   knitr::kable(
     col.names = c("Experiment", "mean","sd", "mean", "sd", "mean", "sd"),
     booktabs = TRUE,
-    caption = "Specificity for lookout, HDoutliers and stray algorithms when no outliers are present.") %>% kableExtra::add_header_above(x, header=headcols) %>%  kableExtra::row_spec(1:dim(output)[1], color = "blue")
+    caption = "Specificity for lookout, HDoutliers and stray algorithms when no outliers are present.") %>% kableExtra::add_header_above(x, header=headcols) %>%  kableExtra::row_spec(1:dim(output)[1], color = "blue"
+  ) %>%
+  kableExtra::kable_styling(font_size=10)
 ```
 
 ## \textcolor{blue}{Evaluating time series outliers }{-}
@@ -1571,7 +1572,9 @@ output %>%
   knitr::kable(
     col.names = c("AR", "mean", "sd", "mean", "sd", "mean", "sd", "mean", "sd"),
     booktabs = TRUE,
-    caption = "Time series outliers performance comparison") %>% kableExtra::add_header_above(x, header=headcols2) %>% kableExtra::add_header_above(x, header=headcols) %>%  kableExtra::row_spec(1:dim(output)[1], color = "blue")
+    caption = "Time series outliers performance comparison") %>% kableExtra::add_header_above(x, header=headcols2) %>% kableExtra::add_header_above(x, header=headcols) %>%  kableExtra::row_spec(1:dim(output)[1], color = "blue"
+  ) %>%
+  kableExtra::kable_styling(font_size=10)
 ```
 
 # Results on two data repositories {#sec:applications}
@@ -1685,7 +1688,7 @@ The KMASH repository at @datasets has more than 12000 outlier detection datasets
 
 \textcolor{blue}{We evaluate the performance of these five outlier detection methods on this data repository. While lookout, HDoutliers and stray gave valid output for all 12000+ datasets, RDOS and KDEOS gave errors for 5745 datasets. Consequently, we only compare lookout, stray and HDoutliers on this data repository.}
 
-```{r lvplots, fig.cap="Letter value plots of performance differences between 1. lookout and HDoutliers, 2. lookout and stray using Gmean and Fmeasure.", fig.height=4, message=FALSE, out.width="100%"}
+```{r lvplots, fig.cap="Letter value plots of performance differences between 1. lookout and HDoutliers, 2. lookout and stray using Gmean and Fmeasure.", fig.height=4, message=FALSE, out.width="80%", fig.align='center'}
 dat <- readr::read_csv(here::here("data_repo_output/Collated_EX2_Take1_1_alpha_point05.csv"))
 
 # Differences - gmean
@@ -1731,13 +1734,15 @@ g2 <- ggplot(fmeas, aes(x = Algorithm, y = Fmeasure)) +
   lvplot::scale_fill_lv() +
   labs(x = "Algorithm", y = "F measure")
 
-g1 | g2
+#g1 | g2
 ```
 
-Figure \ref{fig:lvplots} shows the letter-value plots [@lvplots] of performance differences between
+<!-- Figure \ref{fig:lvplots} shows the letter-value plots [@lvplots] of performance differences between
 (a) lookout and HDoutliers and
 (b) lookout and stray,
-using Gmean and Fmeasure after removing the entries that have zero values for all three algorithms. Letter-value plots enhance traditional box-plots by including more detailed information making them suitable for large datasets. The letter-value plots in Figure \ref{fig:lvplots} are area adjusted, that is, the area of each box represents the number of points/datasets in it. The median is represented by a white line and each black box represents a fourth of the population denoted by F in the legend. The next box represents a eighth denoted by an E and each successive box represents half of the previous one.
+using Gmean and Fmeasure after removing the entries that have zero values for all three algorithms. -->
+
+<!-- Letter-value plots enhance traditional box-plots by including more detailed information making them suitable for large datasets. The letter-value plots in Figure \ref{fig:lvplots} are area adjusted, that is, the area of each box represents the number of points/datasets in it. The median is represented by a white line and each black box represents a fourth of the population denoted by F in the legend. The next box represents a eighth denoted by an E and each successive box represents half of the previous one. -->
 
 ```{r table, dependson='lvplots', message=FALSE}
 stats <- bind_rows(
@@ -1781,7 +1786,8 @@ tab %>%
     booktabs = TRUE,
     caption = "Summary statistics for comparing lookout with the HDoutliers and stray algorithms."
   ) %>%
-  kableExtra::pack_rows(index = table(tab$Metric))
+  kableExtra::pack_rows(index = table(tab$Metric)) %>%
+  kableExtra::kable_styling(font_size=10)
 
 gmean <- stats %>%
   filter(Metric == "Gmean") %>%
@@ -1793,7 +1799,13 @@ fmeas <- stats %>%
   pull(median)
 ```
 
-From the graphs in Figure \ref{fig:lvplots} we see that the total area of the letter-value plots above zero is larger than the area below zero. This signifies that more datasets have positive Gmean and F-measure values for lookout - HDoutliers and lookout - stray performance values compared to the negative values. This is confirmed by the results in Table \ref{tab:table}. We see that for both Gmean and F-measure, the median, mean and the 95\% confidence interval from Student's t-tests are away from zero. In fact, the Gmean has median values `r sprintf("%.4f",gmean[1])` and `r sprintf("%.4f",gmean[2])` for lookout - HDoutliers and lookout - stray respectively. Similarly, the corresponding F-measure values are `r sprintf("%.4f",fmeas[1])` and `r sprintf("%.4f",fmeas[2])`. Given that both Gmean and F-measure are bounded by 1, this shows that lookout gives better performance than HDoutliers or stray.
+<!-- From the graphs in Figure \ref{fig:lvplots} we see that the total area of the letter-value plots above zero is larger than the area below zero. This signifies that more datasets have positive Gmean and F-measure values for lookout - HDoutliers and lookout - stray performance values compared to the negative values.  -->
+
+In Table \ref{tab:table}, we examine the performance differences between
+(a) lookout and HDoutliers and
+(b) lookout and stray,
+using Gmean and Fmeasure after removing the entries that have zero values for all three algorithms.
+We see that for both Gmean and F-measure, the median, mean and the 95\% confidence interval from Student's t-tests are away from zero. In fact, the Gmean has median values `r sprintf("%.4f",gmean[1])` and `r sprintf("%.4f",gmean[2])` for lookout - HDoutliers and lookout - stray respectively. Similarly, the corresponding F-measure values are `r sprintf("%.4f",fmeas[1])` and `r sprintf("%.4f",fmeas[2])`. Given that both Gmean and F-measure are bounded by 1, this shows that lookout gives better performance than HDoutliers or stray.
 
 # Conclusions {#sec:conclusions}
 
