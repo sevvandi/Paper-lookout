@@ -42,20 +42,6 @@
 \renewcommand{\bottomfraction}{0.85}
 \renewcommand{\textfraction}{0.15}
 \renewcommand{\floatpagefraction}{0.7}
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{array}
-\usepackage{multirow}
-\usepackage{wrapfig}
-\usepackage{float}
-\usepackage{colortbl}
-\usepackage{pdflscape}
-\usepackage{tabu}
-\usepackage{threeparttable}
-\usepackage{threeparttablex}
-\usepackage[normalem]{ulem}
-\usepackage{makecell}
-\usepackage{xcolor}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[section]
@@ -655,7 +641,7 @@ From the graphs in Figure \ref{fig:lvplots} we see that the total area of the le
 
 Lookout uses leave-one-out kernel density estimates and EVT to detect outliers. Outlier detection methods that use kernel density estimates generally employ a user-defined parameter to construct the bandwidth. Selecting a bandwidth for outlier detection is different from selecting a bandwidth for general data representation, because the goal is to make outliers have lower density estimates compared to the non-outliers. In addition, it is a challenge to select an appropriate bandwidth in high dimensions. To make outliers have lower density estimates compared to the rest, a reasonably large bandwidth needs to be chosen. We introduced an algorithm called \emph{lookout} that uses persistent homology to select the bandwidth.
 
-We compared the performance of lookout \textcolor{blue}{with 4 outlier detection algorithms, 2 of which use EVT to detect outliers and the others use KDE. These algorithms are HDoutliers, stray, KDEOS and RDOS.} Our results on experimental data and on \textcolor{blue}{two data repositories} showed that lookout achieves better performance.
+We compared the performance of lookout \textcolor{blue}{with four outlier detection algorithms, two of which use EVT to detect outliers and the others use KDE. These algorithms are HDoutliers, stray, KDEOS and RDOS.} Our results on experimental data and on \textcolor{blue}{two data repositories} showed that lookout achieves better performance.
 
 We also introduced the concept of \emph{outlier persistence}, exploring the birth and death of outliers with changing bandwidth and significance values. Outlier persistence gives a bigger picture, taking a step back from fixed parameter values. It explores the bandwidth and significance parameters and highlights the outliers that persist over a range of bandwidth values and their significance levels. We suggest that it is a useful measure that increases our understanding of outliers.
 
